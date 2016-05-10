@@ -44,10 +44,10 @@ void DoneInstance();
 
 
 int APIENTRY _tWinMain(
-        HINSTANCE hInstance,
-        HINSTANCE hPrevInstance,
-        LPTSTR    lpCmdLine,
-        int       nCmdShow)
+    HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    LPTSTR    lpCmdLine,
+    int       nCmdShow)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
@@ -134,8 +134,8 @@ endprog:
     DoneInstance();
 
 #ifdef _DEBUG
-        if (_CrtDumpMemoryLeaks())
-            ::MessageBeep(MB_ICONEXCLAMATION);
+    if (_CrtDumpMemoryLeaks())
+        ::MessageBeep(MB_ICONEXCLAMATION);
 #endif
 
     return (int) msg.wParam;
@@ -168,7 +168,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     if (!Emulator_InitConfiguration(0/*(BKConfiguration)Settings_GetConfiguration())*/))
         return FALSE;
 
-    // Create main window    
+    // Create main window
     g_hwnd = CreateWindow(g_szWindowClass, g_szTitle,
             WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_DLGFRAME | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
             0, 0, 0, 0,

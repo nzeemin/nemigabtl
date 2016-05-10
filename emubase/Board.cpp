@@ -78,7 +78,7 @@ void CMotherboard::SetConfiguration(WORD conf)
     //}
 }
 
-void CMotherboard::Reset () 
+void CMotherboard::Reset ()
 {
     m_pCPU->Stop();
 
@@ -152,49 +152,49 @@ BOOL CMotherboard::IsFloppyEngineOn() const
 
 WORD CMotherboard::GetRAMWord(WORD offset)
 {
-    return *((WORD*)(m_pRAM + offset)); 
+    return *((WORD*)(m_pRAM + offset));
 }
 WORD CMotherboard::GetHIRAMWord(WORD offset)
 {
     return *((WORD*)(m_pRAM + 0xffff + offset));
 }
-BYTE CMotherboard::GetRAMByte(WORD offset) 
-{ 
-    return m_pRAM[offset]; 
+BYTE CMotherboard::GetRAMByte(WORD offset)
+{
+    return m_pRAM[offset];
 }
-BYTE CMotherboard::GetHIRAMByte(WORD offset) 
-{ 
+BYTE CMotherboard::GetHIRAMByte(WORD offset)
+{
     DWORD dwOffset = (DWORD)0xffff + (DWORD)offset;
-    return m_pRAM[dwOffset]; 
+    return m_pRAM[dwOffset];
 }
-void CMotherboard::SetRAMWord(WORD offset, WORD word) 
+void CMotherboard::SetRAMWord(WORD offset, WORD word)
 {
     *((WORD*)(m_pRAM + offset)) = word;
 }
-void CMotherboard::SetHIRAMWord(WORD offset, WORD word) 
+void CMotherboard::SetHIRAMWord(WORD offset, WORD word)
 {
     DWORD dwOffset = (DWORD)0xffff + (DWORD)offset;
     *((WORD*)(m_pRAM + dwOffset)) = word;
 }
-void CMotherboard::SetRAMByte(WORD offset, BYTE byte) 
+void CMotherboard::SetRAMByte(WORD offset, BYTE byte)
 {
-    m_pRAM[offset] = byte; 
+    m_pRAM[offset] = byte;
 }
-void CMotherboard::SetHIRAMByte(WORD offset, BYTE byte) 
+void CMotherboard::SetHIRAMByte(WORD offset, BYTE byte)
 {
     DWORD dwOffset = (DWORD)0xffff + (DWORD)offset;
-    m_pRAM[dwOffset] = byte; 
+    m_pRAM[dwOffset] = byte;
 }
 
 WORD CMotherboard::GetROMWord(WORD offset)
 {
     ASSERT(offset < 1024 * 64);
-    return *((WORD*)(m_pROM + offset)); 
+    return *((WORD*)(m_pROM + offset));
 }
-BYTE CMotherboard::GetROMByte(WORD offset) 
-{ 
+BYTE CMotherboard::GetROMByte(WORD offset)
+{
     ASSERT(offset < 1024 * 64);
-    return m_pROM[offset]; 
+    return m_pROM[offset];
 }
 
 
@@ -223,7 +223,7 @@ void CMotherboard::Tick50()  // 50 Hz timer
 {
     //if ((m_Port177662wr & 040000) == 0)
     //{
-        m_pCPU->TickIRQ2();
+    m_pCPU->TickIRQ2();
     //}
 }
 
@@ -298,7 +298,8 @@ BOOL CMotherboard::SystemFrame()
                     m_pCPU->InterruptVIRQ(5, 0200);
             }
             else if ((m_Port177514 & 0240) == 0)
-            {  // Byte is ready, print it
+            {
+                // Byte is ready, print it
                 (*m_ParallelOutCallback)((BYTE)(m_Port177516 & 0xff));
                 m_Port177514 |= 040;  // Set Printer Acknowledge
             }
@@ -599,28 +600,28 @@ WORD CMotherboard::GetPortWord(WORD address)
     case 0177516:
         return 0;
 
-    //case 0177560:
-    //    return m_Port177560;
-    //case 0177562:
-    //    m_Port177560 &= ~0200;
-    //    return m_Port177562;
-    //case 0177564:
-    //case 0177566:
-    //case 0177574:
-    //case 0177576:
-    //    return 0xffff;  //STUB
+        //case 0177560:
+        //    return m_Port177560;
+        //case 0177562:
+        //    m_Port177560 &= ~0200;
+        //    return m_Port177562;
+        //case 0177564:
+        //case 0177566:
+        //case 0177574:
+        //case 0177576:
+        //    return 0xffff;  //STUB
 
     case 0177572:  // Регистр адреса косвенной адресации
         return m_Port177572;
     case 0177570:
         return *(WORD*)(m_pRAM + m_Port177572 + m_Port177572);
 
-    default: 
+    default:
         m_pCPU->MemoryError();
         return 0;
     }
 
-    return 0; 
+    return 0;
 }
 
 // Read word from port for debugger
@@ -730,13 +731,13 @@ void CMotherboard::SetPortWord(WORD address, WORD word)
 
     case 0177514:
 #if !defined(PRODUCT)
-    	DebugLogFormat(_T("Parallel SET STATE %06o\r\n"), word);
+        DebugLogFormat(_T("Parallel SET STATE %06o\r\n"), word);
 #endif
         m_Port177514 = (m_Port177514 & 0100277) | (word & 037600);
         break;
     case 0177516:
 #if !defined(PRODUCT)
-    	DebugLogFormat(_T("Parallel SET DATA %04x\r\n"), word);
+        DebugLogFormat(_T("Parallel SET DATA %04x\r\n"), word);
 #endif
         m_Port177516 = word;
         m_Port177514 &= ~0240;
@@ -910,11 +911,11 @@ void CMotherboard::SetPortWord(WORD address, WORD word)
 ////				wsprintf(buffer,_T(" Block %d Len %d\n"),trk*20+side*10+sector-1,par);
 ////				DebugPrint(buffer);
 ////#endif
-//				
+//
 //				m_floppystate=FLOPPY_FSM_WAITFORLSB;
 //			}
 //			break;
-//	
+//
 //	}
 //}
 

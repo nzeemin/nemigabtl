@@ -24,7 +24,7 @@ class CProcessor  // KM1801VM1 processor
 {
 
 public:  // Constructor / initialization
-                CProcessor(CMotherboard* pBoard);
+    CProcessor(CMotherboard* pBoard);
     void        FireHALT() { m_HALTrq = TRUE; }  // Fire HALT interrupt request, same as HALT command
     void        SetHaltMode(BOOL halt) { m_haltmode = halt; }
     void		MemoryError();
@@ -111,7 +111,7 @@ public:  // Processor control
     void        TickIRQ2();  // IRQ2 signal
     void        InterruptVIRQ(int que, WORD interrupt);  // External interrupt via VIRQ signal
     void        Execute();   // Execute one instruction - for debugger only
-    
+
 public:  // Saving/loading emulator status (pImage addresses up to 32 bytes)
     void        SaveToImage(BYTE* pImage);
     void        LoadFromImage(const BYTE* pImage);
@@ -284,11 +284,11 @@ inline BOOL CProcessor::CheckAddForOverflow (BYTE a, BYTE b)
     {
         pushf
         push cx
-        mov cl,byte ptr [a]
-        add cl,byte ptr [b]
+        mov cl, byte ptr [a]
+        add cl, byte ptr [b]
         jno end
-        mov dword ptr [bOverflow],1
-    end:                            
+        mov dword ptr [bOverflow], 1
+        end:
         pop cx
         popf
     }
@@ -308,11 +308,11 @@ inline BOOL CProcessor::CheckAddForOverflow (WORD a, WORD b)
     {
         pushf
         push cx
-        mov cx,word ptr [a]
-        add cx,word ptr [b]
+        mov cx, word ptr [a]
+        add cx, word ptr [b]
         jno end
-        mov dword ptr [bOverflow],1
-    end:                            
+        mov dword ptr [bOverflow], 1
+        end:
         pop cx
         popf
     }
@@ -324,7 +324,7 @@ inline BOOL CProcessor::CheckAddForOverflow (WORD a, WORD b)
     return ((~a ^ b) & (a ^ sum)) & 0100000;
 #endif
 }
-//void        CProcessor::SetReg(int regno, WORD word) 
+//void        CProcessor::SetReg(int regno, WORD word)
 
 inline BOOL CProcessor::CheckSubForOverflow (BYTE a, BYTE b)
 {
@@ -334,11 +334,11 @@ inline BOOL CProcessor::CheckSubForOverflow (BYTE a, BYTE b)
     {
         pushf
         push cx
-        mov cl,byte ptr [a]
-        sub cl,byte ptr [b]
+        mov cl, byte ptr [a]
+        sub cl, byte ptr [b]
         jno end
-        mov dword ptr [bOverflow],1
-    end:                            
+        mov dword ptr [bOverflow], 1
+        end:
         pop cx
         popf
     }
@@ -358,11 +358,11 @@ inline BOOL CProcessor::CheckSubForOverflow (WORD a, WORD b)
     {
         pushf
         push cx
-        mov cx,word ptr [a]
-        sub cx,word ptr [b]
+        mov cx, word ptr [a]
+        sub cx, word ptr [b]
         jno end
-        mov dword ptr [bOverflow],1
-    end:                            
+        mov dword ptr [bOverflow], 1
+        end:
         pop cx
         popf
     }

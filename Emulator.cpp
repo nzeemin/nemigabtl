@@ -54,7 +54,8 @@ void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DW
 
 //////////////////////////////////////////////////////////////////////
 
-const DWORD ScreenView_Palette[4] = {
+const DWORD ScreenView_Palette[4] =
+{
     0x000000, 0xa0a0a0, 0xd0d0d0, 0xFFFFFF
 };
 
@@ -385,7 +386,7 @@ void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DW
 {
     for (int y = 0; y < 256; y++)
     {
-        const WORD* pVideo = (WORD*)(pVideoBuffer + y * 512/4);
+        const WORD* pVideo = (WORD*)(pVideoBuffer + y * 512 / 4);
         DWORD* pBits = (DWORD*)pImageBits + (256 - 1 - y) * 512;
         for (int x = 0; x < 512 / 8; x++)
         {
@@ -469,7 +470,7 @@ void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DW
 //    DWORD dwBytesRead = 0;
 //    ReadFile(hFile, bufHeader, BKIMAGE_HEADER_SIZE, &dwBytesRead, NULL);
 //    //TODO: Check if dwBytesRead != BKIMAGE_HEADER_SIZE
-//    
+//
 //    //TODO: Check version and size
 //
 //    // Allocate memory

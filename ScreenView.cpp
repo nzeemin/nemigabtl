@@ -110,7 +110,7 @@ void ScreenView_CreateDisplay()
     m_bmpinfo.bmiHeader.biYPelsPerMeter = 0;
     m_bmpinfo.bmiHeader.biClrUsed = 0;
     m_bmpinfo.bmiHeader.biClrImportant = 0;
-    
+
     m_hbmp = CreateDIBSection( hdc, &m_bmpinfo, DIB_RGB_COLORS, (void **) &m_bits, NULL, 0 );
 
     ReleaseDC( g_hwnd, hdc );
@@ -155,14 +155,14 @@ LRESULT CALLBACK ScreenViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
     case WM_LBUTTONDOWN:
         SetFocus(hWnd);
         break;
-    //case WM_KEYDOWN:
-    //    //if ((lParam & (1 << 30)) != 0)  // Auto-repeats should be ignored
-    //    //    return (LRESULT) TRUE;
-    //    //return (LRESULT) ScreenView_OnKeyEvent(wParam, (lParam & (1 << 24)) != 0, TRUE);
-    //    return (LRESULT) TRUE;
-    //case WM_KEYUP:
-    //    //return (LRESULT) ScreenView_OnKeyEvent(wParam, (lParam & (1 << 24)) != 0, FALSE);
-    //    return (LRESULT) TRUE;
+        //case WM_KEYDOWN:
+        //    //if ((lParam & (1 << 30)) != 0)  // Auto-repeats should be ignored
+        //    //    return (LRESULT) TRUE;
+        //    //return (LRESULT) ScreenView_OnKeyEvent(wParam, (lParam & (1 << 24)) != 0, TRUE);
+        //    return (LRESULT) TRUE;
+        //case WM_KEYUP:
+        //    //return (LRESULT) ScreenView_OnKeyEvent(wParam, (lParam & (1 << 24)) != 0, FALSE);
+        //    return (LRESULT) TRUE;
     case WM_SETCURSOR:
         if (::GetFocus() == g_hwndScreen)
         {
@@ -194,7 +194,7 @@ void ScreenView_SetScreenMode(int newMode)
     ScreenView_CreateDisplay();
 
     RECT rc;  ::GetWindowRect(g_hwndScreen, &rc);
-    ::SetWindowPos(g_hwndScreen, NULL, 0,0, rc.right - rc.left, 4 + cyHeight + 4, SWP_NOZORDER | SWP_NOMOVE);
+    ::SetWindowPos(g_hwndScreen, NULL, 0, 0, rc.right - rc.left, 4 + cyHeight + 4, SWP_NOZORDER | SWP_NOMOVE);
 }
 
 void ScreenView_OnDraw(HDC hdc)
@@ -205,18 +205,18 @@ void ScreenView_OnDraw(HDC hdc)
     int x = (rc.right - BK_SCREEN_WIDTH) / 2;
 
     DrawDibDraw(m_hdd, hdc,
-        x, 4, -1, -1,
-        &m_bmpinfo.bmiHeader, m_bits, 0,0,
-        m_cxScreenWidth, m_cyScreenHeight,
-        0);
+            x, 4, -1, -1,
+            &m_bmpinfo.bmiHeader, m_bits, 0, 0,
+            m_cxScreenWidth, m_cyScreenHeight,
+            0);
 
     // Empty border
     HBRUSH hBrush = ::CreateSolidBrush(COLOR_BK_BACKGROUND);
     HGDIOBJ hOldBrush = ::SelectObject(hdc, hBrush);
-    PatBlt(hdc, 0,0, x,rc.bottom, PATCOPY);
-    PatBlt(hdc, x + BK_SCREEN_WIDTH,0, rc.right,rc.bottom, PATCOPY);
-    PatBlt(hdc, x,0, BK_SCREEN_WIDTH,4, BLACKNESS);
-    PatBlt(hdc, x,rc.bottom - 4, BK_SCREEN_WIDTH,4, BLACKNESS);
+    PatBlt(hdc, 0, 0, x, rc.bottom, PATCOPY);
+    PatBlt(hdc, x + BK_SCREEN_WIDTH, 0, rc.right, rc.bottom, PATCOPY);
+    PatBlt(hdc, x, 0, BK_SCREEN_WIDTH, 4, BLACKNESS);
+    PatBlt(hdc, x, rc.bottom - 4, BK_SCREEN_WIDTH, 4, BLACKNESS);
     ::SelectObject(hdc, hOldBrush);
     ::DeleteObject(hBrush);
 }
@@ -260,24 +260,25 @@ WORD ScreenView_GetKeyEventFromQueue()
     return keyevent;
 }
 
-const BYTE arrPcChar2NemigaChar[256] = {  // Nemiga chars from PC chars
-/*       0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f  */
-/*0*/    0000, 0000, 0000, 0x03, 0000, 0000, 0000, 0000, 0177, 0015, 0000, 0000, 0x0c, 0015, 0000, 0000, 
-/*1*/    0000, 0x11, 0000, 0x13, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 
-/*2*/    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 
-/*3*/    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 
-/*4*/    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 
-/*5*/    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f, 
-/*6*/    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f, 
-/*7*/    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 
-/*8*/    0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 
-/*9*/    0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 
-/*a*/    0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 
-/*b*/    0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 
-/*c*/    0xc1, 0xc2, 0xd7, 0xc7, 0xc4, 0xc5, 0xd6, 0xda, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 
-/*d*/    0xd2, 0xd3, 0xd4, 0xd5, 0xc6, 0xc8, 0xc3, 0xde, 0xdb, 0xdd, 0xdf, 0xd9, 0xd8, 0xdc, 0xc0, 0xd1, 
-/*e*/    0xc1, 0xc2, 0xd7, 0xc7, 0xc4, 0xc5, 0xd6, 0xda, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 
-/*f*/    0xd2, 0xd3, 0xd4, 0xd5, 0xc6, 0xc8, 0xc3, 0xde, 0xdb, 0xdd, 0xdf, 0xd9, 0xd8, 0xdc, 0xc0, 0xd1, 
+const BYTE arrPcChar2NemigaChar[256] =    // Nemiga chars from PC chars
+{
+    /*       0     1     2     3     4     5     6     7     8     9     a     b     c     d     e     f  */
+    /*0*/    0000, 0000, 0000, 0x03, 0000, 0000, 0000, 0000, 0177, 0015, 0000, 0000, 0x0c, 0015, 0000, 0000,
+    /*1*/    0000, 0x11, 0000, 0x13, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+    /*2*/    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+    /*3*/    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+    /*4*/    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
+    /*5*/    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
+    /*6*/    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
+    /*7*/    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
+    /*8*/    0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+    /*9*/    0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+    /*a*/    0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+    /*b*/    0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000, 0000,
+    /*c*/    0xc1, 0xc2, 0xd7, 0xc7, 0xc4, 0xc5, 0xd6, 0xda, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0,
+    /*d*/    0xd2, 0xd3, 0xd4, 0xd5, 0xc6, 0xc8, 0xc3, 0xde, 0xdb, 0xdd, 0xdf, 0xd9, 0xd8, 0xdc, 0xc0, 0xd1,
+    /*e*/    0xc1, 0xc2, 0xd7, 0xc7, 0xc4, 0xc5, 0xd6, 0xda, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0,
+    /*f*/    0xd2, 0xd3, 0xd4, 0xd5, 0xc6, 0xc8, 0xc3, 0xde, 0xdb, 0xdd, 0xdf, 0xd9, 0xd8, 0xdc, 0xc0, 0xd1,
 };
 
 void ScreenView_ScanKeyboard()
@@ -313,7 +314,7 @@ void ScreenView_ScanKeyboard()
 //            if (newstate & 128)
 //                DebugPrintFormat(_T("Key PC: 0x%0x %d %d 0x%0x\r\n"), vkey, okShift, okCtrl, (int)key);
 //#endif
-            
+
             key = arrPcChar2NemigaChar[key];
             if (key == 0)
                 continue;

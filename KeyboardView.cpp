@@ -65,7 +65,8 @@ struct KeyboardKeys
     LPCTSTR text;
     BYTE scan;
 }
-m_arrKeyboardKeys[] = {
+m_arrKeyboardKeys[] =
+{
     {   2,  30, 25, 25, KEYCLASSLITE, _T("‘1"),     0007 },
     {  27,  30, 25, 25, KEYCLASSLITE, _T("‘2"),     0017 },
     {   2,  55, 25, 25, KEYCLASSLITE, _T("‘3"),     0027 },
@@ -127,7 +128,7 @@ m_arrKeyboardKeys[] = {
 
     { 100, 105, 27, 25, KEYCLASSGRAY, _T("\u2191"), KEYEXTRA_SHIFT }, // Shift
     { 127, 105, 27, 25, KEYCLASSLITE, _T("ﬂQ"),     0044 }, // ﬂ Q
-    { 154, 105, 27, 25, KEYCLASSLITE, _T("◊\u00ac"),0071 }, // ◊ ^
+    { 154, 105, 27, 25, KEYCLASSLITE, _T("◊\u00ac"), 0071 }, // ◊ ^
     { 181, 105, 27, 25, KEYCLASSLITE, _T("—S"),     0041 }, // — S
     { 208, 105, 27, 25, KEYCLASSLITE, _T("ÃM"),     0072 }, // Ã M
     { 235, 105, 27, 25, KEYCLASSLITE, _T("»I"),     0061 }, // » I
@@ -144,7 +145,7 @@ m_arrKeyboardKeys[] = {
     {  73, 130, 27, 25, KEYCLASSGRAY, _T("–”—"), KEYEXTRA_RUS }, // –”—
     { 100, 130, 27, 25, KEYCLASSGRAY, _T("–/À"), KEYEXTRA_RUSLAT }, // –/À
     { 127, 130, 27, 25, KEYCLASSGRAY, _T("¿À“"),    0101 }, // ¿À“
-    { 154, 130, 215,25, KEYCLASSDARK, NULL,         0102 }, // Space    
+    { 154, 130, 215, 25, KEYCLASSDARK, NULL,         0102 }, // Space
     { 370, 130, 27, 25, KEYCLASSGRAY, _T("–/À"), KEYEXTRA_RUSLAT }, // –/À
     { 397, 130, 27, 25, KEYCLASSGRAY, _T("À¿“"), KEYEXTRA_LAT }, // À¿“
     { 424, 130, 27, 25, KEYCLASSGRAY, _T("«¡"),     0103 }, // «¡
@@ -179,7 +180,8 @@ struct KeyboardIndicator
     LPCTSTR text;
     BOOL state;
 }
-m_arrKeyboardIndicators[] = {
+m_arrKeyboardIndicators[] =
+{
     {   140, 6, 12, 12, _T("–”—"),  FALSE },
     {   215, 6, 12, 12, _T("¬≈–’"), TRUE },
     {   265, 6, 12, 12, _T("À¿“"),  TRUE },
@@ -208,7 +210,7 @@ void KeyboardView_RegisterClass()
     wcex.hInstance		= g_hInst;
     wcex.hIcon			= NULL;
     wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_BTNFACE+1);
+    wcex.hbrBackground	= (HBRUSH)(COLOR_BTNFACE + 1);
     wcex.lpszMenuName	= NULL;
     wcex.lpszClassName	= CLASSNAME_KEYBOARDVIEW;
     wcex.hIconSm		= NULL;
@@ -232,10 +234,10 @@ void CreateKeyboardView(HWND hwndParent, int x, int y, int width, int height)
     ASSERT(hwndParent != NULL);
 
     g_hwndKeyboard = CreateWindow(
-        CLASSNAME_KEYBOARDVIEW, NULL,
-        WS_CHILD | WS_VISIBLE,
-        x, y, width, height,
-        hwndParent, NULL, g_hInst, NULL);
+            CLASSNAME_KEYBOARDVIEW, NULL,
+            WS_CHILD | WS_VISIBLE,
+            x, y, width, height,
+            hwndParent, NULL, g_hInst, NULL);
 }
 
 LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -264,7 +266,7 @@ LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         return (LRESULT)TRUE;
     case WM_LBUTTONDOWN:
         {
-            int x = LOWORD(lParam); 
+            int x = LOWORD(lParam);
             int y = HIWORD(lParam);
             WORD fwkeys = wParam;
 
@@ -393,13 +395,13 @@ void KeyboardView_OnDraw(HDC hdc)
         COLORREF textcolor = COLOR_KEYBOARD_DARK;
         switch (m_arrKeyboardKeys[i].keyclass)
         {
-            case KEYCLASSLITE: hbr = hbrLite; break;
-            case KEYCLASSGRAY: hbr = hbrGray; break;
-            case KEYCLASSDARK: hbr = hbrDark;  textcolor = COLOR_KEYBOARD_LITE; break;
+        case KEYCLASSLITE: hbr = hbrLite; break;
+        case KEYCLASSGRAY: hbr = hbrGray; break;
+        case KEYCLASSDARK: hbr = hbrDark;  textcolor = COLOR_KEYBOARD_LITE; break;
         }
         HGDIOBJ hOldBrush = ::SelectObject(hdc, hbr);
         //rcKey.left++; rcKey.top++; rcKey.right--; rc.bottom--;
-        ::PatBlt(hdc, rcKey.left, rcKey.top, rcKey.right-rcKey.left, rcKey.bottom-rcKey.top, PATCOPY);
+        ::PatBlt(hdc, rcKey.left, rcKey.top, rcKey.right - rcKey.left, rcKey.bottom - rcKey.top, PATCOPY);
         ::SelectObject(hdc, hOldBrush);
 
         //TCHAR text[10];
@@ -408,7 +410,7 @@ void KeyboardView_OnDraw(HDC hdc)
         if (text != NULL)
         {
             ::SetTextColor(hdc, textcolor);
-            ::DrawText(hdc, text, wcslen(text), &rcKey, DT_NOPREFIX|DT_SINGLELINE|DT_CENTER|DT_VCENTER);
+            ::DrawText(hdc, text, wcslen(text), &rcKey, DT_NOPREFIX | DT_SINGLELINE | DT_CENTER | DT_VCENTER);
         }
 
         ::DrawEdge(hdc, &rcKey, BDR_RAISEDOUTER, BF_RECT);
@@ -426,7 +428,7 @@ void KeyboardView_OnDraw(HDC hdc)
 
         HBRUSH hbr = m_arrKeyboardIndicators[i].state ? hbrRed : hbrDark;
         HGDIOBJ hOldBrush = ::SelectObject(hdc, hbr);
-        ::PatBlt(hdc, rcRadio.left, rcRadio.top, rcRadio.right-rcRadio.left, rcRadio.bottom-rcRadio.top, PATCOPY);
+        ::PatBlt(hdc, rcRadio.left, rcRadio.top, rcRadio.right - rcRadio.left, rcRadio.bottom - rcRadio.top, PATCOPY);
         ::SelectObject(hdc, hOldBrush);
 
         ::DrawEdge(hdc, &rcRadio, BDR_SUNKENOUTER, BF_RECT);

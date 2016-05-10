@@ -120,7 +120,8 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     return (INT_PTR) FALSE;
 }
 
-BOOL InputBoxValidate(HWND hDlg) {
+BOOL InputBoxValidate(HWND hDlg)
+{
     HWND hEdit = GetDlgItem(hDlg, IDC_EDIT1);
     TCHAR buffer[8];
     GetWindowText(hEdit, buffer, 8);
@@ -204,9 +205,9 @@ INT_PTR CALLBACK LoadBinProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
             {
                 TCHAR bufFileName[MAX_PATH];
                 BOOL okResult = ShowOpenDialog(g_hwnd,
-                    _T("Select SAV file to load"),
-                    _T("BK binary files (*.sav)\0*.sav\0All Files (*.*)\0*.*\0\0"),
-                    bufFileName);
+                        _T("Select SAV file to load"),
+                        _T("BK binary files (*.sav)\0*.sav\0All Files (*.*)\0*.*\0\0"),
+                        bufFileName);
                 if (! okResult) break;
 
                 Dialogs_DoLoadBinPrepare(hDlg, bufFileName);
@@ -244,11 +245,11 @@ void Dialogs_DoLoadBinPrepare(HWND hDlg, LPCTSTR strFileName)
         AlertWarning(_T("Failed to load SAV file."));
         return;
     }
-    
+
     // Load BIN header
     BYTE bufHeader[48];
-	DWORD bytesRead;
-	::ReadFile(hFile, bufHeader, 48, &bytesRead, NULL);
+    DWORD bytesRead;
+    ::ReadFile(hFile, bufHeader, 48, &bytesRead, NULL);
     if (bytesRead != 48)
     {
         ::CloseHandle(hFile);
@@ -287,8 +288,8 @@ void Dialogs_DoLoadBinLoad(LPCTSTR strFileName)
 
     // Load BIN header
     BYTE bufHeader[48];
-	DWORD bytesRead;
-	::ReadFile(hFile, bufHeader, 48, &bytesRead, NULL);
+    DWORD bytesRead;
+    ::ReadFile(hFile, bufHeader, 48, &bytesRead, NULL);
     if (bytesRead != 48)
     {
         ::CloseHandle(hFile);
@@ -309,7 +310,7 @@ void Dialogs_DoLoadBinLoad(LPCTSTR strFileName)
 
     // Load file data
     ::SetFilePointer(hFile, 0, 0, 0/*FILE_BEGIN*/);
-	::ReadFile(hFile, pBuffer, dataSize, &bytesRead, NULL);
+    ::ReadFile(hFile, pBuffer, dataSize, &bytesRead, NULL);
     if (bytesRead != bytesToRead)
     {
         ::LocalFree(pBuffer);

@@ -43,7 +43,7 @@ void CFloppyDrive::Reset()
 
 //////////////////////////////////////////////////////////////////////
 
-    
+
 CFloppyController::CFloppyController()
 {
     m_drive = -1;  m_pDrive = NULL;
@@ -171,7 +171,7 @@ WORD CFloppyController::GetTimer()
 void CFloppyController::SetCommand(WORD cmd)
 {
 #if !defined(PRODUCT)
-	DebugLogFormat(_T("Floppy%d COMMAND %06o\r\n"), m_drive, cmd);
+    DebugLogFormat(_T("Floppy%d COMMAND %06o\r\n"), m_drive, cmd);
 #endif
 
     m_motorcount = 0;
@@ -230,7 +230,7 @@ void CFloppyController::SetCommand(WORD cmd)
 void CFloppyController::SetState(WORD data)
 {
 #if !defined(PRODUCT)
-	DebugLogFormat(_T("Floppy%d SET STATE %d OPER %06o\r\n"), m_drive, (int)data, m_operation);
+    DebugLogFormat(_T("Floppy%d SET STATE %d OPER %06o\r\n"), m_drive, (int)data, m_operation);
 #endif
     m_motorcount = 0;
 
@@ -375,24 +375,24 @@ void CFloppyController::Periodic()
         {
             if (m_operation == FLOPPY_OPER_STEP_IN)  // Шаг к центру дискеты
             {
-                #if !defined(PRODUCT)
+#if !defined(PRODUCT)
                 DebugLogFormat(_T("Floppy%d STEP IN\r\n"), m_drive);
-                #endif
+#endif
                 if (m_track < 82) { m_track++;  PrepareTrack(); }
             }
             else if (m_operation == FLOPPY_OPER_STEP_OUT)  // Шаг от центра дискеты
             {
-                #if !defined(PRODUCT)
+#if !defined(PRODUCT)
                 DebugLogFormat(_T("Floppy%d STEP OUT\r\n"), m_drive);
-                #endif
+#endif
                 if (m_track >= 1) { m_track--;  PrepareTrack(); }
                 // Только для этой операции выставляется признак нулевой дорожки
                 if (m_track == 0)
                 {
                     m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // Нулевая дорожка, TR00 = 0
-                    #if !defined(PRODUCT)
+#if !defined(PRODUCT)
                     DebugLog(_T("Floppy TRACK 00\r\n"));
-                    #endif
+#endif
                 }
                 else
                     m_status |= FLOPPY_STATUS_TR00_WRPRT;
@@ -502,7 +502,7 @@ void CFloppyController::FlushChanges()
 #endif
 
     // Decode track data from m_data
-    BYTE data[128*23];  memset(data, 0, 128*23);
+    BYTE data[128 * 23];  memset(data, 0, 128 * 23);
     BOOL decoded = DecodeTrackData(m_pDrive->data, data, m_pDrive->datatrack);
 
     if (decoded)  // Write to the file only if the track was correctly decoded from raw data
@@ -531,10 +531,11 @@ void CFloppyController::FlushChanges()
 
         // Save data into the file
         ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-        DWORD dwBytesWritten = ::fwrite(&data, 1, 128*sectors, m_pDrive->fpFile);
+        DWORD dwBytesWritten = ::fwrite(&data, 1, 128 * sectors, m_pDrive->fpFile);
         //TODO: Проверка на ошибки записи
     }
-    else {
+    else
+    {
 #if !defined(PRODUCT)
         DebugLog(_T("Floppy FLUSH FAILED\r\n"));  //DEBUG
 #endif
@@ -640,7 +641,7 @@ static BOOL DecodeTrackData(const BYTE* pRaw, BYTE* pDest, WORD track)
         {
             if (track != 0 || sect != 0)
             {
-                if (destptr >= 128*23)
+                if (destptr >= 128 * 23)
                     return FALSE;  // End of track or error
                 pDest[destptr++] = pRaw[dataptr];
             }
