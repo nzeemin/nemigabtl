@@ -12,6 +12,15 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #pragma once
 
+//////////////////////////////////////////////////////////////////////
+
+#ifdef _DEBUG
+#define NEMIGABTL_VERSION_STRING "DEBUG"
+#elif !defined(PRODUCT)
+#define NEMIGABTL_VERSION_STRING "RELEASE"
+#else
+#include "Version.h"
+#endif
 
 //////////////////////////////////////////////////////////////////////
 // Assertions checking - MFC-like ASSERT macro
@@ -31,7 +40,7 @@ BOOL AssertFailedLine(LPCSTR lpszFileName, int nLine);
 
 
 //////////////////////////////////////////////////////////////////////
-
+// Alerts
 
 void AlertWarning(LPCTSTR sMessage);
 BOOL AlertOkCancel(LPCTSTR sMessage);

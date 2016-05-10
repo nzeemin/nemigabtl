@@ -168,8 +168,11 @@ BOOL MainWindow_InitToolbar()
 
 BOOL MainWindow_InitStatusbar()
 {
-    m_hwndStatusbar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | SBT_TOOLTIPS,
-            _T(""),
+    TCHAR buffer[100];
+    wsprintf(buffer, _T("NEMIGABTL version %s"), _T(NEMIGABTL_VERSION_STRING));
+    m_hwndStatusbar = CreateStatusWindow(
+            WS_CHILD | WS_VISIBLE | SBT_TOOLTIPS,
+            buffer,
             g_hwnd, 101);
     if (! m_hwndStatusbar)
         return FALSE;

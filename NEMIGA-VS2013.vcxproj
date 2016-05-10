@@ -134,6 +134,12 @@
     <Manifest>
       <AdditionalManifestFiles>manifest.xml;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
+    <PreBuildEvent>
+      <Command>"!version.bat"</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Updating Version.h file...</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Common.cpp" />
