@@ -1,0 +1,11 @@
+/Debug
+/Product
+/Release
+/*.ncb
+/*.suo
+*.user
+/*.bin
+/Version.h
+/ipch
+/NEMIGABTL.APS
+/trace.log
