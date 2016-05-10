@@ -11,6 +11,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 // DebugView.cpp
 
 #include "stdafx.h"
+#include <commctrl.h>
 #include "Main.h"
 #include "Views.h"
 #include "ToolWindow.h"
@@ -30,6 +31,7 @@ HWND g_hwndDebug = (HWND) INVALID_HANDLE_VALUE;  // Debug View window handle
 WNDPROC m_wndprocDebugToolWindow = NULL;  // Old window proc address of the ToolWindow
 
 HWND m_hwndDebugViewer = (HWND) INVALID_HANDLE_VALUE;
+HWND m_hwndDebugToolbar = (HWND) INVALID_HANDLE_VALUE;
 
 WORD m_wDebugCpuR[9];  // Old register values - R0..R7, PSW
 BOOL m_okDebugCpuRChanged[9];  // Register change flags
@@ -94,18 +96,61 @@ void CreateDebugView(HWND hwndParent, int x, int y, int width, int height)
             0, 0, rcClient.right, rcClient.bottom,
             g_hwndDebug, NULL, g_hInst, NULL);
 
+    m_hwndDebugToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL,
+            WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_TRANSPARENT | TBSTYLE_TOOLTIPS | CCS_NOPARENTALIGN | CCS_NODIVIDER | CCS_VERT,
+            4, 4, 32, rcClient.bottom, m_hwndDebugViewer,
+            (HMENU) 102,
+            g_hInst, NULL);
+
+    TBADDBITMAP addbitmap;
+    addbitmap.hInst = g_hInst;
+    addbitmap.nID = IDB_TOOLBAR;
+    SendMessage(m_hwndDebugToolbar, TB_ADDBITMAP, 2, (LPARAM) &addbitmap);
+
+    SendMessage(m_hwndDebugToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
+    SendMessage(m_hwndDebugToolbar, TB_SETBUTTONSIZE, 0, (LPARAM) MAKELONG (26, 26));
+
+    TBBUTTON buttons[2];
+    ZeroMemory(buttons, sizeof(buttons));
+    for (int i = 0; i < sizeof(buttons) / sizeof(TBBUTTON); i++)
+    {
+        buttons[i].fsState = TBSTATE_ENABLED | TBSTATE_WRAP;
+        buttons[i].fsStyle = BTNS_BUTTON;
+        buttons[i].iString = -1;
+    }
+    buttons[0].idCommand = ID_DEBUG_STEPINTO;
+    buttons[0].iBitmap = 15;
+    buttons[1].idCommand = ID_DEBUG_STEPOVER;
+    buttons[1].iBitmap = 16;
+
+    SendMessage(m_hwndDebugToolbar, TB_ADDBUTTONS, (WPARAM) sizeof(buttons) / sizeof(TBBUTTON), (LPARAM) &buttons);
+
     memset(m_wDebugCpuR, 255, sizeof(m_wDebugCpuR));
     memset(m_okDebugCpuRChanged, 1, sizeof(m_okDebugCpuRChanged));
+}
+
+// Adjust position of client windows
+void DebugView_AdjustWindowLayout()
+{
+    RECT rc;  GetClientRect(g_hwndDebug, &rc);
+
+    if (m_hwndDebugViewer != (HWND) INVALID_HANDLE_VALUE)
+        SetWindowPos(m_hwndDebugViewer, NULL, 0, 0, rc.right, rc.bottom, SWP_NOZORDER);
 }
 
 LRESULT CALLBACK DebugViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
+    LRESULT lResult;
     switch (message)
     {
     case WM_DESTROY:
         g_hwndDebug = (HWND) INVALID_HANDLE_VALUE;  // We are closed! Bye-bye!..
         return CallWindowProc(m_wndprocDebugToolWindow, hWnd, message, wParam, lParam);
+    case WM_SIZE:
+        lResult = CallWindowProc(m_wndprocDebugToolWindow, hWnd, message, wParam, lParam);
+        DebugView_AdjustWindowLayout();
+        return lResult;
     default:
         return CallWindowProc(m_wndprocDebugToolWindow, hWnd, message, wParam, lParam);
     }
@@ -117,6 +162,9 @@ LRESULT CALLBACK DebugViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, 
     UNREFERENCED_PARAMETER(lParam);
     switch (message)
     {
+    case WM_COMMAND:
+        ::PostMessage(g_hwnd, WM_COMMAND, wParam, lParam);
+        break;
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
@@ -203,12 +251,12 @@ void DebugView_DoDraw(HDC hdc)
 
     //TextOut(hdc, cxChar * 1, 2 + 1 * cyLine, _T("CPU"), 3);
 
-    DebugView_DrawProcessor(hdc, pDebugPU, cxChar * 2, 2 + 1 * cyLine, arrR, arrRChanged);
+    DebugView_DrawProcessor(hdc, pDebugPU, 30 + cxChar * 2, 2 + 1 * cyLine, arrR, arrRChanged);
 
     // Draw stack for the current processor
-    DebugView_DrawMemoryForRegister(hdc, 6, pDebugPU, 35 * cxChar, 2 + 0 * cyLine);
+    DebugView_DrawMemoryForRegister(hdc, 6, pDebugPU, 30 + 35 * cxChar, 2 + 0 * cyLine);
 
-    DebugView_DrawPorts(hdc, g_pBoard, 57 * cxChar, 2 + 0 * cyLine);
+    DebugView_DrawPorts(hdc, g_pBoard, 30 + 57 * cxChar, 2 + 0 * cyLine);
 
     SetTextColor(hdc, colorOld);
     SetBkColor(hdc, colorBkOld);
@@ -246,7 +294,7 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
         ::SetTextColor(hdc, arrRChanged[r] ? COLOR_RED : colorText);
 
         LPCTSTR strRegName = REGISTER_NAME[r];
-        TextOut(hdc, x, y + r * cyLine, strRegName, (int) wcslen(strRegName));
+        TextOut(hdc, x, y + r * cyLine, strRegName, (int) _tcslen(strRegName));
 
         WORD value = arrR[r]; //pProc->GetReg(r);
         DrawOctalValue(hdc, x + cxChar * 3, y + r * cyLine, value);

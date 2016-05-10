@@ -29,6 +29,8 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #define COLOR_BLUE      RGB(0,0,255)
 #define COLOR_SUBTITLE  RGB(0,128,0)
 #define COLOR_VALUE     RGB(128,128,128)
+#define COLOR_JUMP      RGB(80,192,224)
+#define COLOR_CURRENT   RGB(255,255,224)
 
 
 HWND g_hwndDisasm = (HWND) INVALID_HANDLE_VALUE;  // Disasm View window handle
@@ -115,14 +117,28 @@ void CreateDisasmView(HWND hwndParent, int x, int y, int width, int height)
             g_hwndDisasm, NULL, g_hInst, NULL);
 }
 
+// Adjust position of client windows
+void DisasmView_AdjustWindowLayout()
+{
+    RECT rc;  GetClientRect(g_hwndDisasm, &rc);
+
+    if (m_hwndDisasmViewer != (HWND) INVALID_HANDLE_VALUE)
+        SetWindowPos(m_hwndDisasmViewer, NULL, 0, 0, rc.right, rc.bottom, SWP_NOZORDER);
+}
+
 LRESULT CALLBACK DisasmViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
+    LRESULT lResult;
     switch (message)
     {
     case WM_DESTROY:
         g_hwndDisasm = (HWND) INVALID_HANDLE_VALUE;  // We are closed! Bye-bye!..
         return CallWindowProc(m_wndprocDisasmToolWindow, hWnd, message, wParam, lParam);
+    case WM_SIZE:
+        lResult = CallWindowProc(m_wndprocDisasmToolWindow, hWnd, message, wParam, lParam);
+        DisasmView_AdjustWindowLayout();
+        return lResult;
     default:
         return CallWindowProc(m_wndprocDisasmToolWindow, hWnd, message, wParam, lParam);
     }
@@ -408,6 +424,31 @@ void DisasmView_SetBaseAddr(WORD base)
 //////////////////////////////////////////////////////////////////////
 // Draw functions
 
+void DisasmView_DrawJump(HDC hdc, int yFrom, int delta, int x, int cyLine)
+{
+    int dist = abs(delta);
+    if (dist < 2) dist = 2;
+    if (dist > 20) dist = 16;
+
+    int yTo = yFrom + delta * cyLine;
+    yFrom += cyLine / 2;
+
+    HGDIOBJ oldPen = SelectObject(hdc, CreatePen(PS_SOLID, 1, COLOR_JUMP));
+
+    POINT points[4];
+    points[0].x = x;  points[0].y = yFrom;
+    points[1].x = x + dist * 4;  points[1].y = yFrom;
+    points[2].x = x + dist * 12;  points[2].y = yTo;
+    points[3].x = x;  points[3].y = yTo;
+    PolyBezier(hdc, points, 4);
+    MoveToEx(hdc, x - 4, points[3].y, NULL);
+    LineTo(hdc, x + 4, yTo - 1);
+    MoveToEx(hdc, x - 4, points[3].y, NULL);
+    LineTo(hdc, x + 4, yTo + 1);
+
+    SelectObject(hdc, oldPen);
+}
+
 void DisasmView_DoDraw(HDC hdc)
 {
     ASSERT(g_pBoard != NULL);
@@ -417,16 +458,17 @@ void DisasmView_DoDraw(HDC hdc)
     HGDIOBJ hOldFont = SelectObject(hdc, hFont);
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
     COLORREF colorOld = SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
-    COLORREF colorBkOld = SetBkColor(hdc, GetSysColor(COLOR_WINDOW));
+    SetBkMode(hdc, TRANSPARENT);
+    //COLORREF colorBkOld = SetBkColor(hdc, GetSysColor(COLOR_WINDOW));
 
     CProcessor* pDisasmPU = g_pBoard->GetCPU();
 
-    // Draw disasseble for the current processor
+    // Draw disassembly for the current processor
     WORD prevPC = g_wEmulatorPrevCpuPC;
     int yFocus = DisasmView_DrawDisassemble(hdc, pDisasmPU, m_wDisasmBaseAddr, prevPC, 0, 2 + 0 * cyLine);
 
     SetTextColor(hdc, colorOld);
-    SetBkColor(hdc, colorBkOld);
+    //SetBkColor(hdc, colorBkOld);
     SelectObject(hdc, hOldFont);
     DeleteObject(hFont);
 
@@ -456,6 +498,36 @@ DisasmSubtitleItem* DisasmView_FindSubtitle(WORD address, int typemask)
     return NULL;
 }
 
+BOOL DisasmView_CheckForJump(const WORD* memory, WORD /*address*/, int* pDelta)
+{
+    WORD instr = *memory;
+
+    // BR, BNE, BEQ, BGE, BLT, BGT, BLE
+    // BPL, BMI, BHI, BLOS, BVC, BVS, BHIS, BLO
+    if ((instr & 0177400) >= 0000400 && (instr & 0177400) < 0004000 ||
+        (instr & 0177400) >= 0100000 && (instr & 0177400) < 0104000)
+    {
+        *pDelta = ((int)(char)(instr & 0xff)) + 1;
+        return TRUE;
+    }
+
+    // SOB
+    if ((instr & ~(WORD)0777) == PI_SOB)
+    {
+        *pDelta = -(GetDigit(instr, 1) * 4 + GetDigit(instr, 0)) + 1;
+        return TRUE;
+    }
+
+    // CALL, JMP
+    if (instr == 0004767 || instr == 0000167)
+    {
+        *pDelta = ((short)(memory[1]) + 4) / 2;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previous, int x, int y)
 {
     int result = -1;
@@ -464,6 +536,15 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previ
 
     WORD proccurrent = pProc->GetPC();
     WORD current = base;
+
+    // Draw current line background
+    if (!m_okDisasmSubtitles)  //NOTE: Subtitles can move lines down
+    {
+        HGDIOBJ oldBrush = SelectObject(hdc, CreateSolidBrush(COLOR_CURRENT));
+        int yCurrent = (proccurrent - (current - 5)) * cyLine;
+        PatBlt(hdc, 0, yCurrent, 1000, cyLine, PATCOPY);
+        SelectObject(hdc, oldBrush);
+    }
 
     // Читаем из памяти процессора в буфер
     const int nWindowSize = 30;
@@ -492,7 +573,7 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previ
                 LPCTSTR strBlockSubtitle = pSubItem->comment;
 
                 ::SetTextColor(hdc, COLOR_SUBTITLE);
-                TextOut(hdc, x + 21 * cxChar, y, strBlockSubtitle, (int) wcslen(strBlockSubtitle));
+                TextOut(hdc, x + 21 * cxChar, y, strBlockSubtitle, (int) _tcslen(strBlockSubtitle));
                 ::SetTextColor(hdc, colorText);
 
                 y += cyLine;
@@ -537,7 +618,7 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previ
                 LPCTSTR strSubtitle = pSubItem->comment;
 
                 ::SetTextColor(hdc, COLOR_SUBTITLE);
-                TextOut(hdc, x + 52 * cxChar, y, strSubtitle, (int) wcslen(strSubtitle));
+                TextOut(hdc, x + 52 * cxChar, y, strSubtitle, (int) _tcslen(strSubtitle));
                 ::SetTextColor(hdc, colorText);
 
                 // Строку с субтитром мы можем использовать как опорную для дизассемблера
@@ -559,11 +640,19 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previ
             else
             {
                 length = DisassembleInstruction(memory + index, address, strInstr, strArg);
+
+                int delta;
+                if (!m_okDisasmSubtitles &&  //NOTE: Subtitles can move lines down
+                    DisasmView_CheckForJump(memory + index, address, &delta) &&
+                    abs(delta) < 32)
+                {
+                    DisasmView_DrawJump(hdc, y, delta, x + (30 + _tcslen(strArg)) * cxChar, cyLine);
+                }
             }
             if (index + length <= nWindowSize)
             {
-                TextOut(hdc, x + 21 * cxChar, y, strInstr, (int) wcslen(strInstr));
-                TextOut(hdc, x + 29 * cxChar, y, strArg, (int) wcslen(strArg));
+                TextOut(hdc, x + 21 * cxChar, y, strInstr, (int) _tcslen(strInstr));
+                TextOut(hdc, x + 29 * cxChar, y, strArg, (int) _tcslen(strArg));
             }
             ::SetTextColor(hdc, colorText);
             if (wNextBaseAddr == 0)
