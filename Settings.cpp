@@ -249,7 +249,7 @@ void Settings_SetScreenViewMode(int mode)
 }
 int Settings_GetScreenViewMode()
 {
-    DWORD dwValue;
+    DWORD dwValue = 0;
     Settings_LoadDwordValue(_T("ScreenViewMode"), &dwValue);
     return (int) dwValue;
 }

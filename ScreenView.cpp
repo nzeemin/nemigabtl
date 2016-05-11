@@ -100,7 +100,7 @@ void ScreenView_CreateDisplay()
     HDC hdc = GetDC( g_hwnd );
 
     m_bmpinfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-    m_bmpinfo.bmiHeader.biWidth = NEMIGA_SCREEN_WIDTH;
+    m_bmpinfo.bmiHeader.biWidth = m_cxScreenWidth;
     m_bmpinfo.bmiHeader.biHeight = m_cyScreenHeight;
     m_bmpinfo.bmiHeader.biPlanes = 1;
     m_bmpinfo.bmiHeader.biBitCount = 32;
@@ -125,6 +125,7 @@ void CreateScreenView(HWND hwndParent, int x, int y, int cxWidth)
     int yTop = y;
     int cyScreenHeight = 4 + m_cyScreenHeight + 4;
     int cyHeight = cyScreenHeight;
+    cxWidth = 4 + m_cxScreenWidth + 4;
 
     g_hwndScreen = CreateWindow(
             CLASSNAME_SCREENVIEW, NULL,
@@ -190,11 +191,14 @@ void ScreenView_SetScreenMode(int newMode)
     // Ask Emulator module for screen width and height
     int cxWidth, cyHeight;
     Emulator_GetScreenSize(newMode, &cxWidth, &cyHeight);
+    m_cxScreenWidth = cxWidth;
     m_cyScreenHeight = cyHeight;
     ScreenView_CreateDisplay();
 
     RECT rc;  ::GetWindowRect(g_hwndScreen, &rc);
-    ::SetWindowPos(g_hwndScreen, NULL, 0, 0, rc.right - rc.left, 4 + cyHeight + 4, SWP_NOZORDER | SWP_NOMOVE);
+    ::SetWindowPos(g_hwndScreen, NULL, 0, 0, 4 + cxWidth + 4, 4 + cyHeight + 4, SWP_NOZORDER | SWP_NOMOVE);
+
+    ScreenView_RedrawScreen();
 }
 
 void ScreenView_OnDraw(HDC hdc)
@@ -202,7 +206,7 @@ void ScreenView_OnDraw(HDC hdc)
     if (m_bits == NULL) return;
 
     RECT rc;  ::GetClientRect(g_hwndScreen, &rc);
-    int x = (rc.right - NEMIGA_SCREEN_WIDTH) / 2;
+    int x = (rc.right - m_cxScreenWidth) / 2;
 
     DrawDibDraw(m_hdd, hdc,
             x, 4, -1, -1,

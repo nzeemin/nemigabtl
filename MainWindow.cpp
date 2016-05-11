@@ -650,16 +650,16 @@ void MainWindow_UpdateMenu()
     //// View|Color Screen
     //MainWindow_SetToolbarImage(ID_VIEW_RGBSCREEN,
     //    (ScreenView_GetScreenMode() & 1) ? ToolbarImageColorScreen : ToolbarImageBWScreen);
-    //// View|Screen Mode
-    //UINT scrmodecmd = 0;
-    //switch (ScreenView_GetScreenMode())
-    //{
-    //case 0: scrmodecmd = ID_VIEW_SCREENMODE0; break;
-    //case 1: scrmodecmd = ID_VIEW_SCREENMODE1; break;
+    // View|Screen Mode
+    UINT scrmodecmd = 0;
+    switch (ScreenView_GetScreenMode())
+    {
+    case 0: scrmodecmd = ID_VIEW_SCREENMODE0; break;
+    case 1: scrmodecmd = ID_VIEW_SCREENMODE1; break;
     //case 2: scrmodecmd = ID_VIEW_SCREENMODE2; break;
     //case 3: scrmodecmd = ID_VIEW_SCREENMODE3; break;
-    //}
-    //CheckMenuRadioItem(hMenu, ID_VIEW_SCREENMODE0, ID_VIEW_SCREENMODE3, scrmodecmd, MF_BYCOMMAND);
+    }
+    CheckMenuRadioItem(hMenu, ID_VIEW_SCREENMODE0, ID_VIEW_SCREENMODE1, scrmodecmd, MF_BYCOMMAND);
 
     // Emulator menu options
     CheckMenuItem(hMenu, ID_EMULATOR_AUTOSTART, (Settings_GetAutostart() ? MF_CHECKED : MF_UNCHECKED));
@@ -718,6 +718,12 @@ bool MainWindow_DoCommand(int commandId)
         break;
     case ID_VIEW_FULLSCREEN:
         MainWindow_DoViewFullscreen();
+        break;
+    case ID_VIEW_SCREENMODE0:
+        MainWindow_DoViewScreenMode(0);
+        break;
+    case ID_VIEW_SCREENMODE1:
+        MainWindow_DoViewScreenMode(1);
         break;
     case ID_EMULATOR_RUN:
         MainWindow_DoEmulatorRun();
@@ -783,7 +789,7 @@ bool MainWindow_DoCommand(int commandId)
 
 void MainWindow_DoViewDebug()
 {
-    //MainWindow_DoViewScreenMode(1);  // Switch to Normal Height mode
+    MainWindow_DoViewScreenMode(0);  // Switch to 512x256 Short mode
 
     Settings_SetDebug(!Settings_GetDebug());
     MainWindow_ShowHideDebug();
@@ -805,7 +811,7 @@ void MainWindow_DoViewKeyboard()
 
 void MainWindow_DoViewScreenMode(int newMode)
 {
-    //if (Settings_GetDebug() && newMode == 2) return;  // Deny switching to Double Height in Debug mode
+    if (Settings_GetDebug() && newMode != 0) return;  // Deny switching to other mode in Debug mode
 
     ScreenView_SetScreenMode(newMode);
 

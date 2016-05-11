@@ -98,6 +98,9 @@ BEGIN
     BEGIN
         MENUITEM "Toolbar",                     ID_VIEW_TOOLBAR
         MENUITEM "Keyboard",                    ID_VIEW_KEYBOARD
+        MENUITEM SEPARATOR
+        MENUITEM "512 x 256 Short",             ID_VIEW_SCREENMODE0
+        MENUITEM "512 x 312 Normal",            ID_VIEW_SCREENMODE1
     END
     POPUP "&Emulator"
     BEGIN

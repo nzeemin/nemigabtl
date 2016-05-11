@@ -49,10 +49,32 @@ WORD g_wEmulatorPrevCpuPC = 0177777;  // Previous PC value
 
 void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R);
 
-void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits);
-
-
 //////////////////////////////////////////////////////////////////////
+//Прототип функции преобразования экрана
+// Input:
+//   pVideoBuffer   Исходные данные, биты экрана БК
+//   okSmallScreen  Признак "малого" экрана
+//   pPalette       Палитра
+//   scroll         Текущее значение скроллинга
+//   pImageBits     Результат, 32-битный цвет, размер для каждой функции свой
+typedef void (CALLBACK* PREPARE_SCREEN_CALLBACK)(const BYTE* pVideoBuffer, const DWORD* pPalette, void* pImageBits);
+
+void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits);
+
+struct ScreenModeStruct
+{
+    int width;
+    int height;
+    PREPARE_SCREEN_CALLBACK callback;
+}
+static ScreenModeReference[] =
+{
+    {  512, 256, Emulator_PrepareScreenBW512x256 },
+    {  512, 312, Emulator_PrepareScreenBW512x312 },
+    //{  768, 468, Emulator_PrepareScreenBW768x468 },
+    //{ 1024, 624, Emulator_PrepareScreenBW1024x624 },
+};
 
 const DWORD ScreenView_Palette[4] =
 {
@@ -359,11 +381,11 @@ WORD Emulator_GetChangeRamStatus(WORD address)
 
 void Emulator_GetScreenSize(int scrmode, int* pwid, int* phei)
 {
-    //if (scrmode < 0 || scrmode >= sizeof(ScreenModeReference) / sizeof(ScreenModeStruct))
-    //    return;
-    //ScreenModeStruct* pinfo = ScreenModeReference + scrmode;
-    *pwid = 512; //pinfo->width;
-    *phei = 256; //pinfo->height;
+    if (scrmode < 0 || scrmode >= sizeof(ScreenModeReference) / sizeof(ScreenModeStruct))
+        return;
+    ScreenModeStruct* pinfo = ScreenModeReference + scrmode;
+    *pwid = pinfo->width;
+    *phei = pinfo->height;
 }
 
 void Emulator_PrepareScreenRGB32(void* pImageBits, int screenMode)
@@ -374,7 +396,8 @@ void Emulator_PrepareScreenRGB32(void* pImageBits, int screenMode)
     ASSERT(pVideoBuffer != NULL);
 
     // Render to bitmap
-    Emulator_PrepareScreenBW512x256(pVideoBuffer, ScreenView_Palette, pImageBits);
+    PREPARE_SCREEN_CALLBACK callback = ScreenModeReference[screenMode].callback;
+    callback(pVideoBuffer, ScreenView_Palette, pImageBits);
 }
 
 const DWORD * Emulator_GetPalette()
@@ -404,6 +427,13 @@ void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DW
             pVideo++;
         }
     }
+}
+
+void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits)
+{
+    DWORD * pImageStart = ((DWORD *)pImageBits) + 512 * 28;
+    Emulator_PrepareScreenBW512x256(pVideoBuffer, palette, pImageStart);
+	//TODO
 }
 
 
