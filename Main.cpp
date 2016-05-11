@@ -17,6 +17,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include <mmintrin.h>
 #include <vfw.h>
 #include <commctrl.h>
+#include <shellapi.h>
 
 #include "Main.h"
 #include "Emulator.h"
@@ -185,6 +186,29 @@ void DoneInstance()
     Emulator_Done();
 
     Settings_Done();
+}
+
+void ParseCommandLine()
+{
+    LPTSTR commandline = ::GetCommandLine();
+
+    int argnum = 0;
+    LPTSTR* args = CommandLineToArgvW(commandline, &argnum);
+
+    if (argnum <= 1)
+        return;
+
+    for (int curargn = 1; curargn < argnum; curargn++)
+    {
+        LPTSTR arg = args[curargn];
+        if (_tcscmp(arg, _T("/boot")) == 0)
+        {
+            //TODO: Check if we have Floppy0 image assigned
+            Option_AutoBoot = TRUE;
+        }
+    }
+
+    ::LocalFree(args);
 }
 
 

@@ -39,11 +39,22 @@ BOOL AssertFailedLine(LPCSTR lpszFileName, int nLine)
 
 void AlertWarning(LPCTSTR sMessage)
 {
-    ::MessageBox(NULL, sMessage, _T("BK Back to Life"), MB_OK | MB_ICONEXCLAMATION | MB_TOPMOST);
+    ::MessageBox(NULL, sMessage, _T("NEMIGA Back to Life"), MB_OK | MB_ICONEXCLAMATION | MB_TOPMOST);
+}
+void AlertWarningFormat(LPCTSTR sFormat, ...)
+{
+    TCHAR buffer[512];
+
+    va_list ptr;
+    va_start(ptr, sFormat);
+    _vsntprintf_s(buffer, 512, 512 - 1, sFormat, ptr);
+    va_end(ptr);
+
+    ::MessageBox(NULL, buffer, _T("NEMIGA Back to Life"), MB_OK | MB_ICONEXCLAMATION);
 }
 BOOL AlertOkCancel(LPCTSTR sMessage)
 {
-    int result = ::MessageBox(NULL, sMessage, _T("BK Back to Life"), MB_OKCANCEL | MB_ICONQUESTION | MB_TOPMOST);
+    int result = ::MessageBox(NULL, sMessage, _T("NEMIGA Back to Life"), MB_OKCANCEL | MB_ICONQUESTION | MB_TOPMOST);
     return (result == IDOK);
 }
 
@@ -67,7 +78,7 @@ void DebugPrintFormat(LPCTSTR pszFormat, ...)
 
     va_list ptr;
     va_start(ptr, pszFormat);
-    _vsnwprintf_s(buffer, 512, 512 - 1, pszFormat, ptr);
+    _vsntprintf_s(buffer, 512, 512 - 1, pszFormat, ptr);
     va_end(ptr);
 
     DebugPrint(buffer);
@@ -82,10 +93,19 @@ void DebugLogCreateFile()
 {
     if (Common_LogFile == NULL)
     {
-        Common_LogFile = CreateFile(TRACELOG_FILE_NAME,
+        Common_LogFile = ::CreateFile(TRACELOG_FILE_NAME,
                 GENERIC_WRITE, FILE_SHARE_READ, NULL,
                 CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     }
+}
+
+void DebugLogCloseFile()
+{
+    if (Common_LogFile == NULL)
+        return;
+
+    ::CloseHandle(Common_LogFile);
+    Common_LogFile = NULL;
 }
 
 void DebugLogClear()
@@ -125,7 +145,7 @@ void DebugLogFormat(LPCTSTR pszFormat, ...)
 
     va_list ptr;
     va_start(ptr, pszFormat);
-    _vsnwprintf_s(buffer, 512, 512 - 1, pszFormat, ptr);
+    _vsntprintf_s(buffer, 512, 512 - 1, pszFormat, ptr);
     va_end(ptr);
 
     DebugLog(buffer);
@@ -192,7 +212,7 @@ void PrintOctalValue(TCHAR* buffer, WORD value)
     for (int p = 0; p < 6; p++)
     {
         int digit = value & 7;
-        buffer[5 - p] = _T('0') + digit;
+        buffer[5 - p] = _T('0') + (TCHAR)digit;
         value = (value >> 3);
     }
     buffer[6] = 0;
@@ -233,7 +253,7 @@ BOOL ParseOctalValue(LPCTSTR text, WORD* pValue)
         if (ch == 0) break;
         if (ch < _T('0') || ch > _T('7')) return FALSE;
         value = (value << 3);
-        int digit = ch - _T('0');
+        TCHAR digit = ch - _T('0');
         value += digit;
     }
     *pValue = value;
@@ -244,7 +264,7 @@ void DrawOctalValue(HDC hdc, int x, int y, WORD value)
 {
     TCHAR buffer[7];
     PrintOctalValue(buffer, value);
-    TextOut(hdc, x, y, buffer, (int) wcslen(buffer));
+    TextOut(hdc, x, y, buffer, (int) _tcslen(buffer));
 }
 void DrawHexValue(HDC hdc, int x, int y, WORD value)
 {
@@ -259,7 +279,7 @@ void DrawBinaryValue(HDC hdc, int x, int y, WORD value)
     TextOut(hdc, x, y, buffer, 16);
 }
 
-// BK to Unicode conversion table
+// NEMIGA to Unicode conversion table
 const TCHAR BK_CHAR_CODES[] =
 {
     0x3C0,  0x2534, 0x2665, 0x2510, 0x2561, 0x251C, 0x2514, 0x2550, 0x2564, 0x2660, 0x250C, 0x252C, 0x2568, 0x2193, 0x253C, 0x2551,

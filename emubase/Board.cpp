@@ -14,6 +14,8 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "stdafx.h"
 #include "Emubase.h"
 
+void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, WORD address);
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -23,6 +25,7 @@ CMotherboard::CMotherboard ()
     m_pCPU = new CProcessor(this);
     m_pFloppyCtl = NULL;
 
+    m_okTraceCPU = false;
     m_SoundGenCallback = NULL;
     m_ParallelOutCallback = NULL;
 
@@ -262,6 +265,10 @@ BOOL CMotherboard::SystemFrame()
     {
         for (int procticks = 0; procticks < frameProcTicks; procticks++)  // CPU ticks
         {
+#if !defined(PRODUCT)
+            if (m_okTraceCPU && m_pCPU->GetInternalTick() == 0)
+                TraceInstruction(m_pCPU, this, m_pCPU->GetPC());
+#endif
             m_pCPU->Execute();
             if (m_pCPU->GetPC() == m_CPUbp)
                 return FALSE;  // Breakpoint
@@ -991,5 +998,35 @@ void CMotherboard::SetParallelOutCallback(PARALLELOUTCALLBACK outcallback)
     }
 }
 
+
+//////////////////////////////////////////////////////////////////////
+
+#if !defined(PRODUCT)
+
+void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, WORD address)
+{
+    BOOL okHaltMode = pProc->IsHaltMode();
+
+    WORD memory[4];
+    int addrtype = ADDRTYPE_RAM;
+    for (WORD i = 0; i < 4; i++)
+        memory[i] = pBoard->GetWordView(address + i * 2, okHaltMode, true, &addrtype);
+
+    //if (addrtype != ADDRTYPE_RAM)
+    //    return;
+
+    TCHAR bufaddr[7];
+    PrintOctalValue(bufaddr, address);
+
+    TCHAR instr[8];
+    TCHAR args[32];
+    DisassembleInstruction(memory, address, instr, args);
+    TCHAR buffer[64];
+    wsprintf(buffer, _T("%s\t%s\t%s\r\n"), bufaddr, instr, args);
+
+    DebugLog(buffer);
+}
+
+#endif
 
 //////////////////////////////////////////////////////////////////////

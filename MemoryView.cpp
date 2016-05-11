@@ -187,7 +187,7 @@ void MemoryView_OnDraw(HDC hdc)
 
     TCHAR buffer[7];
     const TCHAR* ADDRESS_LINE = _T(" address  0      2      4      6      10     12     14     16");
-    TextOut(hdc, 0, 0, ADDRESS_LINE, (int) _tcslen(ADDRESS_LINE));
+    TextOut(hdc, cxChar * 4, 0, ADDRESS_LINE, (int) _tcslen(ADDRESS_LINE));
 
     RECT rcClip;
     GetClipBox(hdc, &rcClip);
@@ -199,9 +199,9 @@ void MemoryView_OnDraw(HDC hdc)
     int y = 1 * cyLine;
     for (;;)    // Draw lines
     {
-        DrawOctalValue(hdc, 2 * cxChar, y, address);
+        DrawOctalValue(hdc, 5 * cxChar, y, address);
 
-        int x = 10 * cxChar;
+        int x = 13 * cxChar;
         TCHAR wchars[16];
         for (int j = 0; j < 8; j++)    // Draw words as octal value
         {
@@ -275,8 +275,9 @@ void MemoryView_OnDraw(HDC hdc)
     if (::GetFocus() == m_hwndMemoryViewer)
     {
         RECT rcFocus = rcClient;
+        rcFocus.left += cxChar * 4;
         rcFocus.top += cyLine;
-        rcFocus.right = cxChar * (63 + 22);
+        rcFocus.right = cxChar * (63 + 24);
         DrawFocusRect(hdc, &rcFocus);
     }
 }

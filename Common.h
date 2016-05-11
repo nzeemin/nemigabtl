@@ -43,6 +43,7 @@ BOOL AssertFailedLine(LPCSTR lpszFileName, int nLine);
 // Alerts
 
 void AlertWarning(LPCTSTR sMessage);
+void AlertWarningFormat(LPCTSTR sFormat, ...);
 BOOL AlertOkCancel(LPCTSTR sMessage);
 
 
@@ -54,6 +55,7 @@ BOOL AlertOkCancel(LPCTSTR sMessage);
 void DebugPrint(LPCTSTR message);
 void DebugPrintFormat(LPCTSTR pszFormat, ...);
 void DebugLogClear();
+void DebugLogCloseFile();
 void DebugLog(LPCTSTR message);
 void DebugLogFormat(LPCTSTR pszFormat, ...);
 

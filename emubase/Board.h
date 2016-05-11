@@ -83,6 +83,8 @@ public:  // Memory access  //TODO: Make it private
 public:  // Debug
     void        DebugTicks();  // One Debug CPU tick -- use for debug step or debug breakpoint
     void        SetCPUBreakpoint(WORD bp) { m_CPUbp = bp; } // Set CPU breakpoint
+    bool        GetTrace() const { return m_okTraceCPU; }
+    void        SetTrace(bool okTraceCPU) { m_okTraceCPU = okTraceCPU; }
 public:  // System control
     void        SetConfiguration(WORD conf);
     void        Reset();  // Reset computer
@@ -146,6 +148,7 @@ private:  // Ports: implementation
     WORD        m_Port177516;       // Регистр данных ИРПР
 private:
     WORD        m_CPUbp;  // CPU breakpoint address
+    bool        m_okTraceCPU;
 private:
     SOUNDGENCALLBACK m_SoundGenCallback;
     PARALLELOUTCALLBACK m_ParallelOutCallback;

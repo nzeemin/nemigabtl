@@ -27,7 +27,8 @@ HWND g_hwndConsole = (HWND) INVALID_HANDLE_VALUE;  // Console View window handle
 WNDPROC m_wndprocConsoleToolWindow = NULL;  // Old window proc address of the ToolWindow
 
 HWND m_hwndConsoleLog = (HWND) INVALID_HANDLE_VALUE;  // Console log window - read-only edit control
-HWND m_hwndConsoleEdit = (HWND) INVALID_HANDLE_VALUE;  // Console prompt - edit control
+HWND m_hwndConsoleEdit = (HWND) INVALID_HANDLE_VALUE;  // Console line - edit control
+HWND m_hwndConsolePrompt = (HWND) INVALID_HANDLE_VALUE;  // Console prompt - static control
 HFONT m_hfontConsole = NULL;
 WNDPROC m_wndprocConsoleEdit = NULL;  // Old window proc address of the console prompt
 
@@ -92,18 +93,26 @@ void CreateConsoleView(HWND hwndParent, int x, int y, int width, int height)
             WS_EX_CLIENTEDGE,
             _T("EDIT"), NULL,
             WS_CHILD | WS_VISIBLE,
-            0, rcConsole.bottom - 20,
-            rcConsole.right, 20,
+            90, rcConsole.bottom - 20,
+            rcConsole.right - 90, 20,
             g_hwndConsole, NULL, g_hInst, NULL);
     m_hwndConsoleLog = CreateWindowEx(
             WS_EX_CLIENTEDGE,
             _T("EDIT"), NULL,
             WS_CHILD | WS_VSCROLL | WS_VISIBLE | ES_READONLY | ES_MULTILINE,
             0, 0,
-            rcConsole.right, rcConsole.bottom - 24,
+            rcConsole.right, rcConsole.bottom - 20,
+            g_hwndConsole, NULL, g_hInst, NULL);
+    m_hwndConsolePrompt = CreateWindowEx(
+            0,
+            _T("STATIC"), NULL,
+            WS_CHILD | WS_VISIBLE | SS_CENTERIMAGE | SS_CENTER | SS_NOPREFIX,
+            0, rcConsole.bottom - 20,
+            90, 20,
             g_hwndConsole, NULL, g_hInst, NULL);
 
     m_hfontConsole = CreateMonospacedFont();
+    SendMessage(m_hwndConsolePrompt, WM_SETFONT, (WPARAM) m_hfontConsole, 0);
     SendMessage(m_hwndConsoleEdit, WM_SETFONT, (WPARAM) m_hfontConsole, 0);
     SendMessage(m_hwndConsoleLog, WM_SETFONT, (WPARAM) m_hfontConsole, 0);
 
@@ -123,9 +132,12 @@ void CreateConsoleView(HWND hwndParent, int x, int y, int width, int height)
 void ConsoleView_AdjustWindowLayout()
 {
     RECT rc;  GetClientRect(g_hwndConsole, &rc);
+    int promptWidth = 65;
 
+    if (m_hwndConsolePrompt != (HWND) INVALID_HANDLE_VALUE)
+        SetWindowPos(m_hwndConsolePrompt, NULL, 0, rc.bottom - 20, promptWidth, 20, SWP_NOZORDER);
     if (m_hwndConsoleEdit != (HWND) INVALID_HANDLE_VALUE)
-        SetWindowPos(m_hwndConsoleEdit, NULL, 0, rc.bottom - 20, rc.right, 20, SWP_NOZORDER);
+        SetWindowPos(m_hwndConsoleEdit, NULL, promptWidth, rc.bottom - 20, rc.right - promptWidth, 20, SWP_NOZORDER);
     if (m_hwndConsoleLog != (HWND) INVALID_HANDLE_VALUE)
         SetWindowPos(m_hwndConsoleLog, NULL, 0, 0, rc.right, rc.bottom - 24, SWP_NOZORDER);
 }
@@ -208,7 +220,7 @@ void PrintConsolePrompt()
     PrintOctalValue(bufferAddr, pProc->GetPC());
     TCHAR buffer[14];
     wsprintf(buffer, _T("%s> "), bufferAddr);
-    ConsoleView_Print(buffer);
+    ::SetWindowText(m_hwndConsolePrompt, buffer);
 }
 
 // Print register name, octal value and binary value
@@ -383,8 +395,7 @@ void ConsoleView_ShowHelp()
             _T("  rN XXXXXX  Set register N to value XXXXXX; N=0..7,ps\r\n")
             _T("  s          Step Into; executes one instruction\r\n")
             _T("  so         Step Over; executes and stops after the current instruction\r\n")
-            _T("  u          Save memory dump to file memdumpXPU.bin\r\n")
-                     );
+            _T("  u          Save memory dump to file memdumpXPU.bin\r\n"));
 }
 
 void DoConsoleCommand()
@@ -397,8 +408,11 @@ void DoConsoleCommand()
     if (command[0] == 0) return;  // Nothing to do
 
     // Echo command to the log
-    ConsoleView_Print(command);
-    ConsoleView_Print(_T("\r\n"));
+    TCHAR buffer[36];
+    ::GetWindowText(m_hwndConsolePrompt, buffer, 14);
+    ConsoleView_Print(buffer);
+    wsprintf(buffer, _T(" %s\r\n"), command);
+    ConsoleView_Print(buffer);
 
     BOOL okUpdateAllViews = FALSE;  // Flag - need to update all debug views
     CProcessor* pProc = ConsoleView_GetCurrentProcessor();
@@ -421,6 +435,7 @@ void DoConsoleCommand()
                 WORD value = pProc->GetReg(r);
                 PrintRegister(name, value);
             }
+            PrintRegister(_T("PS"), pProc->GetPSW());
         }
         else if (command[1] >= _T('0') && command[1] <= _T('7'))  // "r0".."r7"
         {
@@ -557,6 +572,21 @@ void DoConsoleCommand()
             }
         }
         break;
+#if !defined(PRODUCT)
+    case _T('t'):
+        {
+            bool okTrace = !g_pBoard->GetTrace();
+            g_pBoard->SetTrace(okTrace);
+            if (okTrace)
+                ConsoleView_Print(_T("  Trace is ON.\r\n"));
+            else
+            {
+                ConsoleView_Print(_T("  Trace is OFF.\r\n"));
+                DebugLogCloseFile();
+            }
+        }
+        break;
+#endif
     default:
         ConsoleView_Print(MESSAGE_UNKNOWN_COMMAND);
         break;

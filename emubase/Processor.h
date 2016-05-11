@@ -28,6 +28,7 @@ public:  // Constructor / initialization
     void        FireHALT() { m_HALTrq = TRUE; }  // Fire HALT interrupt request, same as HALT command
     void        SetHaltMode(BOOL halt) { m_haltmode = halt; }
     void		MemoryError();
+    int			GetInternalTick() const { return m_internalTick; }
     void        SetInternalTick (WORD tick) { m_internalTick = tick; }
 
 public:

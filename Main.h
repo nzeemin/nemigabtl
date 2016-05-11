@@ -103,6 +103,7 @@ void Settings_SetScreenHeightMode(int mode);
 int  Settings_GetScreenHeightMode();
 void Settings_SetDebug(BOOL flag);
 BOOL Settings_GetDebug();
+void Settings_GetDebugFontName(LPTSTR buffer);
 void Settings_SetAutostart(BOOL flag);
 BOOL Settings_GetAutostart();
 void Settings_SetRealSpeed(BOOL flag);
@@ -124,5 +125,10 @@ BOOL Settings_GetTape();
 void Settings_SetParallel(BOOL flag);
 BOOL Settings_GetParallel();
 
+
+//////////////////////////////////////////////////////////////////////
+// Options
+
+extern BOOL Option_AutoBoot;
 
 //////////////////////////////////////////////////////////////////////
