@@ -67,11 +67,7 @@
 #define ID_CONF_BK0011                  32816
 #define ID_CONF_BK0011FDD               32817
 #define ID_EMULATOR_PARALLEL            32818
-#define ID_EMULATOR_JOYSTICKNUMPAD      32820
-#define ID_EMULATOR_JOYSTICK1           32821
-#define ID_EMULATOR_JOYSTICK2           32822
-#define ID_EMULATOR_COVOX               32823
-#define ID_DEBUG_TELETYPE               32824
+#define ID_VIEW_FULLSCREEN              32824
 #define ID_DEBUG_STEPOVER               32825
 #define ID_VIEW_RGBSCREEN               32826
 #define ID_VIEW_SCREENMODE0             32827

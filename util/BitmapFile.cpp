@@ -38,8 +38,8 @@ BOOL BmpFile_SaveScreenshot(
     BITMAPINFOHEADER bih;
     ::ZeroMemory(&bih, sizeof(bih));
     bih.biSize = sizeof( BITMAPINFOHEADER );
-    bih.biWidth = BK_SCREEN_WIDTH;
-    bih.biHeight = BK_SCREEN_HEIGHT;
+    bih.biWidth = NEMIGA_SCREEN_WIDTH;
+    bih.biHeight = NEMIGA_SCREEN_HEIGHT;
     bih.biSizeImage = bih.biWidth * bih.biHeight / 2;
     bih.biPlanes = 1;
     bih.biBitCount = 4;
@@ -155,8 +155,8 @@ BOOL PngFile_WriteHeader(FILE * fpFile, BYTE bitdepth)
     BYTE IHDRchunk[12 + 13];
     SaveValueMSB(IHDRchunk, 13);
     memcpy(IHDRchunk + 4, "IHDR", 4);
-    SaveValueMSB(IHDRchunk + 8, BK_SCREEN_WIDTH);
-    SaveValueMSB(IHDRchunk + 12, BK_SCREEN_HEIGHT);
+    SaveValueMSB(IHDRchunk + 8, NEMIGA_SCREEN_WIDTH);
+    SaveValueMSB(IHDRchunk + 12, NEMIGA_SCREEN_HEIGHT);
     *(IHDRchunk + 16) = bitdepth;  // Bit depth
     *(IHDRchunk + 17) = 3;  // Color type: indexed color
     *(IHDRchunk + 18) = 0;  // No compression
@@ -210,7 +210,7 @@ BOOL PngFile_WriteImageData4(FILE * fpFile, DWORD framenum, const DWORD* pBits, 
     // http://www.ietf.org/rfc/rfc1950.txt
     // We use uncomressed DEFLATE format, see RFC-1951
     // http://tools.ietf.org/html/rfc1951
-    DWORD pDataLength = 8 + 2 + (6 + BK_SCREEN_WIDTH / 2) * BK_SCREEN_HEIGHT + 4/*adler*/ + 4;
+    DWORD pDataLength = 8 + 2 + (6 + NEMIGA_SCREEN_WIDTH / 2) * NEMIGA_SCREEN_HEIGHT + 4/*adler*/ + 4;
     if (framenum > 1) pDataLength += 4;
     BYTE * pData = (BYTE *) ::malloc(pDataLength);
     SaveValueMSB(pData, pDataLength - 12);
@@ -346,8 +346,8 @@ BOOL PngFile_WriteFctl(FILE * fpFile, DWORD framenum)
     SaveValueMSB(acTLchunk, 26);
     memcpy(acTLchunk + 4, "fcTL", 4);
     SaveValueMSB(acTLchunk + 8 + 0, framenum);  // Sequence number
-    SaveValueMSB(acTLchunk + 8 + 4, BK_SCREEN_WIDTH);
-    SaveValueMSB(acTLchunk + 8 + 8, BK_SCREEN_HEIGHT);
+    SaveValueMSB(acTLchunk + 8 + 4, NEMIGA_SCREEN_WIDTH);
+    SaveValueMSB(acTLchunk + 8 + 8, NEMIGA_SCREEN_HEIGHT);
     SaveValueMSB(acTLchunk + 8 + 12, 0);  // X
     SaveValueMSB(acTLchunk + 8 + 16, 0);  // Y
     SaveWordMSB(acTLchunk + 8 + 20,  1);  // Frame delay fraction numerator

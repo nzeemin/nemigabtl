@@ -66,8 +66,8 @@ void DebugLogFormat(LPCTSTR pszFormat, ...);
 // Processor register names
 const TCHAR* REGISTER_NAME[];
 
-const int BK_SCREEN_WIDTH = 512;
-const int BK_SCREEN_HEIGHT = 256;
+const int NEMIGA_SCREEN_WIDTH = 512;
+const int NEMIGA_SCREEN_HEIGHT = 256;
 
 
 HFONT CreateMonospacedFont();

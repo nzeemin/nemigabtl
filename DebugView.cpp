@@ -72,6 +72,12 @@ void DebugView_RegisterClass()
     RegisterClassEx(&wcex);
 }
 
+void DebugView_Init()
+{
+    memset(m_wDebugCpuR, 255, sizeof(m_wDebugCpuR));
+    memset(m_okDebugCpuRChanged, 1, sizeof(m_okDebugCpuRChanged));
+}
+
 void CreateDebugView(HWND hwndParent, int x, int y, int width, int height)
 {
     ASSERT(hwndParent != NULL);
@@ -124,9 +130,6 @@ void CreateDebugView(HWND hwndParent, int x, int y, int width, int height)
     buttons[1].iBitmap = 16;
 
     SendMessage(m_hwndDebugToolbar, TB_ADDBUTTONS, (WPARAM) sizeof(buttons) / sizeof(TBBUTTON), (LPARAM) &buttons);
-
-    memset(m_wDebugCpuR, 255, sizeof(m_wDebugCpuR));
-    memset(m_okDebugCpuRChanged, 1, sizeof(m_okDebugCpuRChanged));
 }
 
 // Adjust position of client windows

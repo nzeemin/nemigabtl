@@ -30,8 +30,8 @@ HDRAWDIB m_hdd = NULL;
 BITMAPINFO m_bmpinfo;
 HBITMAP m_hbmp = NULL;
 DWORD * m_bits = NULL;
-int m_cxScreenWidth = BK_SCREEN_WIDTH;
-int m_cyScreenHeight = BK_SCREEN_HEIGHT;
+int m_cxScreenWidth = NEMIGA_SCREEN_WIDTH;
+int m_cyScreenHeight = NEMIGA_SCREEN_HEIGHT;
 BYTE m_ScreenKeyState[256];
 int m_ScreenMode = 0;
 
@@ -100,7 +100,7 @@ void ScreenView_CreateDisplay()
     HDC hdc = GetDC( g_hwnd );
 
     m_bmpinfo.bmiHeader.biSize = sizeof( BITMAPINFOHEADER );
-    m_bmpinfo.bmiHeader.biWidth = BK_SCREEN_WIDTH;
+    m_bmpinfo.bmiHeader.biWidth = NEMIGA_SCREEN_WIDTH;
     m_bmpinfo.bmiHeader.biHeight = m_cyScreenHeight;
     m_bmpinfo.bmiHeader.biPlanes = 1;
     m_bmpinfo.bmiHeader.biBitCount = 32;
@@ -202,7 +202,7 @@ void ScreenView_OnDraw(HDC hdc)
     if (m_bits == NULL) return;
 
     RECT rc;  ::GetClientRect(g_hwndScreen, &rc);
-    int x = (rc.right - BK_SCREEN_WIDTH) / 2;
+    int x = (rc.right - NEMIGA_SCREEN_WIDTH) / 2;
 
     DrawDibDraw(m_hdd, hdc,
             x, 4, -1, -1,
@@ -214,9 +214,9 @@ void ScreenView_OnDraw(HDC hdc)
     HBRUSH hBrush = ::CreateSolidBrush(COLOR_BK_BACKGROUND);
     HGDIOBJ hOldBrush = ::SelectObject(hdc, hBrush);
     PatBlt(hdc, 0, 0, x, rc.bottom, PATCOPY);
-    PatBlt(hdc, x + BK_SCREEN_WIDTH, 0, rc.right, rc.bottom, PATCOPY);
-    PatBlt(hdc, x, 0, BK_SCREEN_WIDTH, 4, BLACKNESS);
-    PatBlt(hdc, x, rc.bottom - 4, BK_SCREEN_WIDTH, 4, BLACKNESS);
+    PatBlt(hdc, x + NEMIGA_SCREEN_WIDTH, 0, rc.right, rc.bottom, PATCOPY);
+    PatBlt(hdc, x, 0, NEMIGA_SCREEN_WIDTH, 4, BLACKNESS);
+    PatBlt(hdc, x, rc.bottom - 4, NEMIGA_SCREEN_WIDTH, 4, BLACKNESS);
     ::SelectObject(hdc, hOldBrush);
     ::DeleteObject(hBrush);
 }
@@ -358,7 +358,7 @@ BOOL ScreenView_SaveScreenshot(LPCTSTR sFileName)
     ASSERT(sFileName != NULL);
     ASSERT(m_bits != NULL);
 
-    DWORD* pBits = (DWORD*) ::malloc(BK_SCREEN_WIDTH * BK_SCREEN_HEIGHT * 4);
+    DWORD* pBits = (DWORD*) ::malloc(NEMIGA_SCREEN_WIDTH * NEMIGA_SCREEN_HEIGHT * 4);
     const DWORD* colors = Emulator_GetPalette(/*m_ScreenMode*/);
     Emulator_PrepareScreenRGB32(pBits, m_ScreenMode);
 
