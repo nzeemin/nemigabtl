@@ -143,7 +143,9 @@ public:  // Saving/loading emulator status
     //void        LoadFromImage(const BYTE* pImage);
 private:  // Ports: implementation
     WORD        m_Port170006;       // Регистр данных клавиатуры (байт 170006) и регистр фиксации HALT-запросов (байт 170007)
+    WORD        m_Port170006wr;     // Регистр 170006 на запись
     WORD        m_Port177572;       // Регистр адреса косвенной адресации
+    WORD        m_Port177574;       // Регистр ??
     WORD        m_Port177514;       // Регистр состояния ИРПР
     WORD        m_Port177516;       // Регистр данных ИРПР
 private:

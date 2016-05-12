@@ -433,7 +433,7 @@ void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const DW
 {
     DWORD * pImageStart = ((DWORD *)pImageBits) + 512 * 28;
     Emulator_PrepareScreenBW512x256(pVideoBuffer, palette, pImageStart);
-	//TODO
+    //TODO
 }
 
 

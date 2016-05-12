@@ -656,8 +656,8 @@ void MainWindow_UpdateMenu()
     {
     case 0: scrmodecmd = ID_VIEW_SCREENMODE0; break;
     case 1: scrmodecmd = ID_VIEW_SCREENMODE1; break;
-    //case 2: scrmodecmd = ID_VIEW_SCREENMODE2; break;
-    //case 3: scrmodecmd = ID_VIEW_SCREENMODE3; break;
+        //case 2: scrmodecmd = ID_VIEW_SCREENMODE2; break;
+        //case 3: scrmodecmd = ID_VIEW_SCREENMODE3; break;
     }
     CheckMenuRadioItem(hMenu, ID_VIEW_SCREENMODE0, ID_VIEW_SCREENMODE1, scrmodecmd, MF_BYCOMMAND);
 

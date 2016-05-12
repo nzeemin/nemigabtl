@@ -86,8 +86,9 @@ void CMotherboard::Reset ()
     m_pCPU->Stop();
 
     // Reset ports
-    m_Port170006 = 0;
+    m_Port170006 = m_Port170006wr = 0;
     m_Port177572 = 0;
+    m_Port177574 = 0;
     m_Port177514 = 0377;
 
     ResetDevices();
@@ -159,7 +160,7 @@ WORD CMotherboard::GetRAMWord(WORD offset)
 }
 WORD CMotherboard::GetHIRAMWord(WORD offset)
 {
-    return *((WORD*)(m_pRAM + 0xffff + offset));
+    return *((WORD*)(m_pRAM + 0x10000 + offset));
 }
 BYTE CMotherboard::GetRAMByte(WORD offset)
 {
@@ -167,7 +168,7 @@ BYTE CMotherboard::GetRAMByte(WORD offset)
 }
 BYTE CMotherboard::GetHIRAMByte(WORD offset)
 {
-    DWORD dwOffset = (DWORD)0xffff + (DWORD)offset;
+    DWORD dwOffset = (DWORD)0x10000 + (DWORD)offset;
     return m_pRAM[dwOffset];
 }
 void CMotherboard::SetRAMWord(WORD offset, WORD word)
@@ -176,7 +177,7 @@ void CMotherboard::SetRAMWord(WORD offset, WORD word)
 }
 void CMotherboard::SetHIRAMWord(WORD offset, WORD word)
 {
-    DWORD dwOffset = (DWORD)0xffff + (DWORD)offset;
+    DWORD dwOffset = (DWORD)0x10000 + (DWORD)offset;
     *((WORD*)(m_pRAM + dwOffset)) = word;
 }
 void CMotherboard::SetRAMByte(WORD offset, BYTE byte)
@@ -185,7 +186,7 @@ void CMotherboard::SetRAMByte(WORD offset, BYTE byte)
 }
 void CMotherboard::SetHIRAMByte(WORD offset, BYTE byte)
 {
-    DWORD dwOffset = (DWORD)0xffff + (DWORD)offset;
+    DWORD dwOffset = (DWORD)0x10000 + (DWORD)offset;
     m_pRAM[dwOffset] = byte;
 }
 
@@ -211,6 +212,8 @@ void CMotherboard::ResetDevices()
 
     //m_pCPU->DeassertHALT();//DEBUG
     m_Port170006 |= 0100000;
+    m_Port170006wr = 0;
+    m_Port177574 = 0;
     m_pCPU->FireHALT();
 
     // Reset ports
@@ -220,6 +223,7 @@ void CMotherboard::ResetDevices()
 void CMotherboard::ResetHALT()
 {
     m_Port170006 = 0;
+    m_Port170006wr = 0;
 }
 
 void CMotherboard::Tick50()  // 50 Hz timer
@@ -525,6 +529,13 @@ const BYTE* CMotherboard::GetVideoBuffer()
 
 int CMotherboard::TranslateAddress(WORD address, BOOL okHaltMode, BOOL okExec, WORD* pOffset)
 {
+    // ROM 4.05 expect that screen projected to memory, controlled by port 177574 bit 0
+    if ((m_Port177574 & 1) != 0 /*&& address >= 01400*/ && address <= 077777)
+    {
+        *pOffset = address + 0100000;
+        return ADDRTYPE_HIRAM;
+    }
+
     if (address < 0160000)  // 000000-157777 -- RAM
     {
         *pOffset = address;
@@ -546,7 +557,7 @@ int CMotherboard::TranslateAddress(WORD address, BOOL okHaltMode, BOOL okExec, W
     if ((address >= 0170006 && address <= 0170013) ||
         //(address >= 0177560 && address <= 0177577) ||
         (address >= 0177514 && address <= 0177517) ||
-        (address >= 0177570 && address <= 0177573) ||
+        (address >= 0177570 && address <= 0177575) ||
         (address >= 0177100 && address <= 0177107))  // Ports
     {
         *pOffset = address;
@@ -614,13 +625,14 @@ WORD CMotherboard::GetPortWord(WORD address)
         //    return m_Port177562;
         //case 0177564:
         //case 0177566:
-        //case 0177574:
+    case 0177574:
+        return m_Port177574;
         //case 0177576:
         //    return 0xffff;  //STUB
 
     case 0177572:  // Регистр адреса косвенной адресации
         return m_Port177572;
-    case 0177570:
+    case 0177570:  // Регистр данных косвенного доступа
         return *(WORD*)(m_pRAM + m_Port177572 + m_Port177572);
 
     default:
@@ -668,7 +680,9 @@ WORD CMotherboard::GetPortView(WORD address)
     case 0177564:
     case 0177566:
     case 0177570:
+        return 0;  //STUB
     case 0177574:
+        return m_Port177574;
     case 0177576:
         return 0;  //STUB
 
@@ -704,6 +718,8 @@ void CMotherboard::SetPortWord(WORD address, WORD word)
     {
     case 0170006:
         m_Port170006 = 0;
+        m_Port170006wr = word;
+        //if ((word & 01400) == 0) m_pCPU->SetHaltMode(FALSE);
         m_pCPU->SetHaltMode((word & 3) != 0);
         break;  //STUB
 
@@ -754,7 +770,10 @@ void CMotherboard::SetPortWord(WORD address, WORD word)
     case 0177562:
     case 0177564:
     case 0177566:
+        break;  //STUB
     case 0177574:
+        m_Port177574 = word;
+        break;
     case 0177576:
         break;  //STUB
 
@@ -1022,7 +1041,8 @@ void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, WORD address)
     TCHAR args[32];
     DisassembleInstruction(memory, address, instr, args);
     TCHAR buffer[64];
-    wsprintf(buffer, _T("%s\t%s\t%s\r\n"), bufaddr, instr, args);
+    wsprintf(buffer, _T("%s: %s\t%s\r\n"), bufaddr, instr, args);
+    //wsprintf(buffer, _T("%s %s: %s\t%s\r\n"), pProc->IsHaltMode() ? _T("HALT") : _T("USER"), bufaddr, instr, args);
 
     DebugLog(buffer);
 }
