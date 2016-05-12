@@ -66,7 +66,7 @@ void MainWindow_DoEmulatorParallel();
 void MainWindow_DoFileSaveState();
 void MainWindow_DoFileLoadState();
 void MainWindow_DoEmulatorFloppy(int slot);
-//void MainWindow_DoEmulatorConf(BKConfiguration configuration);
+void MainWindow_DoEmulatorConf(int configuration);
 void MainWindow_DoFileScreenshot();
 void MainWindow_DoFileScreenshotSaveAs();
 void MainWindow_DoFileLoadBin();
@@ -669,16 +669,14 @@ void MainWindow_UpdateMenu()
     //MainWindow_SetToolbarImage(ID_EMULATOR_SOUND, (Settings_GetSound() ? ToolbarImageSoundOn : ToolbarImageSoundOff));
     EnableMenuItem(hMenu, ID_DEBUG_STEPINTO, (g_okEmulatorRunning ? MF_DISABLED : MF_ENABLED));
 
-    //UINT configcmd = 0;
-    //switch (g_nEmulatorConfiguration)
-    //{
-    //case BK_CONF_BK0010_BASIC: configcmd = ID_CONF_BK0010BASIC; break;
-    //case BK_CONF_BK0010_FOCAL: configcmd = ID_CONF_BK0010FOCAL; break;
-    //case BK_CONF_BK0010_FDD:   configcmd = ID_CONF_BK0010FDD; break;
-    //case BK_CONF_BK0011:       configcmd = ID_CONF_BK0011; break;
-    //case BK_CONF_BK0011_FDD:   configcmd = ID_CONF_BK0011FDD; break;
-    //}
-    //CheckMenuRadioItem(hMenu, ID_CONF_BK0010BASIC, ID_CONF_BK0011FDD, configcmd, MF_BYCOMMAND);
+    UINT configcmd = 0;
+    switch (g_nEmulatorConfiguration)
+    {
+    case EMU_CONF_NEMIGA303: configcmd = ID_CONF_NEMIGA303; break;
+    case EMU_CONF_NEMIGA405: configcmd = ID_CONF_NEMIGA405; break;
+    case EMU_CONF_NEMIGA406: configcmd = ID_CONF_NEMIGA406; break;
+    }
+    CheckMenuRadioItem(hMenu, ID_CONF_NEMIGA303, ID_CONF_NEMIGA406, configcmd, MF_BYCOMMAND);
 
     // Emulator|FloppyX
     CheckMenuItem(hMenu, ID_EMULATOR_FLOPPY0, (g_pBoard->IsFloppyImageAttached(0) ? MF_CHECKED : MF_UNCHECKED));
@@ -777,6 +775,15 @@ bool MainWindow_DoCommand(int commandId)
         break;
     case ID_FILE_LOADBIN:
         MainWindow_DoFileLoadBin();
+        break;
+    case ID_CONF_NEMIGA303:
+        MainWindow_DoEmulatorConf(EMU_CONF_NEMIGA303);
+        break;
+    case ID_CONF_NEMIGA405:
+        MainWindow_DoEmulatorConf(EMU_CONF_NEMIGA405);
+        break;
+    case ID_CONF_NEMIGA406:
+        MainWindow_DoEmulatorConf(EMU_CONF_NEMIGA406);
         break;
     case ID_FILE_SETTINGS:
         MainWindow_DoFileSettings();
@@ -993,24 +1000,24 @@ void MainWindow_DoFileSettings()
     ShowSettingsDialog();
 }
 
-//void MainWindow_DoEmulatorConf(BKConfiguration configuration)
-//{
-//    // Check if configuration changed
-//    if (g_nEmulatorConfiguration == configuration)
-//        return;
-//
-//    // Ask user -- we have to reset machine to change configuration
-//    if (!AlertOkCancel(_T("Reset required after configuration change.\nAre you agree?")))
-//        return;
-//
-//    // Change configuration
-//    Emulator_InitConfiguration(configuration);
-//
-//    Settings_SetConfiguration(configuration);
-//
-//    MainWindow_UpdateMenu();
-//    MainWindow_UpdateAllViews();
-//}
+void MainWindow_DoEmulatorConf(int configuration)
+{
+    // Check if configuration changed
+    if (g_nEmulatorConfiguration == configuration)
+        return;
+
+    // Ask user -- we have to reset machine to change configuration
+    if (!AlertOkCancel(_T("Reset required after configuration change.\nAre you agree?")))
+        return;
+
+    // Change configuration
+    Emulator_InitConfiguration(configuration);
+
+    Settings_SetConfiguration(configuration);
+
+    MainWindow_UpdateMenu();
+    MainWindow_UpdateAllViews();
+}
 
 void MainWindow_DoEmulatorFloppy(int slot)
 {

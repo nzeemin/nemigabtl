@@ -60,12 +60,9 @@
 #define ID_EMULATOR_CONF                32808
 #define ID_VIEW_MEMORYMAP               32810
 #define ID_FILE_LOADBIN                 32811
-#define ID_CONF_BK0010MONIT             32812
-#define ID_CONF_BK0010BASIC             32813
-#define ID_CONF_BK0010FOCAL             32814
-#define ID_CONF_BK0010FDD               32815
-#define ID_CONF_BK0011                  32816
-#define ID_CONF_BK0011FDD               32817
+#define ID_CONF_NEMIGA303               32813
+#define ID_CONF_NEMIGA405               32814
+#define ID_CONF_NEMIGA406               32815
 #define ID_EMULATOR_PARALLEL            32818
 #define ID_VIEW_FULLSCREEN              32824
 #define ID_DEBUG_STEPOVER               32825

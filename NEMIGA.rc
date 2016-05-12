@@ -110,13 +110,11 @@ BEGIN
         MENUITEM "Parallel",                    ID_EMULATOR_PARALLEL
         MENUITEM "Autostart",                   ID_EMULATOR_AUTOSTART
     END
-    POPUP "&Configuration", INACTIVE
+    POPUP "&Configuration"
     BEGIN
-        MENUITEM "BK 0010.01 BASIC",            ID_CONF_BK0010BASIC
-        MENUITEM "BK 0010.01 FOCAL",            ID_CONF_BK0010FOCAL
-        MENUITEM "BK 0010.01 FDD",              ID_CONF_BK0010FDD
-        MENUITEM "BK 0011M",                    ID_CONF_BK0011
-        MENUITEM "BK 0011M FDD",                ID_CONF_BK0011FDD
+        MENUITEM "NEMIGA 3.03",                 ID_CONF_NEMIGA303
+        MENUITEM "NEMIGA 4.05",                 ID_CONF_NEMIGA405
+        MENUITEM "NEMIGA 4.06",                 ID_CONF_NEMIGA406
     END
     POPUP "&Drives"
     BEGIN

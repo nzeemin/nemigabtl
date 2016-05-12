@@ -18,9 +18,19 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 //////////////////////////////////////////////////////////////////////
 
+enum EmulatorConfiguration
+{
+    EMU_CONF_NEMIGA303 = 303,
+    EMU_CONF_NEMIGA405 = 405,
+    EMU_CONF_NEMIGA406 = 406,
+};
+
+
+//////////////////////////////////////////////////////////////////////
+
 
 extern CMotherboard* g_pBoard;
-//extern BKConfiguration g_nEmulatorConfiguration;  // Current configuration
+extern int g_nEmulatorConfiguration;  // Current configuration
 extern BOOL g_okEmulatorRunning;
 
 extern BYTE* g_pEmulatorRam;  // RAM values - for change tracking
@@ -35,7 +45,7 @@ extern WORD g_wEmulatorPrevPpuPC;  // Previous PC value
 
 
 BOOL Emulator_Init();
-BOOL Emulator_InitConfiguration(WORD configuration);
+BOOL Emulator_InitConfiguration(int configuration);
 void Emulator_Done();
 void Emulator_SetCPUBreakpoint(WORD address);
 void Emulator_SetPPUBreakpoint(WORD address);

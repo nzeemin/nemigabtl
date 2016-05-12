@@ -25,7 +25,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 
 CMotherboard* g_pBoard = NULL;
-WORD g_nEmulatorConfiguration;  // Current configuration
+int g_nEmulatorConfiguration;  // Current configuration
 BOOL g_okEmulatorRunning = FALSE;
 
 WORD m_wEmulatorCPUBreakpoint = 0177777;
@@ -85,7 +85,9 @@ const DWORD ScreenView_Palette[4] =
 //////////////////////////////////////////////////////////////////////
 
 
-const LPCTSTR FILENAME_ROM_PROC    = _T("nemiga-303.rom");
+const LPCTSTR FILENAME_ROM_303 = _T("nemiga-303.rom");
+const LPCTSTR FILENAME_ROM_405 = _T("nemiga-405.rom");
+const LPCTSTR FILENAME_ROM_406 = _T("nemiga-406.rom");
 
 
 //////////////////////////////////////////////////////////////////////
@@ -155,14 +157,31 @@ void Emulator_Done()
     ::free(g_pEmulatorChangedRam);
 }
 
-BOOL Emulator_InitConfiguration(WORD configuration)
+BOOL Emulator_InitConfiguration(int configuration)
 {
     g_pBoard->SetConfiguration(configuration);
+
+    LPCTSTR szRomFileName = NULL;
+    switch (configuration)
+    {
+    case EMU_CONF_NEMIGA303:
+        szRomFileName = FILENAME_ROM_303;
+        break;
+    case EMU_CONF_NEMIGA405:
+        szRomFileName = FILENAME_ROM_405;
+        break;
+    case EMU_CONF_NEMIGA406:
+        szRomFileName = FILENAME_ROM_406;
+        break;
+    default:
+        szRomFileName = FILENAME_ROM_303;
+        break;
+    }
 
     BYTE buffer[4096];
 
     // Load ROM file
-    if (!Emulator_LoadRomFile(FILENAME_ROM_PROC, buffer, 0, 4096))
+    if (!Emulator_LoadRomFile(szRomFileName, buffer, 0, 4096))
     {
         AlertWarning(_T("Failed to load the ROM file."));
         return FALSE;
