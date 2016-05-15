@@ -88,8 +88,9 @@ BEGIN
         MENUITEM "Load State…",                 ID_FILE_LOADSTATE, INACTIVE
         MENUITEM SEPARATOR
         MENUITEM "Screenshot",                  ID_FILE_SCREENSHOT
-        MENUITEM "Save Screenshot As...",       ID_FILE_SAVESCREENSHOTAS
+        MENUITEM "Save Screenshot as...",       ID_FILE_SAVESCREENSHOTAS
         MENUITEM SEPARATOR
+        MENUITEM "Create Disk...",              ID_FILE_CREATEDISK
         MENUITEM "Settings",                    ID_FILE_SETTINGS
         MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               IDM_EXIT

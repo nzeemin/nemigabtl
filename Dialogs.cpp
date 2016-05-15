@@ -184,6 +184,39 @@ BOOL ShowOpenDialog(HWND hwndOwner, LPCTSTR strTitle, LPCTSTR strFilter, TCHAR* 
 //////////////////////////////////////////////////////////////////////
 // Create Disk Dialog
 
+void Dialogs_DoCreateDisk()
+{
+    TCHAR bufFileName[MAX_PATH];
+    BOOL okResult = ShowSaveDialog(g_hwnd,
+            _T("Save new disk as"),
+            _T("NEMIGA disks (*.dsk)\0*.dsk\0All Files (*.*)\0*.*\0\0"),
+            _T("dsk"),
+            bufFileName);
+    if (! okResult) return;
+
+    // Create the file
+    LONG fileSize = 235392; // = 80 * 23 * 128 - 128
+    HANDLE hFile = ::CreateFile(bufFileName,
+            GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        DWORD dwError = ::GetLastError();
+        AlertWarningFormat(_T("Failed to create a file for the new disk (0x%08lx)."), dwError);
+        return;
+    }
+
+    // Zero-fill the file
+    ::SetFilePointer(hFile, fileSize, NULL, FILE_BEGIN);
+    ::SetEndOfFile(hFile);
+    ::CloseHandle(hFile);
+
+    ::MessageBox(g_hwnd, _T("New disk file created successfully.\nPlease initialize the disk using INIT command."),
+            _T("NEMIGABTL"), MB_OK | MB_ICONINFORMATION);
+}
+
+
+//////////////////////////////////////////////////////////////////////
+
 void ShowLoadBinDialog()
 {
     DialogBox(g_hInst, MAKEINTRESOURCE(IDD_LOADBIN), g_hwnd, LoadBinProc);

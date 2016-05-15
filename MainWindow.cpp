@@ -69,6 +69,7 @@ void MainWindow_DoEmulatorFloppy(int slot);
 void MainWindow_DoEmulatorConf(int configuration);
 void MainWindow_DoFileScreenshot();
 void MainWindow_DoFileScreenshotSaveAs();
+void MainWindow_DoFileCreateDisk();
 void MainWindow_DoFileLoadBin();
 void MainWindow_DoFileSettings();
 void MainWindow_OnToolbarGetInfoTip(LPNMTBGETINFOTIP);
@@ -773,6 +774,9 @@ bool MainWindow_DoCommand(int commandId)
     case ID_FILE_SAVESCREENSHOTAS:
         MainWindow_DoFileScreenshotSaveAs();
         break;
+    case ID_FILE_CREATEDISK:
+        MainWindow_DoFileCreateDisk();
+        break;
     case ID_FILE_LOADBIN:
         MainWindow_DoFileLoadBin();
         break;
@@ -988,6 +992,11 @@ void MainWindow_DoFileScreenshotSaveAs()
     {
         AlertWarning(_T("Failed to save screenshot bitmap."));
     }
+}
+
+void MainWindow_DoFileCreateDisk()
+{
+    Dialogs_DoCreateDisk();
 }
 
 void MainWindow_DoFileLoadBin()
