@@ -123,14 +123,14 @@ void CreateScreenView(HWND hwndParent, int x, int y, int cxWidth)
 
     int xLeft = x;
     int yTop = y;
-    int cyScreenHeight = 4 + m_cyScreenHeight + 4;
+    int cyScreenHeight = m_cyScreenHeight;
     int cyHeight = cyScreenHeight;
     cxWidth = 4 + m_cxScreenWidth + 4;
 
     g_hwndScreen = CreateWindow(
             CLASSNAME_SCREENVIEW, NULL,
             WS_CHILD | WS_VISIBLE,
-            xLeft, yTop, cxWidth, cyHeight,
+            xLeft, 0, cxWidth, cyHeight,
             hwndParent, NULL, g_hInst, NULL);
 
     // Initialize m_ScreenKeyState
@@ -196,7 +196,7 @@ void ScreenView_SetScreenMode(int newMode)
     ScreenView_CreateDisplay();
 
     RECT rc;  ::GetWindowRect(g_hwndScreen, &rc);
-    ::SetWindowPos(g_hwndScreen, NULL, 0, 0, 4 + cxWidth + 4, 4 + cyHeight + 4, SWP_NOZORDER | SWP_NOMOVE);
+    ::SetWindowPos(g_hwndScreen, NULL, 0, 0, 4 + cxWidth + 4, cyHeight, SWP_NOZORDER | SWP_NOMOVE);
 
     ScreenView_RedrawScreen();
 }

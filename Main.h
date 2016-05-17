@@ -124,6 +124,10 @@ void Settings_SetTape(BOOL flag);
 BOOL Settings_GetTape();
 void Settings_SetParallel(BOOL flag);
 BOOL Settings_GetParallel();
+void Settings_SetNetwork(BOOL flag);
+BOOL Settings_GetNetwork();
+int  Settings_GetNetStation();
+void Settings_SetNetStation(int value);
 
 
 //////////////////////////////////////////////////////////////////////

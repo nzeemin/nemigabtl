@@ -53,9 +53,7 @@ void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R);
 //Прототип функции преобразования экрана
 // Input:
 //   pVideoBuffer   Исходные данные, биты экрана БК
-//   okSmallScreen  Признак "малого" экрана
 //   pPalette       Палитра
-//   scroll         Текущее значение скроллинга
 //   pImageBits     Результат, 32-битный цвет, размер для каждой функции свой
 typedef void (CALLBACK* PREPARE_SCREEN_CALLBACK)(const BYTE* pVideoBuffer, const DWORD* pPalette, void* pImageBits);
 

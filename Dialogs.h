@@ -24,7 +24,6 @@ BOOL ShowSaveDialog(HWND hwndOwner, LPCTSTR strTitle, LPCTSTR strFilter, LPCTSTR
 BOOL ShowOpenDialog(HWND hwndOwner, LPCTSTR strTitle, LPCTSTR strFilter, TCHAR* bufFileName);
 
 void Dialogs_DoCreateDisk();
-void ShowLoadBinDialog();
 
 void ShowSettingsDialog();
 
