@@ -31,13 +31,12 @@ class CProcessor;
 #define ADDRTYPE_MASK  255  // RAM type mask
 #define ADDRTYPE_RAMMASK 7  // RAM chunk number mask
 
-//// Emulator image constants
-//#define BKIMAGE_HEADER_SIZE 256
-//#define BKIMAGE_SIZE (BKIMAGE_HEADER_SIZE + (32 + 64 * 3) * 1024)
-//#define BKIMAGE_HEADER1 0x30304B41  // "BK00"
-//#define BKIMAGE_HEADER2 0x214C5442  // "BTL!"
-//#define BKIMAGE_VERSION 0x00010000  // 1.0
-
+// Emulator image constants
+#define NEMIGAIMAGE_HEADER_SIZE 32
+#define NEMIGAIMAGE_SIZE 147456
+#define NEMIGAIMAGE_HEADER1 0x494D454E  // "NEMI"
+#define NEMIGAIMAGE_HEADER2 0x21214147  // "GA!!"
+#define NEMIGAIMAGE_VERSION 0x00010000  // 1.0
 
 //////////////////////////////////////////////////////////////////////
 
@@ -139,8 +138,8 @@ private:  // Access to I/O ports
     BYTE        GetPortByte(WORD address);
     void        SetPortByte(WORD address, BYTE byte);
 public:  // Saving/loading emulator status
-    //void        SaveToImage(BYTE* pImage);
-    //void        LoadFromImage(const BYTE* pImage);
+    void        SaveToImage(BYTE* pImage);
+    void        LoadFromImage(const BYTE* pImage);
 private:  // Ports: implementation
     WORD        m_Port170006;       // Регистр данных клавиатуры (байт 170006) и регистр фиксации HALT-запросов (байт 170007)
     WORD        m_Port170006wr;     // Регистр 170006 на запись

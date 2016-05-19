@@ -927,37 +927,35 @@ void MainWindow_DoEmulatorParallel()
 
 void MainWindow_DoFileLoadState()
 {
-    //// File Open dialog
-    //TCHAR bufFileName[MAX_PATH];
-    //*bufFileName = 0;
-    //OPENFILENAME ofn;
-    //ZeroMemory(&ofn, sizeof(ofn));
-    //ofn.lStructSize = sizeof(ofn);
-    //ofn.hwndOwner = g_hwnd;
-    //ofn.hInstance = g_hInst;
-    //ofn.lpstrTitle = _T("Open state image to load");
-    //ofn.lpstrFilter = _T("NEMIGA state images (*.nmst)\0*.nmst\0All Files (*.*)\0*.*\0\0");
-    //ofn.Flags = OFN_FILEMUSTEXIST;
-    //ofn.lpstrFile = bufFileName;
-    //ofn.nMaxFile = sizeof(bufFileName) / sizeof(TCHAR);
+    TCHAR bufFileName[MAX_PATH];
+    BOOL okResult = ShowOpenDialog(g_hwnd,
+        _T("Open state image to load"),
+        _T("NEMIGA state images (*.nmst)\0*.nmst\0All Files (*.*)\0*.*\0\0"),
+        bufFileName);
+    if (!okResult) return;
 
-    //BOOL okResult = GetOpenFileName(&ofn);
-    //if (! okResult) return;
+    if (!Emulator_LoadImage(bufFileName))
+    {
+        AlertWarning(_T("Failed to load image file."));
+    }
 
-    //Emulator_LoadImage(bufFileName);
+    MainWindow_UpdateAllViews();
 }
 
 void MainWindow_DoFileSaveState()
 {
-    //TCHAR bufFileName[MAX_PATH];
-    //BOOL okResult = ShowSaveDialog(g_hwnd,
-    //    _T("Save state image as"),
-    //    _T("NEMIGA state images (*.nmst)\0*.nmst\0All Files (*.*)\0*.*\0\0"),
-    //    _T("nmst"),
-    //    bufFileName);
-    //if (! okResult) return;
+    TCHAR bufFileName[MAX_PATH];
+    BOOL okResult = ShowSaveDialog(g_hwnd,
+            _T("Save state image as"),
+            _T("NEMIGA state images (*.nmst)\0*.nmst\0All Files (*.*)\0*.*\0\0"),
+            _T("nmst"),
+            bufFileName);
+    if (! okResult) return;
 
-    //Emulator_SaveImage(bufFileName);
+    if (!Emulator_SaveImage(bufFileName))
+    {
+        AlertWarning(_T("Failed to save image file."));
+    }
 }
 
 void MainWindow_DoFileScreenshot()

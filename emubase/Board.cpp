@@ -792,83 +792,65 @@ void CMotherboard::SetPortWord(WORD address, WORD word)
 
 
 //////////////////////////////////////////////////////////////////////
-//
-// Emulator image format:
-//   32 bytes  - Header
-//   32 bytes  - Board status
-//   32 bytes  - CPU status
-//   64 bytes  - CPU memory/IO controller status
-//   32 Kbytes - ROM image
-//   64 Kbytes - RAM image
+// Emulator image
+//  Offset Length
+//       0     32 bytes  - Header
+//      32    128 bytes  - Board status
+//     160     32 bytes  - CPU status
+//     192   3904 bytes  - RESERVED
+//    4096   4096 bytes  - Main ROM image 4K
+//    8192   8192 bytes  - RESERVED for extra 8K ROM
+//   16384 131072 bytes  - RAM image 128K
+//  147456     --        - END
 
-//void CMotherboard::SaveToImage(BYTE* pImage)
-//{
-//    // Board data
-//    WORD* pwImage = (WORD*) (pImage + 32);
-//    *pwImage++ = m_timer;
-//    *pwImage++ = m_timerreload;
-//    *pwImage++ = m_timerflags;
-//    *pwImage++ = m_timerdivider;
-//    *pwImage++ = (WORD) m_chan0disabled;
-//
-//    // CPU status
-//    BYTE* pImageCPU = pImage + 64;
-//    m_pCPU->SaveToImage(pImageCPU);
-//    // PPU status
-//    BYTE* pImagePPU = pImageCPU + 32;
-//    m_pPPU->SaveToImage(pImagePPU);
-//    // CPU memory/IO controller status
-//    BYTE* pImageCpuMem = pImagePPU + 32;
-//    m_pFirstMemCtl->SaveToImage(pImageCpuMem);
-//    // PPU memory/IO controller status
-//    BYTE* pImagePpuMem = pImageCpuMem + 64;
-//    m_pSecondMemCtl->SaveToImage(pImagePpuMem);
-//
-//    // ROM
-//    BYTE* pImageRom = pImage + 256;
-//    memcpy(pImageRom, m_pROM, 32 * 1024);
-//    // RAM planes 0, 1, 2
-//    BYTE* pImageRam = pImageRom + 32 * 1024;
-//    memcpy(pImageRam, m_pRAM[0], 64 * 1024);
-//    pImageRam += 64 * 1024;
-//    memcpy(pImageRam, m_pRAM[1], 64 * 1024);
-//    pImageRam += 64 * 1024;
-//    memcpy(pImageRam, m_pRAM[2], 64 * 1024);
-//}
-//void CMotherboard::LoadFromImage(const BYTE* pImage)
-//{
-//    // Board data
-//    WORD* pwImage = (WORD*) (pImage + 32);
-//    m_timer = *pwImage++;
-//    m_timerreload = *pwImage++;
-//    m_timerflags = *pwImage++;
-//    m_timerdivider = *pwImage++;
-//    m_chan0disabled = (BYTE) *pwImage++;
-//
-//    // CPU status
-//    const BYTE* pImageCPU = pImage + 64;
-//    m_pCPU->LoadFromImage(pImageCPU);
-//    // PPU status
-//    const BYTE* pImagePPU = pImageCPU + 32;
-//    m_pPPU->LoadFromImage(pImagePPU);
-//    // CPU memory/IO controller status
-//    const BYTE* pImageCpuMem = pImagePPU + 32;
-//    m_pFirstMemCtl->LoadFromImage(pImageCpuMem);
-//    // PPU memory/IO controller status
-//    const BYTE* pImagePpuMem = pImageCpuMem + 64;
-//    m_pSecondMemCtl->LoadFromImage(pImagePpuMem);
-//
-//    // ROM
-//    const BYTE* pImageRom = pImage + 256;
-//    memcpy(m_pROM, pImageRom, 32 * 1024);
-//    // RAM planes 0, 1, 2
-//    const BYTE* pImageRam = pImageRom + 32 * 1024;
-//    memcpy(m_pRAM[0], pImageRam, 64 * 1024);
-//    pImageRam += 64 * 1024;
-//    memcpy(m_pRAM[1], pImageRam, 64 * 1024);
-//    pImageRam += 64 * 1024;
-//    memcpy(m_pRAM[2], pImageRam, 64 * 1024);
-//}
+void CMotherboard::SaveToImage(BYTE* pImage)
+{
+    // Board data
+    WORD* pwImage = (WORD*) (pImage + 32);
+    *pwImage++ = m_Configuration;
+    pwImage += 6;  // RESERVED
+    *pwImage++ = m_Port170006;
+    *pwImage++ = m_Port170006wr;
+    *pwImage++ = m_Port177572;
+    *pwImage++ = m_Port177574;
+    *pwImage++ = m_Port177514;
+    *pwImage++ = m_Port177516;
+    //TODO: Timer registers
+
+    // CPU status
+    BYTE* pImageCPU = pImage + 160;
+    m_pCPU->SaveToImage(pImageCPU);
+    // ROM
+    BYTE* pImageRom = pImage + 4096;
+    memcpy(pImageRom, m_pROM, 4096);
+    // RAM
+    BYTE* pImageRam = pImage + 16384;
+    memcpy(pImageRam, m_pRAM, 128 * 1024);
+}
+void CMotherboard::LoadFromImage(const BYTE* pImage)
+{
+    // Board data
+    WORD* pwImage = (WORD*)(pImage + 32);
+    m_Configuration = *pwImage++;
+    pwImage += 6;  // RESERVED
+    m_Port170006 = *pwImage++;
+    m_Port170006wr = *pwImage++;
+    m_Port177572 = *pwImage++;
+    m_Port177574 = *pwImage++;
+    m_Port177516 = *pwImage++;
+    //TODO: Timer registers
+
+    // CPU status
+    const BYTE* pImageCPU = pImage + 160;
+    m_pCPU->LoadFromImage(pImageCPU);
+
+    // ROM
+    const BYTE* pImageRom = pImage + 4096;
+    memcpy(m_pROM, pImageRom, 4096);
+    // RAM
+    const BYTE* pImageRam = pImage + 16384;
+    memcpy(m_pRAM, pImageRam, 128 * 1024);
+}
 
 //void CMotherboard::FloppyDebug(BYTE val)
 //{

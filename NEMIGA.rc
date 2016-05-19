@@ -84,8 +84,8 @@ IDC_NEMIGABTL MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "Save State…",                 ID_FILE_SAVESTATE, INACTIVE
-        MENUITEM "Load State…",                 ID_FILE_LOADSTATE, INACTIVE
+        MENUITEM "Save State…",                 ID_FILE_SAVESTATE
+        MENUITEM "Load State…",                 ID_FILE_LOADSTATE
         MENUITEM SEPARATOR
         MENUITEM "Screenshot",                  ID_FILE_SCREENSHOT
         MENUITEM "Save Screenshot as...",       ID_FILE_SAVESCREENSHOTAS

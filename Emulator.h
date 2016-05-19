@@ -65,8 +65,8 @@ void Emulator_PrepareScreenRGB32(void* pBits, int screenMode);
 void Emulator_OnUpdate();
 WORD Emulator_GetChangeRamStatus(WORD address);
 
-//void Emulator_SaveImage(LPCTSTR sFilePath);
-//void Emulator_LoadImage(LPCTSTR sFilePath);
+BOOL Emulator_SaveImage(LPCTSTR sFilePath);
+BOOL Emulator_LoadImage(LPCTSTR sFilePath);
 
 
 //////////////////////////////////////////////////////////////////////

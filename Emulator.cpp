@@ -458,90 +458,97 @@ void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const DW
 //
 // Emulator image format - see CMotherboard::SaveToImage()
 // Image header format (32 bytes):
-//   4 bytes        BK_IMAGE_HEADER1
-//   4 bytes        BK_IMAGE_HEADER2
-//   4 bytes        BK_IMAGE_VERSION
-//   4 bytes        BK_IMAGE_SIZE
-//   4 bytes        BK uptime
+//   4 bytes        NEMIGAIMAGE_HEADER1
+//   4 bytes        NEMIGAIMAGE_HEADER2
+//   4 bytes        NEMIGAIMAGE_VERSION
+//   4 bytes        NEMIGAIMAGE_SIZE
+//   4 bytes        NEMIGA uptime
 //   12 bytes       Not used
 
-//void Emulator_SaveImage(LPCTSTR sFilePath)
-//{
-//    // Create file
-//    HANDLE hFile = CreateFile(sFilePath,
-//            GENERIC_WRITE, FILE_SHARE_READ, NULL,
-//            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-//    if (hFile == INVALID_HANDLE_VALUE)
-//    {
-//        AlertWarning(_T("Failed to save image file."));
-//        return;
-//    }
-//
-//    // Allocate memory
-//    BYTE* pImage = (BYTE*) ::malloc(BKIMAGE_SIZE);  memset(pImage, 0, BKIMAGE_SIZE);
-//    ::memset(pImage, 0, BKIMAGE_SIZE);
-//    // Prepare header
-//    DWORD* pHeader = (DWORD*) pImage;
-//    *pHeader++ = BKIMAGE_HEADER1;
-//    *pHeader++ = BKIMAGE_HEADER2;
-//    *pHeader++ = BKIMAGE_VERSION;
-//    *pHeader++ = BKIMAGE_SIZE;
-//    // Store emulator state to the image
-//    //g_pBoard->SaveToImage(pImage);
-//    *(DWORD*)(pImage + 16) = m_dwEmulatorUptime;
-//
-//    // Save image to the file
-//    DWORD dwBytesWritten = 0;
-//    WriteFile(hFile, pImage, BKIMAGE_SIZE, &dwBytesWritten, NULL);
-//    //TODO: Check if dwBytesWritten != BKIMAGE_SIZE
-//
-//    // Free memory, close file
-//    ::free(pImage);
-//    CloseHandle(hFile);
-//}
+BOOL Emulator_SaveImage(LPCTSTR sFilePath)
+{
+    // Create file
+    FILE* fpFile = ::_tfsopen(sFilePath, _T("w+b"), _SH_DENYWR);
+    if (fpFile == NULL)
+        return false;
 
-//void Emulator_LoadImage(LPCTSTR sFilePath)
-//{
-//    // Open file
-//    HANDLE hFile = CreateFile(sFilePath,
-//            GENERIC_READ, FILE_SHARE_READ, NULL,
-//            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-//    if (hFile == INVALID_HANDLE_VALUE)
-//    {
-//        AlertWarning(_T("Failed to load image file."));
-//        return;
-//    }
-//
-//    // Read header
-//    DWORD bufHeader[BKIMAGE_HEADER_SIZE / sizeof(DWORD)];
-//    DWORD dwBytesRead = 0;
-//    ReadFile(hFile, bufHeader, BKIMAGE_HEADER_SIZE, &dwBytesRead, NULL);
-//    //TODO: Check if dwBytesRead != BKIMAGE_HEADER_SIZE
-//
-//    //TODO: Check version and size
-//
-//    // Allocate memory
-//    BYTE* pImage = (BYTE*) ::malloc(BKIMAGE_SIZE);  ::memset(pImage, 0, BKIMAGE_SIZE);
-//
-//    // Read image
-//    SetFilePointer(hFile, 0, NULL, FILE_BEGIN);
-//    dwBytesRead = 0;
-//    ReadFile(hFile, pImage, BKIMAGE_SIZE, &dwBytesRead, NULL);
-//    //TODO: Check if dwBytesRead != BKIMAGE_SIZE
-//
-//    // Restore emulator state from the image
-//    //g_pBoard->LoadFromImage(pImage);
-//
-//    m_dwEmulatorUptime = *(DWORD*)(pImage + 16);
-//
-//    // Free memory, close file
-//    ::free(pImage);
-//    CloseHandle(hFile);
-//
-//    g_okEmulatorRunning = FALSE;
-//
-//    MainWindow_UpdateAllViews();
-//}
+    // Allocate memory
+    BYTE* pImage = (BYTE*) ::malloc(NEMIGAIMAGE_SIZE);
+    if (pImage == NULL)
+    {
+        ::fclose(fpFile);
+        return false;
+    }
+    memset(pImage, 0, NEMIGAIMAGE_SIZE);
+    // Prepare header
+    DWORD* pHeader = (DWORD*) pImage;
+    *pHeader++ = NEMIGAIMAGE_HEADER1;
+    *pHeader++ = NEMIGAIMAGE_HEADER2;
+    *pHeader++ = NEMIGAIMAGE_VERSION;
+    *pHeader++ = NEMIGAIMAGE_SIZE;
+    // Store emulator state to the image
+    g_pBoard->SaveToImage(pImage);
+    *(DWORD*)(pImage + 16) = m_dwEmulatorUptime;
+
+    // Save image to the file
+    size_t dwBytesWritten = ::fwrite(pImage, 1, NEMIGAIMAGE_SIZE, fpFile);
+    ::free(pImage);
+    ::fclose(fpFile);
+    if (dwBytesWritten != NEMIGAIMAGE_SIZE)
+        return false;
+
+    return TRUE;
+}
+
+BOOL Emulator_LoadImage(LPCTSTR sFilePath)
+{
+    Emulator_Stop();
+
+    // Open file
+    FILE* fpFile = ::_tfsopen(sFilePath, _T("rb"), _SH_DENYWR);
+    if (fpFile == NULL)
+        return false;
+
+    // Read header
+    DWORD bufHeader[NEMIGAIMAGE_HEADER_SIZE / sizeof(DWORD)];
+    DWORD dwBytesRead = ::fread(bufHeader, 1, NEMIGAIMAGE_HEADER_SIZE, fpFile);
+    if (dwBytesRead != NEMIGAIMAGE_HEADER_SIZE)
+    {
+        ::fclose(fpFile);
+        return false;
+    }
+
+    //TODO: Check version and size
+
+    // Allocate memory
+    BYTE* pImage = (BYTE*) ::malloc(NEMIGAIMAGE_SIZE);
+    if (pImage == NULL)
+    {
+        ::fclose(fpFile);
+        return false;
+    }
+
+    // Read image
+    ::fseek(fpFile, 0, SEEK_SET);
+    dwBytesRead = ::fread(pImage, 1, NEMIGAIMAGE_SIZE, fpFile);
+    if (dwBytesRead != NEMIGAIMAGE_SIZE)
+    {
+        ::free(pImage);
+        ::fclose(fpFile);
+        return false;
+    }
+
+    // Restore emulator state from the image
+    g_pBoard->LoadFromImage(pImage);
+
+    m_dwEmulatorUptime = *(DWORD*)(pImage + 16);
+
+    // Free memory, close file
+    ::free(pImage);
+    ::fclose(fpFile);
+
+    return TRUE;
+}
 
 
 //////////////////////////////////////////////////////////////////////
