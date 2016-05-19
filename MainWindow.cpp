@@ -929,9 +929,9 @@ void MainWindow_DoFileLoadState()
 {
     TCHAR bufFileName[MAX_PATH];
     BOOL okResult = ShowOpenDialog(g_hwnd,
-        _T("Open state image to load"),
-        _T("NEMIGA state images (*.nmst)\0*.nmst\0All Files (*.*)\0*.*\0\0"),
-        bufFileName);
+            _T("Open state image to load"),
+            _T("NEMIGA state images (*.nmst)\0*.nmst\0All Files (*.*)\0*.*\0\0"),
+            bufFileName);
     if (!okResult) return;
 
     if (!Emulator_LoadImage(bufFileName))

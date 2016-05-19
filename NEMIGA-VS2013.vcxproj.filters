@@ -71,12 +71,6 @@
     <ClInclude Include="Views.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="diskette.ico">
-      <Filter>res</Filter>
-    </Image>
-    <Image Include="diskettewp.ico">
-      <Filter>res</Filter>
-    </Image>
     <Image Include="keyboard.bmp">
       <Filter>res</Filter>
     </Image>

@@ -556,6 +556,7 @@ int CMotherboard::TranslateAddress(WORD address, BOOL okHaltMode, BOOL okExec, W
 
     if ((address >= 0170006 && address <= 0170013) ||
         //(address >= 0177560 && address <= 0177577) ||
+        (address >= 0170020 && address <= 0170033) ||
         (address >= 0177514 && address <= 0177517) ||
         (address >= 0177570 && address <= 0177575) ||
         (address >= 0177100 && address <= 0177107))  // Ports

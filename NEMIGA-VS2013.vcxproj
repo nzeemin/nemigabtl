@@ -185,8 +185,6 @@
     <ClInclude Include="Views.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="diskette.ico" />
-    <Image Include="diskettewp.ico" />
     <Image Include="keyboard.bmp" />
     <Image Include="NEMIGABTL.ico" />
     <Image Include="small.ico" />
