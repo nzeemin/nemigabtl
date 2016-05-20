@@ -39,6 +39,7 @@ long m_nMainLastFrameTicks = 0;
 
 BOOL InitInstance(HINSTANCE, int);
 void DoneInstance();
+void ParseCommandLine();
 
 
 //////////////////////////////////////////////////////////////////////
@@ -164,7 +165,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 #endif
     Settings_Init();
 
-    //ParseCommandLine();  // Override settings by command-line option if needed
+    ParseCommandLine();  // Override settings by command-line option if needed
 
     if (!Emulator_Init())
         return FALSE;

@@ -347,6 +347,16 @@ int Emulator_SystemFrame()
         MainWindow_SetStatusbarText(StatusbarPartUptime, buffer);
     }
 
+    // Auto-boot option processing: select "boot from disk" and press Enter
+    if (Option_AutoBoot)
+    {
+        if (m_dwEmulatorUptime == 2 && m_nUptimeFrameCount == 16)
+        {
+            ScreenView_KeyEvent(68, TRUE);  // Press "D"
+            Option_AutoBoot = false;  // All done
+        }
+    }
+
     return 1;
 }
 
