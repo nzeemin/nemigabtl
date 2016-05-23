@@ -98,6 +98,7 @@ int APIENTRY _tWinMain(
                     ScreenView_RedrawScreen();
                     //MemoryMapView_RedrawMap();
                 }
+                ::Sleep(1);
             }
         }
 
@@ -121,12 +122,12 @@ int APIENTRY _tWinMain(
             ::QueryPerformanceCounter(&nFrameFinishTime);
             LONGLONG nTimeElapsed = (nFrameFinishTime.QuadPart - nFrameStartTime.QuadPart)
                     * 1000 / nPerformanceFrequency.QuadPart;
-            if (nTimeElapsed > 0 && nTimeElapsed < 20)  // 1000 millisec / 25 = 40 millisec
+            if (nTimeElapsed > 0 && nTimeElapsed < 30)  // 1000 millisec / 25 = 40 millisec
             {
-                LONG nTimeToSleep = (LONG)(20 - nTimeElapsed);
-                ::Sleep((DWORD) nTimeToSleep / 2);
-                ScreenView_ScanKeyboard();
-                ::Sleep((DWORD) nTimeToSleep / 2);
+                LONG nTimeToSleep = (LONG)(30 - nTimeElapsed);
+                ::Sleep((DWORD) nTimeToSleep);
+                //ScreenView_ScanKeyboard();
+                //::Sleep((DWORD) nTimeToSleep / 2);
             }
         }
 #endif
