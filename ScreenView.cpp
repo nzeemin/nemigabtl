@@ -362,16 +362,16 @@ BOOL ScreenView_SaveScreenshot(LPCTSTR sFileName)
     ASSERT(sFileName != NULL);
     ASSERT(m_bits != NULL);
 
-    DWORD* pBits = (DWORD*) ::malloc(NEMIGA_SCREEN_WIDTH * NEMIGA_SCREEN_HEIGHT * 4);
+    DWORD* pBits = (DWORD*) ::malloc(m_cxScreenWidth * m_cyScreenHeight * 4);
     const DWORD* colors = Emulator_GetPalette(/*m_ScreenMode*/);
     Emulator_PrepareScreenRGB32(pBits, m_ScreenMode);
 
     LPCTSTR sFileNameExt = _tcsrchr(sFileName, _T('.'));
     BOOL result = FALSE;
     if (sFileNameExt != NULL && _tcsicmp(sFileNameExt, _T(".png")) == 0)
-        result = PngFile_SaveScreenshot(pBits, colors, sFileName);
+        result = PngFile_SaveScreenshot(pBits, colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
     else
-        result = BmpFile_SaveScreenshot(pBits, colors, sFileName);
+        result = BmpFile_SaveScreenshot(pBits, colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
 
     ::free(pBits);
 

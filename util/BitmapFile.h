@@ -16,30 +16,13 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 // Save screenshot as .BMP file
 BOOL BmpFile_SaveScreenshot(
-    const DWORD* bits,
-    const DWORD* colors,
-    LPCTSTR sFileName);
+    const DWORD* bits, const DWORD* colors, LPCTSTR sFileName,
+    int screenWidth, int screenHeight);
 
 // Save screenshot as .PNG file
 BOOL PngFile_SaveScreenshot(
-    const DWORD* bits,
-    const DWORD* colors,
-    LPCTSTR sFileName);
-
-
-//////////////////////////////////////////////////////////////////////
-
-DECLARE_HANDLE(HAPNGFILE);
-
-// Create new APNG file
-HAPNGFILE ApngFile_Create(LPCTSTR filename);
-// Close APNG file
-void ApngFile_Close(HAPNGFILE apngfile);
-// Append one frame to the APNG file
-BOOL ApngFile_WriteFrame(
-    HAPNGFILE apngfile,
-    const DWORD* bits,
-    const DWORD* colors);
+    const DWORD* bits, const DWORD* colors, LPCTSTR sFileName,
+    int screenWidth, int screenHeight);
 
 
 //////////////////////////////////////////////////////////////////////
