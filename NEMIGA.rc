@@ -108,6 +108,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Parallel",                    ID_EMULATOR_PARALLEL
         MENUITEM "Autostart",                   ID_EMULATOR_AUTOSTART
+        MENUITEM SEPARATOR
+        MENUITEM "Sound",                       ID_EMULATOR_SOUND
     END
     POPUP "&Configuration"
     BEGIN

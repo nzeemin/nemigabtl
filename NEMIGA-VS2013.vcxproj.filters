@@ -40,6 +40,7 @@
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="ToolWindow.cpp" />
+    <ClCompile Include="SoundGen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="emubase\Board.h">
@@ -69,6 +70,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="ToolWindow.h" />
     <ClInclude Include="Views.h" />
+    <ClInclude Include="SoundGen.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="keyboard.bmp">

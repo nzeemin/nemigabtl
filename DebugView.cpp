@@ -394,6 +394,12 @@ void DebugView_DrawPorts(HDC hdc, CMotherboard* pBoard, int x, int y)
 
     WORD value;
     y += cyLine;
+    value = g_pBoard->GetPortView(0170006);
+    DrawOctalValue(hdc, x + 0 * cxChar, y, 0170006);
+    DrawOctalValue(hdc, x + 8 * cxChar, y, value);
+    //DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
+    TextOut(hdc, x + 16 * cxChar, y, _T("System"), 6);
+    y += cyLine;
     value = g_pBoard->GetPortView(0177660);
     DrawOctalValue(hdc, x + 0 * cxChar, y, 0177572);
     DrawOctalValue(hdc, x + 8 * cxChar, y, value);

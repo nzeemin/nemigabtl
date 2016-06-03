@@ -143,6 +143,10 @@ public:  // Saving/loading emulator status
 private:  // Ports: implementation
     WORD        m_Port170006;       // Регистр данных клавиатуры (байт 170006) и регистр фиксации HALT-запросов (байт 170007)
     WORD        m_Port170006wr;     // Регистр 170006 на запись
+    WORD        m_Port170020;       // Регистр состояния таймера
+    WORD        m_Port170022;       // Регистр частоты
+    WORD        m_Port170024;       // Регистр длительности
+    WORD        m_Port170030;       // Регистр октавы и громкости
     WORD        m_Port177572;       // Регистр адреса косвенной адресации
     WORD        m_Port177574;       // Регистр ??
     WORD        m_Port177514;       // Регистр состояния ИРПР
@@ -150,6 +154,10 @@ private:  // Ports: implementation
 private:
     WORD        m_CPUbp;  // CPU breakpoint address
     bool        m_okTraceCPU;
+    WORD        m_Timer1div;        // Timer 1 subcounter, based on octave value
+    WORD        m_Timer1;           // Timer 1 counter, initial value copied from m_Port170022
+    WORD        m_Timer2;           // Timer 2 counter
+    bool        m_okSoundOnOff;
 private:
     SOUNDGENCALLBACK m_SoundGenCallback;
     PARALLELOUTCALLBACK m_ParallelOutCallback;

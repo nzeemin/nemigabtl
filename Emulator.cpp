@@ -18,7 +18,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Views.h"
 #include "emubase\Board.h"
 #include "emubase\Processor.h"
-//#include "SoundGen.h"
+#include "SoundGen.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -129,11 +129,11 @@ BOOL Emulator_Init()
 
     g_pBoard->Reset();
 
-    //if (m_okEmulatorSound)
-    //{
-    //    SoundGen_Initialize(Settings_GetSoundVolume());
-    //    g_pBoard->SetSoundGenCallback(Emulator_SoundGenCallback);
-    //}
+    if (m_okEmulatorSound)
+    {
+        SoundGen_Initialize(Settings_GetSoundVolume());
+        g_pBoard->SetSoundGenCallback(Emulator_SoundGenCallback);
+    }
 
     return TRUE;
 }
@@ -144,8 +144,8 @@ void Emulator_Done()
 
     CProcessor::Done();
 
-    //g_pBoard->SetSoundGenCallback(NULL);
-    //SoundGen_Finalize();
+    g_pBoard->SetSoundGenCallback(NULL);
+    SoundGen_Finalize();
 
     delete g_pBoard;
     g_pBoard = NULL;
@@ -251,19 +251,19 @@ BOOL Emulator_IsBreakpoint()
 
 void Emulator_SetSound(BOOL soundOnOff)
 {
-    //if (m_okEmulatorSound != soundOnOff)
-    //{
-    //    if (soundOnOff)
-    //    {
-    //        SoundGen_Initialize(Settings_GetSoundVolume());
-    //        g_pBoard->SetSoundGenCallback(Emulator_SoundGenCallback);
-    //    }
-    //    else
-    //    {
-    //        g_pBoard->SetSoundGenCallback(NULL);
-    //        SoundGen_Finalize();
-    //    }
-    //}
+    if (m_okEmulatorSound != soundOnOff)
+    {
+        if (soundOnOff)
+        {
+            SoundGen_Initialize(Settings_GetSoundVolume());
+            g_pBoard->SetSoundGenCallback(Emulator_SoundGenCallback);
+        }
+        else
+        {
+            g_pBoard->SetSoundGenCallback(NULL);
+            SoundGen_Finalize();
+        }
+    }
 
     m_okEmulatorSound = soundOnOff;
 }
@@ -360,19 +360,10 @@ int Emulator_SystemFrame()
     return 1;
 }
 
-//void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R)
-//{
-//    if (m_okEmulatorCovox)
-//    {
-//        // Get lower byte from printer port output register
-//        unsigned short data = g_pBoard->GetPrinterOutPort() & 0xff;
-//        // Merge with channel data
-//        L += (data << 7);
-//        R += (data << 7);
-//    }
-//
-//    SoundGen_FeedDAC(L, R);
-//}
+void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R)
+{
+    SoundGen_FeedDAC(L, R);
+}
 
 // Update cached values after Run or Step
 void Emulator_OnUpdate()

@@ -114,8 +114,8 @@ int APIENTRY _tWinMain(
             ::TranslateMessage(&msg);
             ::DispatchMessage(&msg);
         }
-#if 1
-        if (g_okEmulatorRunning /*&& Settings_GetRealSpeed()*/)
+
+        if (g_okEmulatorRunning && !Settings_GetSound())
         {
             // Slow down to 25 frames per second
             LARGE_INTEGER nFrameFinishTime;  // Frame start time
@@ -126,11 +126,8 @@ int APIENTRY _tWinMain(
             {
                 LONG nTimeToSleep = (LONG)(30 - nTimeElapsed);
                 ::Sleep((DWORD) nTimeToSleep);
-                //ScreenView_ScanKeyboard();
-                //::Sleep((DWORD) nTimeToSleep / 2);
             }
         }
-#endif
     }
 endprog:
 

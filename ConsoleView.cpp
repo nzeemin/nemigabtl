@@ -243,12 +243,6 @@ void PrintRegister(LPCTSTR strName, WORD value)
 
 void SaveMemoryDump(CProcessor *pProc)
 {
-    BYTE buf[65536];
-    for (int i = 0; i < 65536; i++)
-    {
-        buf[i] = g_pBoard->GetByte(i, 1);
-    }
-
     // Create file
     HANDLE file;
     file = CreateFile(_T("memdump.bin"),
@@ -257,9 +251,21 @@ void SaveMemoryDump(CProcessor *pProc)
 
     //SetFilePointer(Common_LogFile, 0, NULL, FILE_END);
 
-    DWORD dwLength = 65536;
+    WORD buf[32768];
     DWORD dwBytesWritten = 0;
-    WriteFile(file, buf, dwLength, &dwBytesWritten, NULL);
+
+    for (int i = 0; i < 32768; i++)
+    {
+        buf[i] = g_pBoard->GetWord(i * 2, TRUE);
+    }
+    WriteFile(file, buf, 65536, &dwBytesWritten, NULL);
+
+    for (int i = 0; i < 32768; i++)
+    {
+        buf[i] = g_pBoard->GetHIRAMWord(i * 2);
+    }
+    WriteFile(file, buf, 65536, &dwBytesWritten, NULL);
+
     CloseHandle(file);
 }
 
@@ -395,7 +401,7 @@ void ConsoleView_ShowHelp()
             _T("  rN XXXXXX  Set register N to value XXXXXX; N=0..7,ps\r\n")
             _T("  s          Step Into; executes one instruction\r\n")
             _T("  so         Step Over; executes and stops after the current instruction\r\n")
-            _T("  u          Save memory dump to file memdumpXPU.bin\r\n"));
+            _T("  u          Save memory dump to file memdump.bin\r\n"));
 }
 
 void DoConsoleCommand()

@@ -172,7 +172,7 @@ BOOL MainWindow_InitToolbar()
     addbitmap.nID = IDB_TOOLBAR;
     SendMessage(m_hwndToolbar, TB_ADDBITMAP, 2, (LPARAM) &addbitmap);
 
-    TBBUTTON buttons[9];
+    TBBUTTON buttons[10];
     ZeroMemory(buttons, sizeof(buttons));
     for (int i = 0; i < sizeof(buttons) / sizeof(TBBUTTON); i++)
     {
@@ -205,14 +205,13 @@ BOOL MainWindow_InitToolbar()
     buttons[6].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[6].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("3"));
     buttons[7].fsStyle = BTNS_SEP;
-    buttons[8].idCommand = ID_FILE_SCREENSHOT;
-    buttons[8].iBitmap = ToolbarImageScreenshot;
-    buttons[8].fsStyle = BTNS_BUTTON;
-    //buttons[9].idCommand = ID_EMULATOR_SOUND;
-    //buttons[9].iBitmap = 8;
-    //buttons[9].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
-    //buttons[9].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Sound"));
-
+    buttons[8].idCommand = ID_EMULATOR_SOUND;
+    buttons[8].iBitmap = 8;
+    buttons[8].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
+    buttons[8].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Sound"));
+    buttons[9].idCommand = ID_FILE_SCREENSHOT;
+    buttons[9].iBitmap = ToolbarImageScreenshot;
+    buttons[9].fsStyle = BTNS_BUTTON;
     SendMessage(m_hwndToolbar, TB_ADDBUTTONS, (WPARAM) sizeof(buttons) / sizeof(TBBUTTON), (LPARAM) &buttons);
 
     if (Settings_GetToolbar())
@@ -663,10 +662,10 @@ void MainWindow_UpdateMenu()
 
     // Emulator menu options
     CheckMenuItem(hMenu, ID_EMULATOR_AUTOSTART, (Settings_GetAutostart() ? MF_CHECKED : MF_UNCHECKED));
-    //CheckMenuItem(hMenu, ID_EMULATOR_SOUND, (Settings_GetSound() ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_EMULATOR_SOUND, (Settings_GetSound() ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_EMULATOR_PARALLEL, (Settings_GetParallel() ? MF_CHECKED : MF_UNCHECKED));
 
-    //MainWindow_SetToolbarImage(ID_EMULATOR_SOUND, (Settings_GetSound() ? ToolbarImageSoundOn : ToolbarImageSoundOff));
+    MainWindow_SetToolbarImage(ID_EMULATOR_SOUND, (Settings_GetSound() ? ToolbarImageSoundOn : ToolbarImageSoundOff));
     EnableMenuItem(hMenu, ID_DEBUG_STEPINTO, (g_okEmulatorRunning ? MF_DISABLED : MF_ENABLED));
 
     UINT configcmd = 0;

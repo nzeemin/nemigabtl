@@ -28,6 +28,8 @@ CMotherboard::CMotherboard ()
     m_okTraceCPU = false;
     m_SoundGenCallback = NULL;
     m_ParallelOutCallback = NULL;
+    m_okSoundOnOff = false;
+    m_Timer1 = m_Timer1div = m_Timer2 = 0;
 
     // Allocate memory for RAM and ROM
     m_pRAM = (BYTE*) ::malloc(128 * 1024);  ::memset(m_pRAM, 0, 128 * 1024);
@@ -90,6 +92,9 @@ void CMotherboard::Reset ()
     m_Port177572 = 0;
     m_Port177574 = 0;
     m_Port177514 = 0377;
+    m_Port170020 = m_Port170022 = m_Port170024 = m_Port170030 = 0;
+    m_okSoundOnOff = false;
+    m_Timer1 = m_Timer1div = m_Timer2 = 0;
 
     ResetDevices();
 
@@ -230,13 +235,65 @@ void CMotherboard::Tick50()  // 50 Hz timer
 {
     //if ((m_Port177662wr & 040000) == 0)
     //{
-    m_pCPU->TickIRQ2();
+    //m_pCPU->TickIRQ2();
     //}
+
+    //m_pCPU->FireHALT();
+
+    if (m_Timer2 == 0)
+    {
+        // Если разряды 4 и 5 равны 1 1, то запуск второго счётчика происходит по тактовому входу С2
+        //if ((m_Port170020 & 060) == 060)
+        if (m_Port170024 != 0 && (m_Port170020 & 01000) == 01000)
+        {
+            m_Timer2 = m_Port170024;
+//#if !defined(PRODUCT)
+//            DebugLog(_T("Tick50 Timer2 START\r\n"));
+//#endif
+        }
+    }
+    else //if (m_Timer2 > 0)
+    {
+        m_Timer2--;
+        if (m_Timer2 == 0)
+        {
+            m_pCPU->FireHALT();
+            m_Port170020 &= ~01000;  // Снимаем "Фикс прерывания 2"
+            m_Port170006 |= 010000;  // Сигнал Н3
+            m_okSoundOnOff = false;  // Судя по схеме, звук выключается по сигналу ЗПР2
+            m_Port170024 = 0;
+#if !defined(PRODUCT)
+            DebugLog(_T("Tick50 Timer2 END\r\n"));
+#endif
+        }
+    }
 }
 
-void CMotherboard::ExecuteCPU()
+void CMotherboard::TimerTick() // Timer Tick, 8 MHz
 {
-    m_pCPU->Execute();
+    if (m_Timer1 == 0 || m_Timer1div == 0)
+    {
+        // Если разряды 2 и 3 равны 1 1, то запуск первого счётчика происходит по тактовому входу С1
+        if ((m_Port170020 & 014) == 014)
+        {
+            WORD octave = m_Port170030 & 7;  // Октава 1..7
+            m_Timer1div = (1 << octave);
+        }
+        return;
+    }
+
+    m_Timer1div--;
+    if (m_Timer1div == 0)
+    {
+        WORD octave = m_Port170030 & 7;  // Октава 1..7
+        m_Timer1div = (1 << octave);
+
+        m_Timer1--;
+        if (m_Timer1 == 0)
+        {
+            m_Timer1 = m_Port170022;
+        }
+    }
 }
 
 void CMotherboard::DebugTicks()
@@ -247,23 +304,26 @@ void CMotherboard::DebugTicks()
         m_pFloppyCtl->Periodic();
 }
 
+void CMotherboard::ExecuteCPU()
+{
+    m_pCPU->Execute();
+}
 
 /*
-Каждый фрейм равен 1/25 секунды = 40 мс = 20000 тиков, 1 тик = 2 мкс.
-12 МГц = 1 / 12000000 = 0.83(3) мкс
+Каждый фрейм равен 1/25 секунды = 40 мс
+Фрейм делим на 20000 тиков, 1 тик = 2 мкс
 В каждый фрейм происходит:
-* 160000 тиков ЦП - 8 раз за тик -- 4 МГц, 2.5 мкс
-* 2 тика IRQ2 50 Гц, в 0-й и 10000-й тик фрейма
-* 625 тиков FDD - каждый 32-й тик (300 RPM = 5 оборотов в секунду)
+* 320000 тиков таймер 1 -- 16 раз за тик -- 8 МГц
+*  80000 тиков ЦП       --  4 раз за тик -- 4 МГц, 2.5 мкс
+*      2 тика IRQ2 и таймер 2 -- 50 Гц, в 0-й и 10000-й тик фрейма
+*    625 тиков FDD -- каждый 32-й тик (300 RPM = 5 оборотов в секунду)
 */
 BOOL CMotherboard::SystemFrame()
 {
     int frameProcTicks = 4;
-    //const int audioticks = 20286 / (SOUNDSAMPLERATE / 25);
+    const int audioticks = 20286 / (SOUNDSAMPLERATE / 25);
     int floppyTicks = 32;
     int teletypeTxCount = 0;
-
-    int timerTicks = 0;
 
     for (int frameticks = 0; frameticks < 20000; frameticks++)
     {
@@ -277,12 +337,9 @@ BOOL CMotherboard::SystemFrame()
             if (m_pCPU->GetPC() == m_CPUbp)
                 return FALSE;  // Breakpoint
 
-            //timerTicks++;
-            //if (timerTicks >= 128)
-            //{
-            //    TimerTick();  // System timer tick: 31250 Hz = 32uS (BK-0011), 23437.5 Hz = 42.67 uS (BK-0010)
-            //    timerTicks = 0;
-            //}
+            // Timer 1 ticks, 4 MHz = 25 * 20000 * 4 * 2
+            TimerTick();
+            TimerTick();
         }
 
         if (frameticks % 10000 == 0)
@@ -296,8 +353,8 @@ BOOL CMotherboard::SystemFrame()
                 m_pFloppyCtl->Periodic();
         }
 
-        //if (frameticks % audioticks == 0)  // AUDIO tick
-        //    DoSound();
+        if (frameticks % audioticks == 0)  // AUDIO tick
+            DoSound();
 
         if (m_ParallelOutCallback != NULL)
         {
@@ -328,6 +385,9 @@ void CMotherboard::KeyboardEvent(BYTE scancode, BOOL okPressed)
         m_Port170006 |= 02000;
         m_Port170006 |= scancode;
         m_pCPU->FireHALT();
+#if !defined(PRODUCT)
+        DebugLog(_T("Keyboard\r\n"));
+#endif
         return;
     }
 }
@@ -390,6 +450,9 @@ WORD CMotherboard::GetWord(WORD address, BOOL okHaltMode, BOOL okExec)
         else if (address == 0177566)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("GetWord 06o\r\n"), address);
+#endif
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -426,6 +489,9 @@ BYTE CMotherboard::GetByte(WORD address, BOOL okHaltMode)
         else if (address == 0177566)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
+//#if !defined(PRODUCT)
+//        DebugLogFormat(_T("GetByte 06o\r\n"), address);
+//#endif
         return GetRAMByte(offset);
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -469,6 +535,9 @@ void CMotherboard::SetWord(WORD address, BOOL okHaltMode, WORD word)
         else if (address == 0177566)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
+//#if !defined(PRODUCT)
+//        DebugLogFormat(_T("SetWord 06o\r\n"), address);
+//#endif
         SetRAMWord(offset & 0177776, word);
         return;
     case ADDRTYPE_DENY:
@@ -512,6 +581,9 @@ void CMotherboard::SetByte(WORD address, BOOL okHaltMode, BYTE byte)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
         SetRAMByte(offset, byte);
+//#if !defined(PRODUCT)
+//        DebugLogFormat(_T("SetByte 06o\r\n"), address);
+//#endif
         return;
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -590,27 +662,40 @@ WORD CMotherboard::GetPortWord(WORD address)
     case 0170006:
         return m_Port170006;
 
-    case 0170010:  // Network
-    case 0170012:
+    case 0170010:  // RgSt -- Network
+    case 0170012:  // RgL -- Network
         return 0xffff;  //STUB
 
-    case 0170020:  // Timer
-    case 0170022:
-    case 0170024:
-    case 0170026:
-    case 0170030:
-    case 0170032:
+    case 0170020:  // RgStSnd -- Sound Status 10-bit register
+        return m_Port170020 & 01777;
+    case 0170022:  // RgF -- Sound Frequency 8 MHz
+        return m_Port170022;
+    case 0170024:  // RgLength -- Sound Length 50 Hz
+        return m_Port170024;
+    case 0170026:  // RgOn -- Sound On
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
+#endif
+        m_okSoundOnOff = true;
+        return 0;  //STUB
+    case 0170030:  // RgOct
+        return m_Port170030;
+    case 0170032:  // RgOff -- Sound Off
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
+#endif
+        m_okSoundOnOff = !m_okSoundOnOff;
         return 0;  //STUB
 
-    case 0177100:  // Floppy status
+    case 0177100:  // RgStat -- Floppy status
         if (m_pFloppyCtl == NULL) return 0;
         return m_pFloppyCtl->GetState();
-    case 0177102:  // Floppy data
+    case 0177102:  // RgData -- Floppy data
         if (m_pFloppyCtl == NULL) return 0;
         return m_pFloppyCtl->GetData();
-    case 0177104:  // Floppy command
+    case 0177104:  // RgCntrl -- Floppy command
         return 0;  //STUB
-    case 0177106:  // Floppy timer
+    case 0177106:  // RgTime -- Floppy timer
         if (m_pFloppyCtl == NULL) return 0;
         return m_pFloppyCtl->GetTimer();
 
@@ -649,15 +734,22 @@ WORD CMotherboard::GetPortView(WORD address)
 {
     switch (address)
     {
+    case 0170006:
+        return m_Port170006;
     case 0170010:  // Network
     case 0170012:
         return 0;  //STUB
 
     case 0170020:  // Timer
+        return m_Port170020 & 01777;
     case 0170022:
+        return m_Port170022;
     case 0170024:
+        return m_Port170024;
     case 0170026:
+        return 0;  //STUB
     case 0170030:
+        return m_Port170030;
     case 0170032:
         return 0;  //STUB
 
@@ -728,13 +820,42 @@ void CMotherboard::SetPortWord(WORD address, WORD word)
     case 0170012:
         break;  //STUB
 
-    case 0170020:  // Timer
+    case 0170020:  // Timer status
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("Timer Status SET %06o\r\n"), word);
+#endif
+        m_Port170020 = word & 01777;
+        break;
     case 0170022:
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("Timer Freq  SET %06o\r\n"), word);
+#endif
+        m_Port170022 = word;
+        break;
     case 0170024:
-    case 0170026:
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("Timer Len   SET %06o\r\n"), word);
+#endif
+        m_Port170024 = word;
+        break;
+    case 0170026:  // Sound On
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
+#endif
+        m_okSoundOnOff = true;
+        break;
     case 0170030:
-    case 0170032:
-        break;  //STUB
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("Timer OctVol SET %06o\r\n"), word);
+#endif
+        m_Port170030 = word & 037;
+        break;
+    case 0170032:  // Sound On/Off trigger
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
+#endif
+        m_okSoundOnOff = !m_okSoundOnOff;
+        break;
 
     case 0177100:  // Floppy status
         if (m_pFloppyCtl != NULL)
@@ -816,7 +937,14 @@ void CMotherboard::SaveToImage(BYTE* pImage)
     *pwImage++ = m_Port177574;
     *pwImage++ = m_Port177514;
     *pwImage++ = m_Port177516;
-    //TODO: Timer registers
+    *pwImage++ = m_Port170020;
+    *pwImage++ = m_Port170022;
+    *pwImage++ = m_Port170024;
+    *pwImage++ = m_Port170030;
+    *pwImage++ = m_Timer1;
+    *pwImage++ = m_Timer1div;
+    *pwImage++ = m_Timer2;
+    *pwImage++ = (WORD)m_okSoundOnOff;
 
     // CPU status
     BYTE* pImageCPU = pImage + 160;
@@ -839,7 +967,14 @@ void CMotherboard::LoadFromImage(const BYTE* pImage)
     m_Port177572 = *pwImage++;
     m_Port177574 = *pwImage++;
     m_Port177516 = *pwImage++;
-    //TODO: Timer registers
+    m_Port170020 = *pwImage++;
+    m_Port170022 = *pwImage++;
+    m_Port170024 = *pwImage++;
+    m_Port170030 = *pwImage++;
+    m_Timer1 = *pwImage++;
+    m_Timer1div = *pwImage++;
+    m_Timer2 = *pwImage++;
+    m_okSoundOnOff = ((*pwImage++) != 0);
 
     // CPU status
     const BYTE* pImageCPU = pImage + 160;
@@ -936,43 +1071,22 @@ void CMotherboard::DoSound(void)
     if (m_SoundGenCallback == NULL)
         return;
 
-    //BOOL bSoundBit = (m_Port177716tap & 0100) != 0;
+    WORD volume = (m_Port170030 >> 3) & 3;  // Громкость 0..3
+    WORD octave = m_Port170030 & 7;  // Октава 1..7
+    if (!m_okSoundOnOff || volume == 0 || octave == 0)
+    {
+        (*m_SoundGenCallback)(0, 0);
+        return;
+    }
+    if (m_Timer1 > m_Port170022 / 2)
+    {
+        (*m_SoundGenCallback)(0, 0);
+        return;
+    }
 
-    //if (bSoundBit)
-    //    (*m_SoundGenCallback)(0x1fff,0x1fff);
-    //else
-    //    (*m_SoundGenCallback)(0x0000,0x0000);
+    WORD sound = 0x1fff >> (3 - volume);
+    (*m_SoundGenCallback)(sound, sound);
 }
-
-//void CMotherboard::SetTapeReadCallback(TAPEREADCALLBACK callback, int sampleRate)
-//{
-//    if (callback == NULL)  // Reset callback
-//    {
-//        m_TapeReadCallback = NULL;
-//        m_nTapeSampleRate = 0;
-//    }
-//    else
-//    {
-//        m_TapeReadCallback = callback;
-//        m_nTapeSampleRate = sampleRate;
-//        m_TapeWriteCallback = NULL;
-//    }
-//}
-//
-//void CMotherboard::SetTapeWriteCallback(TAPEWRITECALLBACK callback, int sampleRate)
-//{
-//    if (callback == NULL)  // Reset callback
-//    {
-//        m_TapeWriteCallback = NULL;
-//        m_nTapeSampleRate = 0;
-//    }
-//    else
-//    {
-//        m_TapeWriteCallback = callback;
-//        m_nTapeSampleRate = sampleRate;
-//        m_TapeReadCallback = NULL;
-//    }
-//}
 
 void CMotherboard::SetSoundGenCallback(SOUNDGENCALLBACK callback)
 {
