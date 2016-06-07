@@ -11,3 +11,5 @@
 /trace.log
 /*.sdf
 /*.opensdf
+/*.dsk
+/*.nmst
