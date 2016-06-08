@@ -218,9 +218,9 @@ void ScreenView_OnDraw(HDC hdc)
     HBRUSH hBrush = ::CreateSolidBrush(COLOR_BK_BACKGROUND);
     HGDIOBJ hOldBrush = ::SelectObject(hdc, hBrush);
     PatBlt(hdc, 0, 0, x, rc.bottom, PATCOPY);
-    PatBlt(hdc, x + NEMIGA_SCREEN_WIDTH, 0, rc.right, rc.bottom, PATCOPY);
-    PatBlt(hdc, x, 0, NEMIGA_SCREEN_WIDTH, 4, BLACKNESS);
-    PatBlt(hdc, x, rc.bottom - 4, NEMIGA_SCREEN_WIDTH, 4, BLACKNESS);
+    PatBlt(hdc, x + m_cxScreenWidth, 0, rc.right, rc.bottom, PATCOPY);
+    PatBlt(hdc, x, 0, m_cxScreenWidth, 4, BLACKNESS);
+    PatBlt(hdc, x, rc.bottom - 4, m_cxScreenWidth, 4, BLACKNESS);
     ::SelectObject(hdc, hOldBrush);
     ::DeleteObject(hBrush);
 }
