@@ -229,13 +229,13 @@ BOOL PngFile_WriteImageData4(FILE * fpFile, DWORD framenum, const DWORD* pBits, 
         *(pdst++) = (line < screenHeight - 1) ? 0 : 1; // Last?
         *(pdst++) = linelen & 0xff;
         *(pdst++) = (linelen >> 8) & 0xff;
-        *(pdst++) = ~linelen & 0xff;
+        *(pdst++) = (~linelen) & 0xff;
         *(pdst++) = (~linelen >> 8) & 0xff;
 
         BYTE * pline = pdst;
         *(pdst++) = 0;  // additional "filter-type" byte at the beginning of every scanline
         const DWORD * psrc = pBits + ((screenHeight - 1 - line) * screenWidth);
-        for (int i = 0; i < 512; i++)
+        for (int i = 0; i < screenWidth; i++)
         {
             DWORD rgb = *(psrc++);
             BYTE color = 0;
