@@ -392,6 +392,7 @@ void MainWindow_AdjustWindowSize()
 
     const int MAX_DEBUG_WIDTH = 1450;
     const int MAX_DEBUG_HEIGHT = 1400;
+	const int MIN_NODEBUG_WIDTH = 612;
 
     // Get metrics
     RECT rcWorkArea;  SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0);
@@ -431,6 +432,7 @@ void MainWindow_AdjustWindowSize()
     else
     {
         cxWidth = cxScreen + cxFrame * 2 + 8;
+		if (cxWidth < MIN_NODEBUG_WIDTH) cxWidth = MIN_NODEBUG_WIDTH;
         cyHeight = cyCaption + cyMenu + cyScreen + 4 + cyStatus + cyFrame * 2;
         if (Settings_GetToolbar())
             cyHeight += cyToolbar;
@@ -438,7 +440,7 @@ void MainWindow_AdjustWindowSize()
             cyHeight += cyKeyboard;
     }
 
-    SetWindowPos(g_hwnd, NULL, xLeft, yTop, cxWidth, cyHeight, SWP_NOZORDER);
+    SetWindowPos(g_hwnd, NULL, xLeft, yTop, cxWidth, cyHeight, SWP_NOZORDER | SWP_NOMOVE);
 }
 
 void MainWindow_AdjustWindowLayout()
@@ -496,7 +498,8 @@ void MainWindow_AdjustWindowLayout()
         {
             int cxKeyboard = cxScreen;
             int cyKeyboard = 162;
-            SetWindowPos(g_hwndKeyboard, NULL, 0, yKeyboard, cxKeyboard, cyKeyboard, SWP_NOZORDER | SWP_NOCOPYBITS);
+            int xKeyboard = (cxScreen - cxKeyboard) / 2;
+            SetWindowPos(g_hwndKeyboard, NULL, xKeyboard, yKeyboard, cxKeyboard, cyKeyboard, SWP_NOZORDER | SWP_NOCOPYBITS);
             //yTape += cyKeyboard + 4;
             yConsole += cyKeyboard + 4;
         }
