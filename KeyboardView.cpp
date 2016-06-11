@@ -379,8 +379,8 @@ void KeyboardView_OnDraw(HDC hdc)
     HBRUSH hbrRed = ::CreateSolidBrush(COLOR_KEYBOARD_RED);
     m_nKeyboardBitmapLeft = (rc.right - 592) / 2;
     m_nKeyboardBitmapTop = (rc.bottom - 160) / 2;
-	if (m_nKeyboardBitmapTop < 0) m_nKeyboardBitmapTop = 0;
-	if (m_nKeyboardBitmapTop > 16) m_nKeyboardBitmapTop = 16;
+    if (m_nKeyboardBitmapTop < 0) m_nKeyboardBitmapTop = 0;
+    if (m_nKeyboardBitmapTop > 16) m_nKeyboardBitmapTop = 16;
 
     HFONT hfont = CreateDialogFont();
     HGDIOBJ hOldFont = ::SelectObject(hdc, hfont);

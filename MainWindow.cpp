@@ -33,6 +33,7 @@ TCHAR g_szWindowClass[MAX_LOADSTRING];      // Main window class name
 
 HWND m_hwndToolbar = NULL;
 HWND m_hwndStatusbar = NULL;
+HWND m_hwndSplitter = (HWND)INVALID_HANDLE_VALUE;
 
 int m_MainWindowMinCx = NEMIGA_SCREEN_WIDTH + 16;
 int m_MainWindowMinCy = NEMIGA_SCREEN_HEIGHT + 40;
@@ -98,6 +99,7 @@ void MainWindow_RegisterClass()
 
     ToolWindow_RegisterClass();
     OverlappedWindow_RegisterClass();
+    SplitterWindow_RegisterClass();
 
     // Register view classes
     ScreenView_RegisterClass();
@@ -137,7 +139,6 @@ BOOL CreateMainWindow()
 
     MainWindow_ShowHideToolbar();
     MainWindow_ShowHideKeyboard();
-    //MainWindow_ShowHideTape();
     MainWindow_ShowHideDebug();
 
     MainWindow_RestorePositionAndShow();
@@ -392,7 +393,7 @@ void MainWindow_AdjustWindowSize()
 
     const int MAX_DEBUG_WIDTH = 1450;
     const int MAX_DEBUG_HEIGHT = 1400;
-	const int MIN_NODEBUG_WIDTH = 612;
+    const int MIN_NODEBUG_WIDTH = 612;
 
     // Get metrics
     RECT rcWorkArea;  SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0);
@@ -432,7 +433,7 @@ void MainWindow_AdjustWindowSize()
     else
     {
         cxWidth = cxScreen + cxFrame * 2 + 8;
-		if (cxWidth < MIN_NODEBUG_WIDTH) cxWidth = MIN_NODEBUG_WIDTH;
+        if (cxWidth < MIN_NODEBUG_WIDTH) cxWidth = MIN_NODEBUG_WIDTH;
         cyHeight = cyCaption + cyMenu + cyScreen + 4 + cyStatus + cyFrame * 2;
         if (Settings_GetToolbar())
             cyHeight += cyToolbar;
@@ -500,7 +501,6 @@ void MainWindow_AdjustWindowLayout()
             int cyKeyboard = 162;
             int xKeyboard = (cxScreen - cxKeyboard) / 2;
             SetWindowPos(g_hwndKeyboard, NULL, xKeyboard, yKeyboard, cxKeyboard, cyKeyboard, SWP_NOZORDER | SWP_NOCOPYBITS);
-            //yTape += cyKeyboard + 4;
             yConsole += cyKeyboard + 4;
         }
 
@@ -520,6 +520,8 @@ void MainWindow_AdjustWindowLayout()
         int yMemory = cyDebug + 4 + cyDisasm + 4;
         int cyMemory = rc.bottom - yMemory;
         SetWindowPos(g_hwndMemory, NULL, cxScreen + 4, yMemory, cxDebug, cyMemory, SWP_NOZORDER);
+
+        SetWindowPos(m_hwndSplitter, NULL, cxScreen + 4, yMemory - 4, cxDebug, 4, SWP_NOZORDER);
     }
 
     SetWindowPos(m_hwndToolbar, NULL, 4, 4, cxScreen, cyToolbar, SWP_NOZORDER);
@@ -536,6 +538,8 @@ void MainWindow_ShowHideDebug()
     if (!Settings_GetDebug())
     {
         // Delete debug views
+        if (m_hwndSplitter != INVALID_HANDLE_VALUE)
+            DestroyWindow(m_hwndSplitter);
         if (g_hwndConsole != INVALID_HANDLE_VALUE)
             DestroyWindow(g_hwndConsole);
         if (g_hwndDebug != INVALID_HANDLE_VALUE)
@@ -579,6 +583,7 @@ void MainWindow_ShowHideDebug()
             CreateDisasmView(g_hwnd, xDebugLeft, yDisasmTop, cxDebugWidth, cyDisasmHeight);
         if (g_hwndMemory == INVALID_HANDLE_VALUE)
             CreateMemoryView(g_hwnd, xDebugLeft, yMemoryTop, cxDebugWidth, cyMemoryHeight);
+        m_hwndSplitter = SplitterWindow_Create(g_hwnd, g_hwndDisasm, g_hwndMemory);
 
         MainWindow_AdjustWindowLayout();
     }
