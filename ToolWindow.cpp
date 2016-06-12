@@ -134,6 +134,7 @@ void OverlappedWindow_RegisterClass()
 
 bool m_SplitterWindow_IsMoving = false;
 int m_SplitterWindow_MovingStartY = 0;
+int m_SplitterWindow_MovingPrevY = 0;
 
 const int SPLITTERWINDOW_MINWINDOWHEIGHT = 64;
 
@@ -202,6 +203,26 @@ void SplitterWindow_MoveWindows(HWND hwndSplitter, int deltaY)
     SetWindowPos(hwndSplitter, NULL, rcBottom.left, rcBottom.top + deltaY - 4, rcBottom.right - rcBottom.left, 4, SWP_NOZORDER);
 }
 
+void SplitterWindow_DrawRect(HWND hwndSplitter, int Y1, int Y2)
+{
+    int deltaY1 = Y1 - m_SplitterWindow_MovingStartY;
+
+    RECT rc;  GetWindowRect(hwndSplitter, &rc);
+    rc.top += Y1;  rc.bottom += Y1;
+
+    HDC hdc = ::GetWindowDC(NULL);
+
+    ::DrawFocusRect(hdc, &rc);
+
+    if (Y2 != Y1)
+    {
+        rc.top += Y2 - Y1;  rc.bottom += Y2 - Y1;
+        ::DrawFocusRect(hdc, &rc);
+    }
+
+    ::ReleaseDC(NULL, hdc);
+}
+
 LRESULT CALLBACK SplitterWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
@@ -209,15 +230,16 @@ LRESULT CALLBACK SplitterWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
     {
     case WM_LBUTTONDOWN:
         m_SplitterWindow_IsMoving = true;
-        m_SplitterWindow_MovingStartY = GET_Y_LPARAM(lParam);
+        m_SplitterWindow_MovingStartY = m_SplitterWindow_MovingPrevY = GET_Y_LPARAM(lParam);
         ::SetCapture(hWnd);
-        //TODO: Draw frame
+        SplitterWindow_DrawRect(hWnd, m_SplitterWindow_MovingStartY, m_SplitterWindow_MovingStartY);
         return 0;
     case WM_LBUTTONUP:
         if (m_SplitterWindow_IsMoving)
         {
             m_SplitterWindow_IsMoving = false;
             ::ReleaseCapture();
+            SplitterWindow_DrawRect(hWnd, m_SplitterWindow_MovingPrevY, m_SplitterWindow_MovingPrevY);
 
             int deltaY = GET_Y_LPARAM(lParam) - m_SplitterWindow_MovingStartY;
             SplitterWindow_MoveWindows(hWnd, deltaY);
@@ -226,7 +248,10 @@ LRESULT CALLBACK SplitterWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
     case WM_MOUSEMOVE:
         if ((wParam == MK_LBUTTON) && m_SplitterWindow_IsMoving)
         {
-            //TODO: Redraw frame
+            int prevY = m_SplitterWindow_MovingPrevY;
+            m_SplitterWindow_MovingPrevY = GET_Y_LPARAM(lParam);
+            if (prevY != m_SplitterWindow_MovingPrevY)
+                SplitterWindow_DrawRect(hWnd, prevY, m_SplitterWindow_MovingPrevY);
         }
         return 0;
     default:
