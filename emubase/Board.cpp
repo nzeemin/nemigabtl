@@ -533,7 +533,12 @@ void CMotherboard::SetWord(WORD address, BOOL okHaltMode, WORD word)
             return;
         }
         else if (address == 0177566)
+        {
             m_Port170006 |= 040000;
+//#if !defined(PRODUCT)
+//            DebugLogFormat(_T("177566 TERMOUT %04x\r\n"), word);
+//#endif
+        }
         m_pCPU->FireHALT();
 //#if !defined(PRODUCT)
 //        DebugLogFormat(_T("SetWord 06o\r\n"), address);
@@ -578,7 +583,12 @@ void CMotherboard::SetByte(WORD address, BOOL okHaltMode, BYTE byte)
             return;
         }
         else if (address == 0177566)
+        {
             m_Port170006 |= 040000;
+//#if !defined(PRODUCT)
+//            DebugLogFormat(_T("177566 TERMOUT %02x\r\n"), byte);
+//#endif
+        }
         m_pCPU->FireHALT();
         SetRAMByte(offset, byte);
 //#if !defined(PRODUCT)

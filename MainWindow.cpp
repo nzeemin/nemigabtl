@@ -61,7 +61,6 @@ void MainWindow_DoViewScreenMode(int newMode);
 void MainWindow_DoEmulatorRun();
 void MainWindow_DoEmulatorAutostart();
 void MainWindow_DoEmulatorReset();
-void MainWindow_DoEmulatorRealSpeed();
 void MainWindow_DoEmulatorSound();
 void MainWindow_DoEmulatorParallel();
 void MainWindow_DoFileSaveState();
@@ -753,9 +752,6 @@ bool MainWindow_DoCommand(int commandId)
     case ID_EMULATOR_RESET:
         MainWindow_DoEmulatorReset();
         break;
-    case ID_EMULATOR_REALSPEED:
-        MainWindow_DoEmulatorRealSpeed();
-        break;
     case ID_EMULATOR_SOUND:
         MainWindow_DoEmulatorSound();
         break;
@@ -905,12 +901,6 @@ void MainWindow_DoEmulatorAutostart()
 void MainWindow_DoEmulatorReset()
 {
     Emulator_Reset();
-}
-void MainWindow_DoEmulatorRealSpeed()
-{
-    Settings_SetRealSpeed(!Settings_GetRealSpeed());
-
-    MainWindow_UpdateMenu();
 }
 void MainWindow_DoEmulatorSound()
 {

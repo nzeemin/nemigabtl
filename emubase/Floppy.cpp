@@ -283,7 +283,9 @@ WORD CFloppyController::GetData(void)
 void CFloppyController::WriteData(WORD data)
 {
 #if !defined(PRODUCT)
-    DebugLogFormat(_T("Floppy%d WRITE %02x POS%04d\r\n"), m_drive, data, m_pDrive->dataptr);  //DEBUG
+    WORD offset = m_pDrive->dataptr;
+    if (offset >= 10 && (offset - 10) % 130 == 0)
+        DebugLogFormat(_T("Floppy%d WRITE %02x POS%04d SC%02d TR%02d\r\n"), m_drive, data, m_pDrive->dataptr, (offset - 10) / 130, m_track);
 #endif
     m_motorcount = 0;
 
@@ -597,7 +599,9 @@ static void EncodeTrackData(const BYTE* pSrc, BYTE* data, WORD track, WORD side)
         checksumStart = data + ptr;
         for (int i = 0; i < 80; i++)
             data[ptr++] = 23;
-        for (int i = 0; i < 128 - 80; i++)
+        data[ptr++] = 0x30;
+        data[ptr++] = 0x07;
+        for (int i = 0; i < 128 - 82; i++)
             data[ptr++] = 0xff;
         checksum = CalculateChecksum(checksumStart, 128);
         data[ptr++] = (checksum & 0xff);  data[ptr++] = ((checksum & 0xff00) >> 8);
