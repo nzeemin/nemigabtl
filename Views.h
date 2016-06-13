@@ -14,7 +14,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #pragma once
 
 //////////////////////////////////////////////////////////////////////
-
+// Window class names
 
 const LPCTSTR CLASSNAME_SCREENVIEW      = _T("NEMIGABTLSCREEN");
 const LPCTSTR CLASSNAME_KEYBOARDVIEW    = _T("NEMIGABTLKEYBOARD");
@@ -40,7 +40,7 @@ void ScreenView_PrepareScreen();
 void ScreenView_ScanKeyboard();
 void ScreenView_ProcessKeyboard();
 void ScreenView_RedrawScreen();  // Force to call PrepareScreen and to draw the image
-void CreateScreenView(HWND hwndParent, int x, int y, int cxWidth);
+void ScreenView_Create(HWND hwndParent, int x, int y, int cxWidth);
 LRESULT CALLBACK ScreenViewWndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL ScreenView_SaveScreenshot(LPCTSTR sFileName);
 void ScreenView_KeyEvent(BYTE keyscan, BOOL pressed);
@@ -54,7 +54,7 @@ extern HWND g_hwndKeyboard;  // Keyboard View window handle
 void KeyboardView_RegisterClass();
 void KeyboardView_Init();
 void KeyboardView_Done();
-void CreateKeyboardView(HWND hwndParent, int x, int y, int width, int height);
+void KeyboardView_Create(HWND hwndParent, int x, int y, int width, int height);
 LRESULT CALLBACK KeyboardViewWndProc(HWND, UINT, WPARAM, LPARAM);
 
 
@@ -65,7 +65,7 @@ extern HWND g_hwndDebug;  // Debug View window handle
 
 void DebugView_RegisterClass();
 void DebugView_Init();
-void CreateDebugView(HWND hwndParent, int x, int y, int width, int height);
+void DebugView_Create(HWND hwndParent, int x, int y, int width, int height);
 LRESULT CALLBACK DebugViewWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DebugViewViewerWndProc(HWND, UINT, WPARAM, LPARAM);
 void DebugView_OnUpdate();
@@ -78,7 +78,7 @@ BOOL DebugView_IsRegisterChanged(int regno);
 extern HWND g_hwndDisasm;  // Disasm View window handle
 
 void DisasmView_RegisterClass();
-void CreateDisasmView(HWND hwndParent, int x, int y, int width, int height);
+void DisasmView_Create(HWND hwndParent, int x, int y, int width, int height);
 LRESULT CALLBACK DisasmViewWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK DisasmViewViewerWndProc(HWND, UINT, WPARAM, LPARAM);
 void DisasmView_OnUpdate();
@@ -91,7 +91,7 @@ void DisasmView_SetCurrentProc(BOOL okCPU);
 extern HWND g_hwndMemory;  // Memory view window handler
 
 void MemoryView_RegisterClass();
-void CreateMemoryView(HWND hwndParent, int x, int y, int width, int height);
+void MemoryView_Create(HWND hwndParent, int x, int y, int width, int height);
 LRESULT CALLBACK MemoryViewWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -102,7 +102,7 @@ LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
 extern HWND g_hwndConsole;  // Console View window handle
 
 void ConsoleView_RegisterClass();
-void CreateConsoleView(HWND hwndParent, int x, int y, int width, int height);
+void ConsoleView_Create(HWND hwndParent, int x, int y, int width, int height);
 LRESULT CALLBACK ConsoleViewWndProc(HWND, UINT, WPARAM, LPARAM);
 void ConsoleView_Print(LPCTSTR message);
 void ConsoleView_Activate();
