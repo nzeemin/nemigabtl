@@ -90,39 +90,9 @@ void CProcessor::Init()
     RegisterMethodRef( 0000100, 0000177, &CProcessor::ExecuteJMP );
     RegisterMethodRef( 0000200, 0000207, &CProcessor::ExecuteRTS );  // RTS / RETURN
 
-    RegisterMethodRef( 0000240, 0000240, &CProcessor::ExecuteNOP );
-    RegisterMethodRef( 0000241, 0000241, &CProcessor::ExecuteCLC );
-    RegisterMethodRef( 0000242, 0000242, &CProcessor::ExecuteCLV );
-    RegisterMethodRef( 0000243, 0000243, &CProcessor::ExecuteCLVC );
-    RegisterMethodRef( 0000244, 0000244, &CProcessor::ExecuteCLZ );
-    RegisterMethodRef( 0000245, 0000245, &CProcessor::ExecuteCLZC );
-    RegisterMethodRef( 0000246, 0000246, &CProcessor::ExecuteCLZV );
-    RegisterMethodRef( 0000247, 0000247, &CProcessor::ExecuteCLZVC );
-    RegisterMethodRef( 0000250, 0000250, &CProcessor::ExecuteCLN );
-    RegisterMethodRef( 0000251, 0000251, &CProcessor::ExecuteCLNC );
-    RegisterMethodRef( 0000252, 0000252, &CProcessor::ExecuteCLNV );
-    RegisterMethodRef( 0000253, 0000253, &CProcessor::ExecuteCLNVC );
-    RegisterMethodRef( 0000254, 0000254, &CProcessor::ExecuteCLNZ );
-    RegisterMethodRef( 0000255, 0000255, &CProcessor::ExecuteCLNZC );
-    RegisterMethodRef( 0000256, 0000256, &CProcessor::ExecuteCLNZV );
-    RegisterMethodRef( 0000257, 0000257, &CProcessor::ExecuteCCC );
+    RegisterMethodRef( 0000240, 0000257, &CProcessor::ExecuteCCC );
 
-    RegisterMethodRef( 0000260, 0000260, &CProcessor::ExecuteNOP );
-    RegisterMethodRef( 0000261, 0000261, &CProcessor::ExecuteSEC );
-    RegisterMethodRef( 0000262, 0000262, &CProcessor::ExecuteSEV );
-    RegisterMethodRef( 0000263, 0000263, &CProcessor::ExecuteSEVC );
-    RegisterMethodRef( 0000264, 0000264, &CProcessor::ExecuteSEZ );
-    RegisterMethodRef( 0000265, 0000265, &CProcessor::ExecuteSEZC );
-    RegisterMethodRef( 0000266, 0000266, &CProcessor::ExecuteSEZV );
-    RegisterMethodRef( 0000267, 0000267, &CProcessor::ExecuteSEZVC );
-    RegisterMethodRef( 0000270, 0000270, &CProcessor::ExecuteSEN );
-    RegisterMethodRef( 0000271, 0000271, &CProcessor::ExecuteSENC );
-    RegisterMethodRef( 0000272, 0000272, &CProcessor::ExecuteSENV );
-    RegisterMethodRef( 0000273, 0000273, &CProcessor::ExecuteSENVC );
-    RegisterMethodRef( 0000274, 0000274, &CProcessor::ExecuteSENZ );
-    RegisterMethodRef( 0000275, 0000275, &CProcessor::ExecuteSENZC );
-    RegisterMethodRef( 0000276, 0000276, &CProcessor::ExecuteSENZV );
-    RegisterMethodRef( 0000277, 0000277, &CProcessor::ExecuteSCC );
+    RegisterMethodRef( 0000260, 0000277, &CProcessor::ExecuteSCC );
 
     RegisterMethodRef( 0000300, 0000377, &CProcessor::ExecuteSWAB );
 
@@ -805,112 +775,9 @@ void CProcessor::ExecuteNOP ()  // NOP - Нет операции
     m_internalTick = TIMING_NOP;
 }
 
-void CProcessor::ExecuteCLC ()  // CLC - Очистка C
-{
-    SetC(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLV ()
-{
-    SetV(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLVC ()
-{
-    SetV(FALSE);
-    SetC(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLZ ()
-{
-    SetZ(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLZC ()
-{
-    SetZ(FALSE);
-    SetC(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLZV ()
-{
-    SetZ(FALSE);
-    SetV(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLZVC ()
-{
-    SetZ(FALSE);
-    SetV(FALSE);
-    SetC(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLN ()
-{
-    SetN(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLNC ()
-{
-    SetN(FALSE);
-    SetC(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLNV ()
-{
-    SetN(FALSE);
-    SetV(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLNVC ()
-{
-    SetN(FALSE);
-    SetV(FALSE);
-    SetZ(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLNZ ()
-{
-    SetN(FALSE);
-    SetZ(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLNZC ()
-{
-    SetN(FALSE);
-    SetZ(FALSE);
-    SetC(FALSE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteCLNZV ()
-{
-    SetN(FALSE);
-    SetZ(FALSE);
-    SetV(FALSE);
-    m_internalTick = TIMING_NOP;
-}
 void CProcessor::ExecuteCCC ()
 {
-    SetC(FALSE);
-    SetV(FALSE);
-    SetZ(FALSE);
-    SetN(FALSE);
-    m_internalTick = TIMING_REGREG;
-}
-void CProcessor::ExecuteSEC ()
-{
-    SetC(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSEV ()
-{
-    SetV(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSEVC ()
-{
-    SetV(TRUE);
-    SetC(TRUE);
+    SetLPSW(GetLPSW() &  ~((BYTE)(m_instruction & 0xff) & 017));
     m_internalTick = TIMING_NOP;
 }
 void CProcessor::ExecuteSEZ ()
@@ -918,76 +785,10 @@ void CProcessor::ExecuteSEZ ()
     SetZ(TRUE);
     m_internalTick = TIMING_NOP;
 }
-void CProcessor::ExecuteSEZC ()
-{
-    SetZ(TRUE);
-    SetC(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSEZV ()
-{
-    SetZ(TRUE);
-    SetV(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSEZVC ()
-{
-    SetZ(TRUE);
-    SetV(TRUE);
-    SetC(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSEN ()
-{
-    SetN(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSENC ()
-{
-    SetN(TRUE);
-    SetZ(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSENV ()
-{
-    SetN(TRUE);
-    SetV(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSENVC ()
-{
-    SetN(TRUE);
-    SetV(TRUE);
-    SetC(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSENZ ()
-{
-    SetN(TRUE);
-    SetZ(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSENZC ()
-{
-    SetN(TRUE);
-    SetZ(TRUE);
-    SetC(TRUE);
-    m_internalTick = TIMING_NOP;
-}
-void CProcessor::ExecuteSENZV ()
-{
-    SetN(TRUE);
-    SetZ(TRUE);
-    SetV(TRUE);
-    m_internalTick = TIMING_NOP;
-}
 void CProcessor::ExecuteSCC ()
 {
-    SetC(TRUE);
-    SetV(TRUE);
-    SetZ(TRUE);
-    SetN(TRUE);
-    m_internalTick = TIMING_REGREG;
+    SetLPSW(GetLPSW() |  ((BYTE)(m_instruction & 0xff) & 017));
+    m_internalTick = TIMING_NOP;
 }
 
 void CProcessor::ExecuteJMP ()  // JMP - jump: PC = &d (a-mode > 0)
