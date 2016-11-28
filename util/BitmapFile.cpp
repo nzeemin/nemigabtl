@@ -182,13 +182,14 @@ BOOL PngFile_WriteEnd(FILE * fpFile)
     return TRUE;
 }
 
-BOOL PngFile_WritePalette(FILE * fpFile, const DWORD* palette)
+BOOL PngFile_WritePalette(FILE * fpFile, const DWORD* palette, int palsize)
 {
-    BYTE PLTEchunk[12 + 4 * 3];
-    SaveValueMSB(PLTEchunk, 4 * 3);
+    int chunksize = 12 + palsize * 3;
+    BYTE PLTEchunk[12 + 16 * 3];
+    SaveValueMSB(PLTEchunk, palsize * 3);
     memcpy(PLTEchunk + 4, "PLTE", 4);
     BYTE * p = PLTEchunk + 8;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < palsize; i++)
     {
         DWORD color = *(palette++);
         *(p++) = (BYTE)(color >> 16);
@@ -196,8 +197,8 @@ BOOL PngFile_WritePalette(FILE * fpFile, const DWORD* palette)
         *(p++) = (BYTE)(color >> 0);
     }
     SavePngChunkChecksum(PLTEchunk);
-    size_t dwBytesWritten = ::fwrite(PLTEchunk, 1, sizeof(PLTEchunk), fpFile);
-    if (dwBytesWritten != sizeof(PLTEchunk))
+    size_t dwBytesWritten = ::fwrite(PLTEchunk, 1, chunksize, fpFile);
+    if (dwBytesWritten != chunksize)
         return FALSE;
 
     return TRUE;
@@ -239,7 +240,7 @@ BOOL PngFile_WriteImageData4(FILE * fpFile, DWORD framenum, const DWORD* pBits, 
         {
             DWORD rgb = *(psrc++);
             BYTE color = 0;
-            for (BYTE c = 0; c < 4; c++)
+            for (BYTE c = 0; c < 16; c++)
             {
                 if (palette[c] == rgb)
                 {
@@ -273,11 +274,11 @@ BOOL PngFile_WriteImageData4(FILE * fpFile, DWORD framenum, const DWORD* pBits, 
 }
 
 BOOL PngFile_SaveScreenshot(
-    const DWORD* pBits, const DWORD* palette, LPCTSTR sFileName,
+    const DWORD* pBits, const DWORD* palette4, LPCTSTR sFileName,
     int screenWidth, int screenHeight)
 {
     ASSERT(pBits != NULL);
-    ASSERT(palette != NULL);
+    ASSERT(palette4 != NULL);
     ASSERT(sFileName != NULL);
 
     // Create file
@@ -285,19 +286,51 @@ BOOL PngFile_SaveScreenshot(
     if (fpFile == NULL)
         return FALSE;
 
+    // Prepare 16-color palette using the given 4-color palette and all colors from the bitmap
+    DWORD palette16[16];
+    int palsize = 4;
+    {
+        memset(palette16, 0, sizeof(palette16));
+        memcpy(palette16, palette4, sizeof(DWORD) * 4);
+        for (int line = 0; line < screenHeight; line++)
+        {
+            const DWORD * psrc = pBits + ((screenHeight - 1 - line) * screenWidth);
+            for (int i = 0; i < screenWidth; i++)
+            {
+                DWORD rgb = *(psrc++);
+                BYTE color = 255;
+                for (BYTE c = 0; c < palsize; c++)
+                {
+                    if (palette16[c] == rgb)
+                    {
+                        color = c;
+                        break;
+                    }
+                }
+                if (color != 255)
+                    continue;
+                if (palsize < 16)
+                {
+                    palette16[palsize] = rgb;
+                    palsize++;
+                }
+            }
+        }
+    }
+
     if (!PngFile_WriteHeader(fpFile, 4, screenWidth, screenHeight))
     {
         ::fclose(fpFile);
         return FALSE;
     }
 
-    if (!PngFile_WritePalette(fpFile, palette))
+    if (!PngFile_WritePalette(fpFile, palette16, palsize))
     {
         ::fclose(fpFile);
         return FALSE;
     }
 
-    if (!PngFile_WriteImageData4(fpFile, 0, pBits, palette, screenWidth, screenHeight))
+    if (!PngFile_WriteImageData4(fpFile, 0, pBits, palette16, screenWidth, screenHeight))
     {
         ::fclose(fpFile);
         return FALSE;

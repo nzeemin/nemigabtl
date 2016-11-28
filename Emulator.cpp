@@ -78,7 +78,7 @@ static ScreenModeReference[] =
 
 const DWORD ScreenView_Palette[4] =
 {
-    0x000000, 0xd0d0d0, 0xa0a0a0, 0xFFFFFF
+    0x000000, 0xB0B0B0, 0x404040, 0xFFFFFF
 };
 
 
