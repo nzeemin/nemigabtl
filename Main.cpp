@@ -122,9 +122,10 @@ int APIENTRY _tWinMain(
             ::QueryPerformanceCounter(&nFrameFinishTime);
             LONGLONG nTimeElapsed = (nFrameFinishTime.QuadPart - nFrameStartTime.QuadPart)
                     * 1000 / nPerformanceFrequency.QuadPart;
-            if (nTimeElapsed > 0 && nTimeElapsed < 30)  // 1000 millisec / 25 = 40 millisec
+            LONGLONG nFrameDelay = 1000 / 25 - 1;  // 1000 millisec / 25 = 40 millisec
+            if (nTimeElapsed > 0 && nTimeElapsed < nFrameDelay)
             {
-                LONG nTimeToSleep = (LONG)(30 - nTimeElapsed);
+                LONG nTimeToSleep = (LONG)(nFrameDelay - nTimeElapsed);
                 ::Sleep((DWORD) nTimeToSleep);
             }
         }

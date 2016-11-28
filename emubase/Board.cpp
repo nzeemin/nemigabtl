@@ -314,15 +314,15 @@ void CMotherboard::ExecuteCPU()
 ‘рейм делим на 20000 тиков, 1 тик = 2 мкс
 ¬ каждый фрейм происходит:
 * 320000 тиков таймер 1 -- 16 раз за тик -- 8 ћ√ц
-*  80000 тиков ÷ѕ       --  4 раз за тик -- 4 ћ√ц, 2.5 мкс
+* 160000 тиков ÷ѕ       --  8 раз за тик -- 4 ћ√ц, 2.5 мкс
 *      2 тика IRQ2 и таймер 2 -- 50 √ц, в 0-й и 10000-й тик фрейма
 *    625 тиков FDD -- каждый 32-й тик (300 RPM = 5 оборотов в секунду)
 */
 BOOL CMotherboard::SystemFrame()
 {
-    int frameProcTicks = 4;
+    const int frameProcTicks = 8;
     const int audioticks = 20286 / (SOUNDSAMPLERATE / 25);
-    int floppyTicks = 32;
+    const int floppyTicks = 32;
     int teletypeTxCount = 0;
 
     for (int frameticks = 0; frameticks < 20000; frameticks++)
@@ -337,7 +337,7 @@ BOOL CMotherboard::SystemFrame()
             if (m_pCPU->GetPC() == m_CPUbp)
                 return FALSE;  // Breakpoint
 
-            // Timer 1 ticks, 4 MHz = 25 * 20000 * 4 * 2
+            // Timer 1 ticks
             TimerTick();
             TimerTick();
         }
