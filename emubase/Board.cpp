@@ -28,6 +28,7 @@ CMotherboard::CMotherboard ()
     m_okTraceCPU = false;
     m_SoundGenCallback = NULL;
     m_ParallelOutCallback = NULL;
+    m_okTimer50OnOff = FALSE;
     m_okSoundOnOff = false;
     m_Timer1 = m_Timer1div = m_Timer2 = 0;
 
@@ -233,12 +234,10 @@ void CMotherboard::ResetHALT()
 
 void CMotherboard::Tick50()  // 50 Hz timer
 {
-    //if ((m_Port177662wr & 040000) == 0)
-    //{
-    //m_pCPU->TickIRQ2();
-    //}
-
-    //m_pCPU->FireHALT();
+    if (m_okTimer50OnOff)
+    {
+        m_pCPU->TickIRQ2();
+    }
 
     if (m_Timer2 == 0)
     {
@@ -314,13 +313,13 @@ void CMotherboard::ExecuteCPU()
 Фрейм делим на 20000 тиков, 1 тик = 2 мкс
 В каждый фрейм происходит:
 * 320000 тиков таймер 1 -- 16 раз за тик -- 8 МГц
-* 160000 тиков ЦП       --  8 раз за тик -- 4 МГц, 2.5 мкс
+* 320000 тиков ЦП       -- 16 раз за тик
 *      2 тика IRQ2 и таймер 2 -- 50 Гц, в 0-й и 10000-й тик фрейма
 *    625 тиков FDD -- каждый 32-й тик (300 RPM = 5 оборотов в секунду)
 */
 BOOL CMotherboard::SystemFrame()
 {
-    const int frameProcTicks = 8;
+    const int frameProcTicks = 16;
     const int audioticks = 20286 / (SOUNDSAMPLERATE / 25);
     const int floppyTicks = 32;
     int teletypeTxCount = 0;
@@ -339,10 +338,9 @@ BOOL CMotherboard::SystemFrame()
 
             // Timer 1 ticks
             TimerTick();
-            TimerTick();
         }
 
-        if (frameticks % 10000 == 0)
+        if (frameticks == 0 || frameticks == 10000)
         {
             Tick50();  // 1/50 timer event
         }

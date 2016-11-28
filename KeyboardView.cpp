@@ -38,6 +38,7 @@ BYTE * m_pKeyboardRom = NULL;
 BYTE m_nKeyboardKeyPressed = KEYSCAN_NONE;  // Scan-code for the key pressed, or KEYSCAN_NONE
 BYTE m_nKeyboardCharPressed = 0;
 
+void KeyboardView_InvalidateIndicators();
 void KeyboardView_OnDraw(HDC hdc);
 int KeyboardView_GetKeyByPoint(int x, int y);
 void Keyboard_DrawKey(HDC hdc, BYTE keyscan);
@@ -318,13 +319,18 @@ LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
                     m_arrKeyboardIndicators[3].state = FALSE;   // ÖÈÔ
                     repaintIndicators = TRUE;
                     break;
+                case KEYEXTRA_TIMER:
+                    {
+                        BOOL okOnOff = !m_arrKeyboardIndicators[6].state;  // ÒÀÉÌÅÐ
+                        m_arrKeyboardIndicators[6].state = okOnOff;
+                        g_pBoard->SetTimer50OnOff(okOnOff);
+                        repaintIndicators = TRUE;
+                    }
+                    break;
                 }
 
                 if (repaintIndicators)
-                {
-                    RECT rcInd;  rcInd.left = 0;  rcInd.top = 6;  rcInd.right = 360;  rcInd.bottom = 20;
-                    ::InvalidateRect(g_hwndKeyboard, &rcInd, FALSE);
-                }
+                    KeyboardView_InvalidateIndicators();
             }
 
             ::SetCapture(g_hwndKeyboard);
@@ -358,6 +364,27 @@ LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return (LRESULT)FALSE;
+}
+
+void KeyboardView_InvalidateIndicators()
+{
+    RECT rc;  ::GetClientRect(g_hwndKeyboard, &rc);
+
+    m_nKeyboardBitmapLeft = (rc.right - 592) / 2;
+    m_nKeyboardBitmapTop = (rc.bottom - 160) / 2;
+    if (m_nKeyboardBitmapTop < 0) m_nKeyboardBitmapTop = 0;
+    if (m_nKeyboardBitmapTop > 16) m_nKeyboardBitmapTop = 16;
+
+    for (int i = 0; i < m_nKeyboardIndicatorsCount; i++)
+    {
+        RECT rcRadio;
+        rcRadio.left = m_nKeyboardBitmapLeft + m_arrKeyboardIndicators[i].x;
+        rcRadio.top = m_nKeyboardBitmapTop + m_arrKeyboardIndicators[i].y;
+        rcRadio.right = rcRadio.left + m_arrKeyboardIndicators[i].w;
+        rcRadio.bottom = rcRadio.top + m_arrKeyboardIndicators[i].h;
+
+        ::InvalidateRect(g_hwndKeyboard, &rcRadio, FALSE);
+    }
 }
 
 void KeyboardView_OnDraw(HDC hdc)

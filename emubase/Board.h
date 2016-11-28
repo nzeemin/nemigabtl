@@ -59,6 +59,7 @@ class CMotherboard  // NEMIGA computer
 private:  // Devices
     CProcessor*     m_pCPU;  // CPU device
     CFloppyController*  m_pFloppyCtl;  // FDD control
+    BOOL        m_okTimer50OnOff;
 private:  // Memory
     WORD        m_Configuration;  // See BK_COPT_Xxx flag constants
     BYTE*       m_pRAM;  // RAM, 8 * 16 = 128 KB
@@ -89,6 +90,8 @@ public:  // System control
     void        Reset();  // Reset computer
     void        LoadROM(const BYTE* pBuffer);  // Load 8 KB ROM image from the biffer
     void        LoadRAM(int startbank, const BYTE* pBuffer, int length);  // Load data into the RAM
+    void        SetTimer50OnOff(BOOL okOnOff) { m_okTimer50OnOff = okOnOff; }
+    BOOL        IsTimer50OnOff() const { return m_okTimer50OnOff; }
     void        Tick50();           // Tick 50 Hz - goes to CPU EVNT line
     void		TimerTick();		// Timer Tick, 31250 Hz, 32uS -- dividers are within timer routine
     void        ResetDevices();     // INIT signal

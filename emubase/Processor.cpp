@@ -30,7 +30,7 @@ const int TIMING_SOB    =   20;  // 6.8 us
 const int TIMING_BR     =   16;  // 5.4 us
 const int TIMING_MARK   =   36;
 
-const int TIMING_REGREG =   12;  // Base timing
+const int TIMING_REGREG =   11;  // Base timing
 const int TIMING_A[8]   = { 0, 12, 12, 20, 12, 20, 20, 28 };  // Source
 const int TIMING_B[8]   = { 0, 20, 20, 32, 20, 32, 32, 40 };  // Destination
 const int TIMING_AB[8]  = { 0, 16, 16, 24, 16, 24, 24, 32 };  // Source and destination are the same
@@ -57,12 +57,12 @@ WORD ASHC_S_TIMING = 0x0008;
 
 WORD MUL_TIMING[8] =
 {
-    0x0060, 0x00C7, 0x00C7, 0x00D4, 0x00CA, 0x00D8, 0x00E1, 0x00EC
+    0x0034, 0x009B, 0x009B, 0x00A8, 0x009E, 0x00AC, 0x00B5, 0x00C0
 };
 
 WORD DIV_TIMING[8] =
 {
-    0x0080, 0x00E8, 0x00E7, 0x00F4, 0x00EB, 0x00F8,	0x0100,	0x010D
+    0x0020, 0x0088, 0x0087, 0x0094, 0x008B, 0x0098,	0x00A0,	0x00AD
 };
 
 
@@ -321,11 +321,11 @@ void CProcessor::Execute()
                 intrVector = 000014;  intrMode = FALSE;
                 m_TBITrq = FALSE;
             }
-            //else if (m_IRQ2rq && (m_psw & 0200) != 0200)  // EVNT signal, priority 6
-            //{
-            //    intrVector = 0000100;  intrMode = FALSE;
-            //    m_IRQ2rq = FALSE;
-            //}
+            else if (m_IRQ2rq && (m_psw & 0200) != 0200)  // EVNT signal, priority 6
+            {
+                intrVector = 0000100;  intrMode = FALSE;
+                m_IRQ2rq = FALSE;
+            }
             else if (m_virqrq > 0 && (m_psw & 0200) != 0200)  // VIRQ, priority 7
             {
                 intrMode = FALSE;
