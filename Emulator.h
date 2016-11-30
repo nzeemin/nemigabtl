@@ -51,6 +51,7 @@ void Emulator_SetCPUBreakpoint(WORD address);
 void Emulator_SetPPUBreakpoint(WORD address);
 BOOL Emulator_IsBreakpoint();
 void Emulator_SetSound(BOOL soundOnOff);
+BOOL Emulator_SetSerial(BOOL serialOnOff, LPCTSTR serialPort);
 void Emulator_SetParallel(BOOL parallelOnOff);
 void Emulator_Start();
 void Emulator_Stop();

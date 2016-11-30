@@ -27,6 +27,8 @@ CMotherboard::CMotherboard ()
 
     m_okTraceCPU = false;
     m_SoundGenCallback = NULL;
+    m_SerialInCallback = NULL;
+    m_SerialOutCallback = NULL;
     m_ParallelOutCallback = NULL;
     m_okTimer50OnOff = FALSE;
     m_okSoundOnOff = false;
@@ -322,7 +324,8 @@ BOOL CMotherboard::SystemFrame()
     const int frameProcTicks = 16;
     const int audioticks = 20286 / (SOUNDSAMPLERATE / 25);
     const int floppyTicks = 32;
-    int teletypeTxCount = 0;
+    const int serialOutTicks = 20000 / (9600 / 25);
+    int serialTxCount = 0;
 
     for (int frameticks = 0; frameticks < 20000; frameticks++)
     {
@@ -354,21 +357,31 @@ BOOL CMotherboard::SystemFrame()
         if (frameticks % audioticks == 0)  // AUDIO tick
             DoSound();
 
+        if (m_SerialInCallback != NULL && frameticks % 416 == 0)
+        {
+            BYTE b;
+            if (m_SerialInCallback(&b))
+            {
+                //if (SerialInput(b) && (m_Port176570 & 0100))
+                //    m_pCPU->InterruptVIRQ(7, 0370);
+            }
+        }
+
         if (m_ParallelOutCallback != NULL)
         {
-            if ((m_Port177514 & 0240) == 040)
-            {
-                m_Port177514 |= 0200;  // Set TR flag
-                // Now printer waits for a next byte
-                if (m_Port177514 & 0100)
-                    m_pCPU->InterruptVIRQ(5, 0200);
-            }
-            else if ((m_Port177514 & 0240) == 0)
-            {
-                // Byte is ready, print it
-                (*m_ParallelOutCallback)((BYTE)(m_Port177516 & 0xff));
-                m_Port177514 |= 040;  // Set Printer Acknowledge
-            }
+            //if ((m_Port177514 & 0240) == 040)
+            //{
+            //    m_Port177514 |= 0200;  // Set TR flag
+            //    // Now printer waits for a next byte
+            //    if (m_Port177514 & 0100)
+            //        m_pCPU->InterruptVIRQ(5, 0200);
+            //}
+            //else if ((m_Port177514 & 0240) == 0)
+            //{
+            //    // Byte is ready, print it
+            //    (*m_ParallelOutCallback)((BYTE)(m_Port177516 & 0xff));
+            //    m_Port177514 |= 040;  // Set Printer Acknowledge
+            //}
         }
     }
 
@@ -1105,6 +1118,22 @@ void CMotherboard::SetSoundGenCallback(SOUNDGENCALLBACK callback)
     else
     {
         m_SoundGenCallback = callback;
+    }
+}
+
+void CMotherboard::SetSerialCallbacks(SERIALINCALLBACK incallback, SERIALOUTCALLBACK outcallback)
+{
+    if (incallback == NULL || outcallback == NULL)  // Reset callbacks
+    {
+        m_SerialInCallback = NULL;
+        m_SerialOutCallback = NULL;
+        //TODO: Set port value to indicate we are not ready to translate
+    }
+    else
+    {
+        m_SerialInCallback = incallback;
+        m_SerialOutCallback = outcallback;
+        //TODO: Set port value to indicate we are ready to translate
     }
 }
 

@@ -19,6 +19,8 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 const TCHAR m_Settings_IniAppName[] = _T("NEMIGA");
 TCHAR m_Settings_IniPath[MAX_PATH];
 
+DCB  m_Settings_SerialConfig;
+
 //////////////////////////////////////////////////////////////////////
 // Options
 
@@ -35,6 +37,25 @@ void Settings_Init()
     *pExt++ = _T('i');
     *pExt++ = _T('n');
     *pExt++ = _T('i');
+
+    // Set m_Settings_SerialConfig defaults
+    ::memset(&m_Settings_SerialConfig, 0, sizeof(DCB));
+    m_Settings_SerialConfig.DCBlength = sizeof(DCB);
+    m_Settings_SerialConfig.BaudRate = 9600;
+    m_Settings_SerialConfig.ByteSize = 8;
+    m_Settings_SerialConfig.fBinary = 1;
+    m_Settings_SerialConfig.fParity = 0;
+    m_Settings_SerialConfig.fOutxCtsFlow = m_Settings_SerialConfig.fOutxDsrFlow = 0;
+    m_Settings_SerialConfig.fDtrControl = DTR_CONTROL_ENABLE;
+    m_Settings_SerialConfig.fDsrSensitivity = 0;
+    m_Settings_SerialConfig.fTXContinueOnXoff = 0;
+    m_Settings_SerialConfig.fOutX = m_Settings_SerialConfig.fInX = 0;
+    m_Settings_SerialConfig.fErrorChar = 0;
+    m_Settings_SerialConfig.fNull = 0;
+    m_Settings_SerialConfig.fRtsControl = RTS_CONTROL_HANDSHAKE;
+    m_Settings_SerialConfig.fAbortOnError = 0;
+    m_Settings_SerialConfig.Parity = NOPARITY;
+    m_Settings_SerialConfig.StopBits = TWOSTOPBITS;
 }
 void Settings_Done()
 {
@@ -263,7 +284,44 @@ SETTINGS_GETSET_DWORD(SoundVolume, _T("SoundVolume"), WORD, 0x3fff);
 
 SETTINGS_GETSET_DWORD(Keyboard, _T("Keyboard"), BOOL, TRUE);
 
+SETTINGS_GETSET_DWORD(Serial, _T("Serial"), BOOL, FALSE);
+
 SETTINGS_GETSET_DWORD(Parallel, _T("Parallel"), BOOL, FALSE);
+
+void Settings_GetSerialPort(LPTSTR buffer)
+{
+    Settings_LoadStringValue(_T("SerialPort"), buffer, 10);
+}
+void Settings_SetSerialPort(LPCTSTR sValue)
+{
+    Settings_SaveStringValue(_T("SerialPort"), sValue);
+}
+
+BOOL m_Settings_SerialConfig_Valid = FALSE;
+void Settings_GetSerialConfig(DCB * pDcb)
+{
+    if (!m_Settings_SerialConfig_Valid)
+    {
+        DCB dcb;
+        if (Settings_LoadBinaryValue(_T("SerialConfig"), &dcb, sizeof(DCB)))
+        {
+            ::memcpy(&m_Settings_SerialConfig, &dcb, sizeof(DCB));
+        }
+        //NOTE: else -- use defaults from m_Settings_SerialConfig
+
+        m_Settings_SerialConfig_Valid = TRUE;
+    }
+    if (m_Settings_SerialConfig_Valid)
+    {
+        ::memcpy(pDcb, &m_Settings_SerialConfig, sizeof(DCB));
+    }
+}
+void Settings_SetSerialConfig(const DCB * pDcb)
+{
+    ::memcpy(&m_Settings_SerialConfig, pDcb, sizeof(DCB));
+    Settings_SaveBinaryValue(_T("SerialConfig"), (const void *)pDcb, sizeof(DCB));
+    m_Settings_SerialConfig_Valid = TRUE;
+}
 
 SETTINGS_GETSET_DWORD(Network, _T("Network"), BOOL, FALSE);
 

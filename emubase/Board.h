@@ -43,6 +43,19 @@ class CProcessor;
 // Sound generator callback function type
 typedef void (CALLBACK* SOUNDGENCALLBACK)(unsigned short L, unsigned short R);
 
+// Serial port callback for receiving
+// Output:
+//   pbyte      Byte received
+//   result     true means we have a new byte, false means not ready yet
+typedef BOOL (CALLBACK* SERIALINCALLBACK)(BYTE* pbyte);
+
+// Serial port callback for translating
+// Input:
+//   byte       A byte to translate
+// Output:
+//   result     true means we translated the byte successfully, false means we have an error
+typedef BOOL (CALLBACK* SERIALOUTCALLBACK)(BYTE byte);
+
 // Parallel port output callback
 // Input:
 //   byte       An output byte
@@ -109,6 +122,7 @@ public:  // Floppy
     BOOL        IsFloppyEngineOn() const;
 public:  // Callbacks
     void		SetSoundGenCallback(SOUNDGENCALLBACK callback);
+    void        SetSerialCallbacks(SERIALINCALLBACK incallback, SERIALOUTCALLBACK outcallback);
     void        SetParallelOutCallback(PARALLELOUTCALLBACK outcallback);
 public:  // Memory
     // Read command for execution
@@ -163,6 +177,8 @@ private:
     bool        m_okSoundOnOff;
 private:
     SOUNDGENCALLBACK m_SoundGenCallback;
+    SERIALINCALLBACK    m_SerialInCallback;
+    SERIALOUTCALLBACK   m_SerialOutCallback;
     PARALLELOUTCALLBACK m_ParallelOutCallback;
 
     void        DoSound();

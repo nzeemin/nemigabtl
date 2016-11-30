@@ -62,6 +62,7 @@ void MainWindow_DoEmulatorRun();
 void MainWindow_DoEmulatorAutostart();
 void MainWindow_DoEmulatorReset();
 void MainWindow_DoEmulatorSound();
+void MainWindow_DoEmulatorSerial();
 void MainWindow_DoEmulatorParallel();
 void MainWindow_DoFileSaveState();
 void MainWindow_DoFileLoadState();
@@ -260,6 +261,15 @@ void MainWindow_RestoreSettings()
     // Restore ScreenViewMode
     int scrmode = Settings_GetScreenViewMode();
     ScreenView_SetScreenMode(scrmode);
+
+    // Restore Serial flag
+    if (Settings_GetSerial())
+    {
+        TCHAR portname[10];
+        Settings_GetSerialPort(portname);
+        if (!Emulator_SetSerial(TRUE, portname))
+            Settings_SetSerial(FALSE);
+    }
 
     // Restore Parallel
     if (Settings_GetParallel())
@@ -670,6 +680,8 @@ void MainWindow_UpdateMenu()
     // Emulator menu options
     CheckMenuItem(hMenu, ID_EMULATOR_AUTOSTART, (Settings_GetAutostart() ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_EMULATOR_SOUND, (Settings_GetSound() ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_EMULATOR_SERIAL, (Settings_GetSerial() ? MF_CHECKED : MF_UNCHECKED));
+    SendMessage(m_hwndToolbar, TB_CHECKBUTTON, ID_EMULATOR_SERIAL, (Settings_GetSerial() ? 1 : 0));
     CheckMenuItem(hMenu, ID_EMULATOR_PARALLEL, (Settings_GetParallel() ? MF_CHECKED : MF_UNCHECKED));
 
     MainWindow_SetToolbarImage(ID_EMULATOR_SOUND, (Settings_GetSound() ? ToolbarImageSoundOn : ToolbarImageSoundOff));
@@ -754,6 +766,9 @@ bool MainWindow_DoCommand(int commandId)
         break;
     case ID_EMULATOR_SOUND:
         MainWindow_DoEmulatorSound();
+        break;
+    case ID_EMULATOR_SERIAL:
+        MainWindow_DoEmulatorSerial();
         break;
     case ID_EMULATOR_PARALLEL:
         MainWindow_DoEmulatorParallel();
@@ -907,6 +922,25 @@ void MainWindow_DoEmulatorSound()
     Settings_SetSound(!Settings_GetSound());
 
     Emulator_SetSound(Settings_GetSound());
+
+    MainWindow_UpdateMenu();
+}
+
+void MainWindow_DoEmulatorSerial()
+{
+    BOOL okSerial = Settings_GetSerial();
+    if (!okSerial)
+    {
+        TCHAR portname[10];
+        Settings_GetSerialPort(portname);
+        if (Emulator_SetSerial(TRUE, portname))
+            Settings_SetSerial(TRUE);
+    }
+    else
+    {
+        Emulator_SetSerial(FALSE, NULL);
+        Settings_SetSerial(FALSE);
+    }
 
     MainWindow_UpdateMenu();
 }

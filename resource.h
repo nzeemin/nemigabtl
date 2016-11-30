@@ -21,6 +21,7 @@
 #define IDD_LOADBIN                     145
 #define IDD_SETTINGS                    146
 #define IDR_NEMIGA_KEYB                 147
+#define IDD_DCB_EDITOR                  148
 #define IDC_EDIT1                       1000
 #define IDC_BUILDDATE                   1001
 #define IDC_EDITADDR                    1001
@@ -34,6 +35,17 @@
 #define IDC_EDITFILE                    1005
 #define IDC_VOLUME                      1006
 #define IDC_NETWORKSTATION              1007
+#define IDC_SERIALPORT                  1008
+#define IDC_BUTTON1                     1009
+#define IDC_BUTTON2                     1010
+#define IDC_BAUDRATE                    1011
+#define IDC_PARITY                      1012
+#define IDC_STOPBITS                    1013
+#define IDC_DTRCONTROL                  1014
+#define IDC_RTSCONTROL                  1015
+#define IDC_OUTXCTSFLOW                 1016
+#define IDC_OUTXDSRFLOW                 1017
+#define IDC_DSRSENSITIVITY              1018
 #define ID_VIEW                         32771
 #define ID_VIEW_MEMORY                  32772
 #define ID_EMULATOR                     32773
@@ -61,6 +73,7 @@
 #define ID_EMULATOR_CONF                32808
 #define ID_VIEW_MEMORYMAP               32810
 #define ID_FILE_LOADBIN                 32811
+#define ID_EMULATOR_SERIAL              32812
 #define ID_CONF_NEMIGA303               32813
 #define ID_CONF_NEMIGA405               32814
 #define ID_CONF_NEMIGA406               32815
@@ -81,9 +94,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        148
+#define _APS_NEXT_RESOURCE_VALUE        149
 #define _APS_NEXT_COMMAND_VALUE         32833
-#define _APS_NEXT_CONTROL_VALUE         1008
+#define _APS_NEXT_CONTROL_VALUE         1019
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif
