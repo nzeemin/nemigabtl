@@ -32,6 +32,7 @@ CFloppyDrive::CFloppyDrive()
     okReadOnly = FALSE;
     datatrack = 0;
     dataptr = 0;
+    memset(data, 0, sizeof(data));
 }
 
 void CFloppyDrive::Reset()

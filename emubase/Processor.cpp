@@ -199,6 +199,12 @@ CProcessor::CProcessor (CMotherboard* pBoard)
     m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_IRQ2rq = FALSE;
     m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = FALSE;
     m_virqrq = 0;
+
+    m_instruction = m_instructionpc = 0;
+    m_regsrc = m_methsrc = 0;
+    m_regdest = m_methdest = 0;
+    m_addrsrc = m_addrdest = 0;
+    memset(m_virq, 0, sizeof(m_virq));
 }
 
 void CProcessor::Start ()
@@ -2058,8 +2064,8 @@ void CProcessor::LoadFromImage(const BYTE* pImage)
     // Registers R0..R7
     ::memcpy(m_R, pwImage, 2 * 8);
     // Saved PC and PSW - skip
-    *pwImage++;
-    *pwImage++;
+    pwImage++;
+    pwImage++;
     // Stopped flag
     m_okStopped = (*pwImage++ != 0);
 }
