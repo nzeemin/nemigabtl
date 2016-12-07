@@ -1567,6 +1567,7 @@ void CProcessor::ExecuteMUL ()  // MUL
     if (res < 0) new_psw |= PSW_N;
     if (res == 0) new_psw |= PSW_Z;
     if ((res > 32767) || (res < -32768)) new_psw |= PSW_C;
+    if (res == 32767) new_psw |= PSW_C;  // Nemiga bug in MUL
     SetLPSW(new_psw);
     m_internalTick = MUL_TIMING[m_methdest];
 }
