@@ -293,6 +293,15 @@ IDR_NEMIGA_KEYB         RCDATA                  "nemiga-keyb.rom"
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// BIN
+//
+
+IDR_NEMIGA_ROM_303      BIN                     "nemiga-303.rom"
+IDR_NEMIGA_ROM_405      BIN                     "nemiga-405.rom"
+IDR_NEMIGA_ROM_406      BIN                     "nemiga-406.rom"
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 

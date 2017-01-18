@@ -172,19 +172,24 @@ BOOL Emulator_InitConfiguration(int configuration)
     g_pBoard->SetConfiguration(configuration);
 
     LPCTSTR szRomFileName = NULL;
+    WORD nRomResourceId;
     switch (configuration)
     {
     case EMU_CONF_NEMIGA303:
         szRomFileName = FILENAME_ROM_303;
+        nRomResourceId = IDR_NEMIGA_ROM_303;
         break;
     case EMU_CONF_NEMIGA405:
         szRomFileName = FILENAME_ROM_405;
+        nRomResourceId = IDR_NEMIGA_ROM_405;
         break;
     case EMU_CONF_NEMIGA406:
         szRomFileName = FILENAME_ROM_406;
+        nRomResourceId = IDR_NEMIGA_ROM_406;
         break;
     default:
         szRomFileName = FILENAME_ROM_303;
+        nRomResourceId = IDR_NEMIGA_ROM_303;
         break;
     }
 
@@ -193,8 +198,20 @@ BOOL Emulator_InitConfiguration(int configuration)
     // Load ROM file
     if (!Emulator_LoadRomFile(szRomFileName, buffer, 0, 4096))
     {
-        AlertWarning(_T("Failed to load the ROM file."));
-        return FALSE;
+        // ROM file not found or failed to load, load the ROM from resource instead
+        HRSRC hRes = NULL;
+        DWORD dwDataSize = 0;
+        HGLOBAL hResLoaded = NULL;
+        void * pResData = NULL;
+        if ((hRes = ::FindResource(NULL, MAKEINTRESOURCE(nRomResourceId), _T("BIN"))) == NULL ||
+            (dwDataSize = ::SizeofResource(NULL, hRes)) < 4096 ||
+            (hResLoaded = ::LoadResource(NULL, hRes)) == NULL ||
+            (pResData = ::LockResource(hResLoaded)) == NULL)
+        {
+            AlertWarning(_T("Failed to load the ROM."));
+            return FALSE;
+        }
+        ::memcpy(buffer, pResData, 4096);
     }
     g_pBoard->LoadROM(buffer);
 
