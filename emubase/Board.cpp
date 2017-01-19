@@ -357,13 +357,38 @@ BOOL CMotherboard::SystemFrame()
         if (frameticks % audioticks == 0)  // AUDIO tick
             DoSound();
 
-        if (m_SerialInCallback != NULL && frameticks % 416 == 0)
+        if (m_SerialInCallback != NULL && frameticks % 52 == 0)
         {
             BYTE b;
             if (m_SerialInCallback(&b))
             {
-                //if (SerialInput(b) && (m_Port176570 & 0100))
-                //    m_pCPU->InterruptVIRQ(7, 0370);
+                if (m_Port176500 & 0200)  // Ready?
+                    m_Port176500 |= 010000;  // Set Overflow flag
+                else
+                {
+                    m_Port176502 = (WORD)b;
+                    m_Port176500 |= 0200;  // Set Ready flag
+                    if (m_Port176500 & 0100)  // Interrupt?
+                        m_pCPU->InterruptVIRQ(7, 0300);
+                }
+            }
+        }
+        if (m_SerialOutCallback != NULL && frameticks % 52 == 0)
+        {
+            if (serialTxCount > 0)
+            {
+                serialTxCount--;
+                if (serialTxCount == 0)  // Translation countdown finished - the byte translated
+                {
+                    (*m_SerialOutCallback)((BYTE)(m_Port176506 & 0xff));
+                    m_Port176504 |= 0200;  // Set Ready flag
+                    if (m_Port176504 & 0100)  // Interrupt?
+                        m_pCPU->InterruptVIRQ(8, 0304);
+                }
+            }
+            else if ((m_Port176504 & 0200) == 0)  // Ready is 0?
+            {
+                serialTxCount = 8;  // Start translation countdown
             }
         }
 
