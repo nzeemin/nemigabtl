@@ -675,6 +675,7 @@ int CMotherboard::TranslateAddress(WORD address, BOOL okHaltMode, BOOL okExec, W
     if ((address >= 0170006 && address <= 0170013) ||
         //(address >= 0177560 && address <= 0177577) ||
         (address >= 0170020 && address <= 0170033) ||
+        (address >= 0176500 && address <= 0176507) ||
         (address >= 0177514 && address <= 0177517) ||
         (address >= 0177570 && address <= 0177575) ||
         (address >= 0177100 && address <= 0177107))  // Ports
@@ -732,6 +733,20 @@ WORD CMotherboard::GetPortWord(WORD address)
 #endif
         m_okSoundOnOff = !m_okSoundOnOff;
         return 0;  //STUB
+
+    // Последовательный порт (отсутствует на реальной Немиге)
+    case 0176500:
+    case 0176501:
+        return m_Port176500;
+    case 0176502:
+    case 0176503:
+        return m_Port176502;
+    case 0176504:
+    case 0176505:
+        return m_Port176504;
+    case 0176506:
+    case 0176507:
+        return m_Port176506;
 
     case 0177100:  // RgStat -- Floppy status
         if (m_pFloppyCtl == NULL) return 0;
@@ -901,6 +916,26 @@ void CMotherboard::SetPortWord(WORD address, WORD word)
         DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = !m_okSoundOnOff;
+        break;
+
+    // Последовательный порт (отсутствует на реальной Немиге)
+    case 0176500:  // Регистр состояния приемника
+    case 0176501:
+        m_Port176500 = (m_Port176500 & ~0100) | (word & 0100);  // Bit 6 only
+        break;
+    case 0176502:  // Регистр данных приемника
+    case 0176503:  // недоступен по записи
+        break;
+    case 0176504:  // Регистр состояния источника
+    case 0176505:
+        if (((m_Port176504 & 0300) == 0200) && (word & 0100))
+            m_pCPU->InterruptVIRQ(8, 0304);
+        m_Port176504 = (m_Port176504 & ~0105) | (word & 0105);  // Bits 0,2,6
+        break;
+    case 0176506:  // Регистр данных источника
+    case 0176507:  // нижние 8 бит доступны по записи
+        m_Port176506 = word & 0xff;
+        m_Port176504 &= ~128;  // Reset bit 7 (Ready)
         break;
 
     case 0177100:  // Floppy status
