@@ -281,6 +281,10 @@ void CProcessor::Execute()
             {
                 intrVector = 0002;  intrMode = TRUE;
                 m_HALTrq = FALSE;
+#if !defined(PRODUCT)
+                if (m_pBoard->GetTrace())
+                    DebugLogFormat(_T("HALT interrupt 170006=%06o\r\n"), m_pBoard->GetPortView(0170006));
+#endif
             }
             else if (m_BPT_rq)  // BPT command
             {

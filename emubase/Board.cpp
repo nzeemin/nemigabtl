@@ -420,9 +420,13 @@ void CMotherboard::KeyboardEvent(BYTE scancode, BOOL okPressed)
     {
         m_Port170006 |= 02000;
         m_Port170006 |= scancode;
+        //if (m_Port177560 | 0100)
         m_pCPU->FireHALT();
 #if !defined(PRODUCT)
-        DebugLog(_T("Keyboard\r\n"));
+        if (scancode >= ' ' && scancode <= 127)
+            DebugLogFormat(_T("Keyboard '%c'\r\n"), scancode);
+        else
+            DebugLogFormat(_T("Keyboard 0x%02x\r\n"), scancode);
 #endif
         return;
     }
@@ -477,9 +481,7 @@ WORD CMotherboard::GetWord(WORD address, BOOL okHaltMode, BOOL okExec)
         //TODO: What to do if okExec == TRUE ?
         return GetPortWord(address);
     case ADDRTYPE_HALT:
-        if (address == 0177560)
-            m_Port170006 |= 010000;
-        else if (address == 0177562)
+        if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
             return GetRAMWord(offset & 0177776);
@@ -516,9 +518,7 @@ BYTE CMotherboard::GetByte(WORD address, BOOL okHaltMode)
         //TODO: What to do if okExec == TRUE ?
         return GetPortByte(address);
     case ADDRTYPE_HALT:
-        if (address == 0177560)
-            m_Port170006 |= 010000;
-        else if (address == 0177562)
+        if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
             return GetRAMByte(offset);
@@ -559,9 +559,7 @@ void CMotherboard::SetWord(WORD address, BOOL okHaltMode, WORD word)
         SetPortWord(address, word);
         return;
     case ADDRTYPE_HALT:
-        if (address == 0177560)
-            m_Port170006 |= 010000;
-        else if (address == 0177562)
+        if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
         {
@@ -609,9 +607,7 @@ void CMotherboard::SetByte(WORD address, BOOL okHaltMode, BYTE byte)
         SetPortByte(address, byte);
         return;
     case ADDRTYPE_HALT:
-        if (address == 0177560)
-            m_Port170006 |= 010000;
-        else if (address == 0177562)
+        if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
         {
@@ -666,7 +662,7 @@ int CMotherboard::TranslateAddress(WORD address, BOOL okHaltMode, BOOL okExec, W
         return ADDRTYPE_ROM;
     }
 
-    if (!okHaltMode && address >= 0177560 && address <= 0177567)
+    if (!okHaltMode && address >= 0177562 && address <= 0177567)
     {
         *pOffset = address;
         return ADDRTYPE_HALT;
