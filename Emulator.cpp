@@ -26,28 +26,28 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 CMotherboard* g_pBoard = NULL;
 int g_nEmulatorConfiguration;  // Current configuration
-BOOL g_okEmulatorRunning = FALSE;
+bool g_okEmulatorRunning = false;
 
-WORD m_wEmulatorCPUBreakpoint = 0177777;
+uint16_t m_wEmulatorCPUBreakpoint = 0177777;
 
-BOOL m_okEmulatorSound = FALSE;
-BOOL m_okEmulatorCovox = FALSE;
+bool m_okEmulatorSound = false;
+bool m_okEmulatorCovox = false;
 
-BOOL m_okEmulatorParallel = FALSE;
-BOOL m_okEmulatorSerial = FALSE;
+bool m_okEmulatorParallel = false;
+bool m_okEmulatorSerial = false;
 HANDLE m_hEmulatorComPort = INVALID_HANDLE_VALUE;
 
 FILE* m_fpEmulatorParallelOut = NULL;
 
 long m_nFrameCount = 0;
-DWORD m_dwTickCount = 0;
-DWORD m_dwEmulatorUptime = 0;  // Machine uptime, seconds, from turn on or reset, increments every 25 frames
+uint32_t m_dwTickCount = 0;
+uint32_t m_dwEmulatorUptime = 0;  // Machine uptime, seconds, from turn on or reset, increments every 25 frames
 long m_nUptimeFrameCount = 0;
 
 BYTE* g_pEmulatorRam;  // RAM values - for change tracking
 BYTE* g_pEmulatorChangedRam;  // RAM change flags
-WORD g_wEmulatorCpuPC = 0177777;      // Current PC value
-WORD g_wEmulatorPrevCpuPC = 0177777;  // Previous PC value
+uint16_t g_wEmulatorCpuPC = 0177777;      // Current PC value
+uint16_t g_wEmulatorPrevCpuPC = 0177777;  // Previous PC value
 
 
 void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R);
@@ -58,12 +58,12 @@ void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R);
 //   pVideoBuffer   Исходные данные, биты экрана БК
 //   pPalette       Палитра
 //   pImageBits     Результат, 32-битный цвет, размер для каждой функции свой
-typedef void (CALLBACK* PREPARE_SCREEN_CALLBACK)(const BYTE* pVideoBuffer, const DWORD* pPalette, void* pImageBits);
+typedef void (CALLBACK* PREPARE_SCREEN_CALLBACK)(const BYTE* pVideoBuffer, const uint32_t* pPalette, void* pImageBits);
 
-void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits);
-void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits);
-void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits);
-void CALLBACK Emulator_PrepareScreenBW1024x624(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW1024x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
 
 struct ScreenModeStruct
 {
@@ -79,7 +79,7 @@ static ScreenModeReference[] =
     { 1024, 624, Emulator_PrepareScreenBW1024x624 },
 };
 
-const DWORD ScreenView_Palette[4] =
+const uint32_t ScreenView_Palette[4] =
 {
     0x000000, 0xB0B0B0, 0x404040, 0xFFFFFF
 };
@@ -95,11 +95,11 @@ const LPCTSTR FILENAME_ROM_406 = _T("nemiga-406.rom");
 
 //////////////////////////////////////////////////////////////////////
 
-BOOL Emulator_LoadRomFile(LPCTSTR strFileName, BYTE* buffer, DWORD fileOffset, DWORD bytesToRead)
+bool Emulator_LoadRomFile(LPCTSTR strFileName, BYTE* buffer, uint32_t fileOffset, uint32_t bytesToRead)
 {
     FILE* fpRomFile = ::_tfsopen(strFileName, _T("rb"), _SH_DENYWR);
     if (fpRomFile == NULL)
-        return FALSE;
+        return false;
 
     ::memset(buffer, 0, bytesToRead);
 
@@ -108,19 +108,19 @@ BOOL Emulator_LoadRomFile(LPCTSTR strFileName, BYTE* buffer, DWORD fileOffset, D
         ::fseek(fpRomFile, fileOffset, SEEK_SET);
     }
 
-    DWORD dwBytesRead = ::fread(buffer, 1, bytesToRead, fpRomFile);
+    uint32_t dwBytesRead = ::fread(buffer, 1, bytesToRead, fpRomFile);
     if (dwBytesRead != bytesToRead)
     {
         ::fclose(fpRomFile);
-        return FALSE;
+        return false;
     }
 
     ::fclose(fpRomFile);
 
-    return TRUE;
+    return true;
 }
 
-BOOL Emulator_Init()
+bool Emulator_Init()
 {
     ASSERT(g_pBoard == NULL);
 
@@ -140,7 +140,7 @@ BOOL Emulator_Init()
         g_pBoard->SetSoundGenCallback(Emulator_SoundGenCallback);
     }
 
-    return TRUE;
+    return true;
 }
 
 void Emulator_Done()
@@ -167,12 +167,12 @@ void Emulator_Done()
     ::free(g_pEmulatorChangedRam);
 }
 
-BOOL Emulator_InitConfiguration(int configuration)
+bool Emulator_InitConfiguration(int configuration)
 {
     g_pBoard->SetConfiguration(configuration);
 
     LPCTSTR szRomFileName = NULL;
-    WORD nRomResourceId;
+    uint16_t nRomResourceId;
     switch (configuration)
     {
     case EMU_CONF_NEMIGA303:
@@ -200,7 +200,7 @@ BOOL Emulator_InitConfiguration(int configuration)
     {
         // ROM file not found or failed to load, load the ROM from resource instead
         HRSRC hRes = NULL;
-        DWORD dwDataSize = 0;
+        uint32_t dwDataSize = 0;
         HGLOBAL hResLoaded = NULL;
         void * pResData = NULL;
         if ((hRes = ::FindResource(NULL, MAKEINTRESOURCE(nRomResourceId), _T("BIN"))) == NULL ||
@@ -209,7 +209,7 @@ BOOL Emulator_InitConfiguration(int configuration)
             (pResData = ::LockResource(hResLoaded)) == NULL)
         {
             AlertWarning(_T("Failed to load the ROM."));
-            return FALSE;
+            return false;
         }
         ::memcpy(buffer, pResData, 4096);
     }
@@ -222,12 +222,12 @@ BOOL Emulator_InitConfiguration(int configuration)
     m_nUptimeFrameCount = 0;
     m_dwEmulatorUptime = 0;
 
-    return TRUE;
+    return true;
 }
 
 void Emulator_Start()
 {
-    g_okEmulatorRunning = TRUE;
+    g_okEmulatorRunning = true;
 
     // Set title bar text
     SetWindowText(g_hwnd, _T("NEMIGA Back to Life [run]"));
@@ -238,7 +238,7 @@ void Emulator_Start()
 }
 void Emulator_Stop()
 {
-    g_okEmulatorRunning = FALSE;
+    g_okEmulatorRunning = false;
     m_wEmulatorCPUBreakpoint = 0177777;
 
     if (m_fpEmulatorParallelOut != NULL)
@@ -265,20 +265,20 @@ void Emulator_Reset()
     MainWindow_UpdateAllViews();
 }
 
-void Emulator_SetCPUBreakpoint(WORD address)
+void Emulator_SetCPUBreakpoint(uint16_t address)
 {
     m_wEmulatorCPUBreakpoint = address;
 }
 
-BOOL Emulator_IsBreakpoint()
+bool Emulator_IsBreakpoint()
 {
-    WORD wCPUAddr = g_pBoard->GetCPU()->GetPC();
+    uint16_t wCPUAddr = g_pBoard->GetCPU()->GetPC();
     if (wCPUAddr == m_wEmulatorCPUBreakpoint)
-        return TRUE;
-    return FALSE;
+        return true;
+    return false;
 }
 
-void Emulator_SetSound(BOOL soundOnOff)
+void Emulator_SetSound(bool soundOnOff)
 {
     if (m_okEmulatorSound != soundOnOff)
     {
@@ -297,7 +297,7 @@ void Emulator_SetSound(BOOL soundOnOff)
     m_okEmulatorSound = soundOnOff;
 }
 
-BOOL CALLBACK Emulator_SerialIn_Callback(BYTE* pByte)
+bool CALLBACK Emulator_SerialIn_Callback(BYTE* pByte)
 {
     DWORD dwBytesRead;
     BOOL result = ::ReadFile(m_hEmulatorComPort, pByte, 1, &dwBytesRead, NULL);
@@ -305,7 +305,7 @@ BOOL CALLBACK Emulator_SerialIn_Callback(BYTE* pByte)
     return result && (dwBytesRead == 1);
 }
 
-BOOL CALLBACK Emulator_SerialOut_Callback(BYTE byte)
+bool CALLBACK Emulator_SerialOut_Callback(BYTE byte)
 {
     DWORD dwBytesWritten;
     ::WriteFile(m_hEmulatorComPort, &byte, 1, &dwBytesWritten, NULL);
@@ -313,7 +313,7 @@ BOOL CALLBACK Emulator_SerialOut_Callback(BYTE byte)
     return (dwBytesWritten == 1);
 }
 
-BOOL Emulator_SetSerial(BOOL serialOnOff, LPCTSTR serialPort)
+bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
 {
     if (m_okEmulatorSerial != serialOnOff)
     {
@@ -327,7 +327,7 @@ BOOL Emulator_SetSerial(BOOL serialOnOff, LPCTSTR serialPort)
             m_hEmulatorComPort = ::CreateFile(port, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (m_hEmulatorComPort == INVALID_HANDLE_VALUE)
             {
-                DWORD dwError = ::GetLastError();
+                uint32_t dwError = ::GetLastError();
                 AlertWarningFormat(_T("Failed to open COM port (0x%08lx)."), dwError);
                 return false;
             }
@@ -337,7 +337,7 @@ BOOL Emulator_SetSerial(BOOL serialOnOff, LPCTSTR serialPort)
             Settings_GetSerialConfig(&dcb);
             if (!::SetCommState(m_hEmulatorComPort, &dcb))
             {
-                DWORD dwError = ::GetLastError();
+                uint32_t dwError = ::GetLastError();
                 ::CloseHandle(m_hEmulatorComPort);
                 m_hEmulatorComPort = INVALID_HANDLE_VALUE;
                 AlertWarningFormat(_T("Failed to configure the COM port (0x%08lx)."), dwError);
@@ -353,7 +353,7 @@ BOOL Emulator_SetSerial(BOOL serialOnOff, LPCTSTR serialPort)
             timeouts.WriteTotalTimeoutConstant = 100;
             if (!::SetCommTimeouts(m_hEmulatorComPort, &timeouts))
             {
-                DWORD dwError = ::GetLastError();
+                uint32_t dwError = ::GetLastError();
                 ::CloseHandle(m_hEmulatorComPort);
                 m_hEmulatorComPort = INVALID_HANDLE_VALUE;
                 AlertWarningFormat(_T("Failed to set the COM port timeouts (0x%08lx)."), dwError);
@@ -381,10 +381,10 @@ BOOL Emulator_SetSerial(BOOL serialOnOff, LPCTSTR serialPort)
 
     m_okEmulatorSerial = serialOnOff;
 
-    return TRUE;
+    return true;
 }
 
-BOOL CALLBACK Emulator_ParallelOut_Callback(BYTE byte)
+bool CALLBACK Emulator_ParallelOut_Callback(BYTE byte)
 {
     if (m_fpEmulatorParallelOut != NULL)
     {
@@ -396,10 +396,10 @@ BOOL CALLBACK Emulator_ParallelOut_Callback(BYTE byte)
     //_snwprintf_s(buffer, 32, _T("Printer: <%02x>\r\n"), byte);
     //ConsoleView_Print(buffer);
 
-    return TRUE;
+    return true;
 }
 
-void Emulator_SetParallel(BOOL parallelOnOff)
+void Emulator_SetParallel(bool parallelOnOff)
 {
     if (m_okEmulatorParallel == parallelOnOff)
         return;
@@ -431,7 +431,7 @@ int Emulator_SystemFrame()
 
     // Calculate frames per second
     m_nFrameCount++;
-    DWORD dwCurrentTicks = GetTickCount();
+    uint32_t dwCurrentTicks = GetTickCount();
     long nTicksElapsed = dwCurrentTicks - m_dwTickCount;
     if (nTicksElapsed >= 1200)
     {
@@ -441,7 +441,7 @@ int Emulator_SystemFrame()
         swprintf_s(buffer, 16, _T("%03.f%%"), dSpeed);
         MainWindow_SetStatusbarText(StatusbarPartFPS, buffer);
 
-        BOOL floppyEngine = g_pBoard->IsFloppyEngineOn();
+        bool floppyEngine = g_pBoard->IsFloppyEngineOn();
         MainWindow_SetStatusbarText(StatusbarPartFloppyEngine, floppyEngine ? _T("Motor") : NULL);
 
         m_nFrameCount = 0;
@@ -469,7 +469,7 @@ int Emulator_SystemFrame()
     {
         if (m_dwEmulatorUptime == 2 && m_nUptimeFrameCount == 16)
         {
-            ScreenView_KeyEvent(68, TRUE);  // Press "D"
+            ScreenView_KeyEvent(68, true);  // Press "D"
             Option_AutoBoot = false;  // All done
         }
     }
@@ -493,7 +493,7 @@ void Emulator_OnUpdate()
     {
         BYTE* pOld = g_pEmulatorRam;
         BYTE* pChanged = g_pEmulatorChangedRam;
-        WORD addr = 0;
+        uint16_t addr = 0;
         do
         {
             BYTE newvalue = g_pBoard->GetRAMByte(addr);
@@ -509,9 +509,9 @@ void Emulator_OnUpdate()
 
 // Get RAM change flag
 //   addrtype - address mode - see ADDRTYPE_XXX constants
-WORD Emulator_GetChangeRamStatus(WORD address)
+uint16_t Emulator_GetChangeRamStatus(uint16_t address)
 {
-    return *((WORD*)(g_pEmulatorChangedRam + address));
+    return *((uint16_t*)(g_pEmulatorChangedRam + address));
 }
 
 void Emulator_GetScreenSize(int scrmode, int* pwid, int* phei)
@@ -535,27 +535,27 @@ void Emulator_PrepareScreenRGB32(void* pImageBits, int screenMode)
     callback(pVideoBuffer, ScreenView_Palette, pImageBits);
 }
 
-const DWORD * Emulator_GetPalette()
+const uint32_t * Emulator_GetPalette()
 {
     return ScreenView_Palette;
 }
 
 #define AVERAGERGB(a, b)  ( (((a) & 0xfefefeffUL) + ((b) & 0xfefefeffUL)) >> 1 )
 
-void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
     for (int y = 0; y < 256; y++)
     {
-        const WORD* pVideo = (WORD*)(pVideoBuffer + y * 512 / 4);
-        DWORD* pBits = (DWORD*)pImageBits + (256 - 1 - y) * 512;
+        const uint16_t* pVideo = (uint16_t*)(pVideoBuffer + y * 512 / 4);
+        uint32_t* pBits = (uint32_t*)pImageBits + (256 - 1 - y) * 512;
         for (int x = 0; x < 512 / 8; x++)
         {
-            WORD src = *pVideo;
+            uint16_t src = *pVideo;
 
             for (int bit = 0; bit < 8; bit++)
             {
                 int colorindex = (src & 0x80) >> 7 | (src & 0x8000) >> 14;
-                DWORD color = palette[colorindex];
+                uint32_t color = palette[colorindex];
                 *pBits = color;
                 pBits++;
                 src = src << 1;
@@ -566,41 +566,41 @@ void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const DW
     }
 }
 
-void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
-    DWORD * pImageStart = ((DWORD *)pImageBits) + 512 * 28;
+    uint32_t * pImageStart = ((uint32_t *)pImageBits) + 512 * 28;
     Emulator_PrepareScreenBW512x256(pVideoBuffer, palette, pImageStart);
 }
 
-void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
     for (int y = 0; y < 256; y += 2)
     {
-        const WORD* psrc1 = (WORD*)(pVideoBuffer + y * 512 / 4);
-        const WORD* psrc2 = (WORD*)(pVideoBuffer + (y + 1) * 512 / 4);
-        DWORD* pdest1 = ((DWORD*)pImageBits) + (426 - 1 - y / 2 * 3) * 768;
-        DWORD* pdest2 = pdest1 - 768;
-        DWORD* pdest3 = pdest2 - 768;
+        const uint16_t* psrc1 = (uint16_t*)(pVideoBuffer + y * 512 / 4);
+        const uint16_t* psrc2 = (uint16_t*)(pVideoBuffer + (y + 1) * 512 / 4);
+        uint32_t* pdest1 = ((uint32_t*)pImageBits) + (426 - 1 - y / 2 * 3) * 768;
+        uint32_t* pdest2 = pdest1 - 768;
+        uint32_t* pdest3 = pdest2 - 768;
         for (int x = 0; x < 512 / 8; x++)
         {
-            WORD src1 = *psrc1;
-            WORD src2 = *psrc2;
+            uint16_t src1 = *psrc1;
+            uint16_t src2 = *psrc2;
             for (int bit = 0; bit < 4; bit++)
             {
                 int colorindex1a = (src1 & 0x80) >> 7 | (src1 & 0x8000) >> 14;  src1 = src1 << 1;
                 int colorindex1b = (src1 & 0x80) >> 7 | (src1 & 0x8000) >> 14;  src1 = src1 << 1;
-                DWORD c1a = palette[colorindex1a];
-                DWORD c1b = palette[colorindex1b];
+                uint32_t c1a = palette[colorindex1a];
+                uint32_t c1b = palette[colorindex1b];
                 int colorindex2a = (src2 & 0x80) >> 7 | (src2 & 0x8000) >> 14;  src2 = src2 << 1;
                 int colorindex2b = (src2 & 0x80) >> 7 | (src2 & 0x8000) >> 14;  src2 = src2 << 1;
-                DWORD c2a = palette[colorindex2a];
-                DWORD c2b = palette[colorindex2b];
+                uint32_t c2a = palette[colorindex2a];
+                uint32_t c2b = palette[colorindex2b];
 
-                DWORD c1ab = AVERAGERGB(c1a, c1b);
-                DWORD c2ab = AVERAGERGB(c2a, c2b);
-                DWORD c12a = AVERAGERGB(c1a, c2a);
-                DWORD c12b = AVERAGERGB(c1b, c2b);
-                DWORD c12ab = AVERAGERGB(c1ab, c2ab);
+                uint32_t c1ab = AVERAGERGB(c1a, c1b);
+                uint32_t c2ab = AVERAGERGB(c2a, c2b);
+                uint32_t c12a = AVERAGERGB(c1a, c2a);
+                uint32_t c12b = AVERAGERGB(c1b, c2b);
+                uint32_t c12ab = AVERAGERGB(c1ab, c2ab);
 
                 (*pdest1++) = c1a;   (*pdest1++) = c1ab;  (*pdest1++) = c1b;
                 (*pdest2++) = c12a;  (*pdest2++) = c12ab; (*pdest2++) = c12b;
@@ -612,21 +612,21 @@ void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const DW
     }
 }
 
-void CALLBACK Emulator_PrepareScreenBW1024x624(const BYTE* pVideoBuffer, const DWORD* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW1024x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
     for (int y = 0; y < 256; y++)
     {
-        const WORD* pVideo = (WORD*)(pVideoBuffer + y * 512 / 4);
-        DWORD* pBits1 = (DWORD*)pImageBits + (568 - 1 - y * 2) * 1024;
-        DWORD* pBits2 = pBits1 - 1024;
+        const uint16_t* pVideo = (uint16_t*)(pVideoBuffer + y * 512 / 4);
+        uint32_t* pBits1 = (uint32_t*)pImageBits + (568 - 1 - y * 2) * 1024;
+        uint32_t* pBits2 = pBits1 - 1024;
         for (int x = 0; x < 512 / 8; x++)
         {
-            WORD src = *pVideo;
+            uint16_t src = *pVideo;
 
             for (int bit = 0; bit < 8; bit++)
             {
                 int colorindex = (src & 0x80) >> 7 | (src & 0x8000) >> 14;
-                DWORD color = palette[colorindex];
+                uint32_t color = palette[colorindex];
 
                 (*pBits1++) = color;  (*pBits1++) = color;
                 (*pBits2++) = color;  (*pBits2++) = color;
@@ -652,7 +652,7 @@ void CALLBACK Emulator_PrepareScreenBW1024x624(const BYTE* pVideoBuffer, const D
 //   4 bytes        NEMIGA uptime
 //   12 bytes       Not used
 
-BOOL Emulator_SaveImage(LPCTSTR sFilePath)
+bool Emulator_SaveImage(LPCTSTR sFilePath)
 {
     // Create file
     FILE* fpFile = ::_tfsopen(sFilePath, _T("w+b"), _SH_DENYWR);
@@ -668,14 +668,14 @@ BOOL Emulator_SaveImage(LPCTSTR sFilePath)
     }
     memset(pImage, 0, NEMIGAIMAGE_SIZE);
     // Prepare header
-    DWORD* pHeader = (DWORD*) pImage;
+    uint32_t* pHeader = (uint32_t*) pImage;
     *pHeader++ = NEMIGAIMAGE_HEADER1;
     *pHeader++ = NEMIGAIMAGE_HEADER2;
     *pHeader++ = NEMIGAIMAGE_VERSION;
     *pHeader++ = NEMIGAIMAGE_SIZE;
     // Store emulator state to the image
     g_pBoard->SaveToImage(pImage);
-    *(DWORD*)(pImage + 16) = m_dwEmulatorUptime;
+    *(uint32_t*)(pImage + 16) = m_dwEmulatorUptime;
 
     // Save image to the file
     size_t dwBytesWritten = ::fwrite(pImage, 1, NEMIGAIMAGE_SIZE, fpFile);
@@ -684,10 +684,10 @@ BOOL Emulator_SaveImage(LPCTSTR sFilePath)
     if (dwBytesWritten != NEMIGAIMAGE_SIZE)
         return false;
 
-    return TRUE;
+    return true;
 }
 
-BOOL Emulator_LoadImage(LPCTSTR sFilePath)
+bool Emulator_LoadImage(LPCTSTR sFilePath)
 {
     Emulator_Stop();
 
@@ -697,8 +697,8 @@ BOOL Emulator_LoadImage(LPCTSTR sFilePath)
         return false;
 
     // Read header
-    DWORD bufHeader[NEMIGAIMAGE_HEADER_SIZE / sizeof(DWORD)];
-    DWORD dwBytesRead = ::fread(bufHeader, 1, NEMIGAIMAGE_HEADER_SIZE, fpFile);
+    uint32_t bufHeader[NEMIGAIMAGE_HEADER_SIZE / sizeof(uint32_t)];
+    uint32_t dwBytesRead = ::fread(bufHeader, 1, NEMIGAIMAGE_HEADER_SIZE, fpFile);
     if (dwBytesRead != NEMIGAIMAGE_HEADER_SIZE)
     {
         ::fclose(fpFile);
@@ -728,13 +728,13 @@ BOOL Emulator_LoadImage(LPCTSTR sFilePath)
     // Restore emulator state from the image
     g_pBoard->LoadFromImage(pImage);
 
-    m_dwEmulatorUptime = *(DWORD*)(pImage + 16);
+    m_dwEmulatorUptime = *(uint32_t*)(pImage + 16);
 
     // Free memory, close file
     ::free(pImage);
     ::fclose(fpFile);
 
-    return TRUE;
+    return true;
 }
 
 

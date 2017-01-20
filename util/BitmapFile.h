@@ -15,12 +15,12 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 //////////////////////////////////////////////////////////////////////
 
 // Save screenshot as .BMP file
-BOOL BmpFile_SaveScreenshot(
+bool BmpFile_SaveScreenshot(
     const DWORD* bits, const DWORD* colors, LPCTSTR sFileName,
     int screenWidth, int screenHeight);
 
 // Save screenshot as .PNG file
-BOOL PngFile_SaveScreenshot(
+bool PngFile_SaveScreenshot(
     const DWORD* bits, const DWORD* colors, LPCTSTR sFileName,
     int screenWidth, int screenHeight);
 

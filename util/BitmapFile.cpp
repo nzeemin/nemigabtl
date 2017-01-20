@@ -16,7 +16,7 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 //////////////////////////////////////////////////////////////////////
 
-BOOL BmpFile_SaveScreenshot(
+bool BmpFile_SaveScreenshot(
     const DWORD* pBits, const DWORD* palette, LPCTSTR sFileName,
     int screenWidth, int screenHeight)
 {
@@ -29,7 +29,7 @@ BOOL BmpFile_SaveScreenshot(
             GENERIC_WRITE, FILE_SHARE_READ, NULL,
             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
-        return FALSE;
+        return false;
 
     BITMAPFILEHEADER hdr;
     ::ZeroMemory(&hdr, sizeof(hdr));
@@ -80,29 +80,29 @@ BOOL BmpFile_SaveScreenshot(
     if (dwBytesWritten != sizeof(BITMAPFILEHEADER))
     {
         ::free(pData);
-        return FALSE;
+        return false;
     }
     WriteFile(hFile, &bih, sizeof(BITMAPINFOHEADER), &dwBytesWritten, NULL);
     if (dwBytesWritten != sizeof(BITMAPINFOHEADER))
     {
         ::free(pData);
-        return FALSE;
+        return false;
     }
     WriteFile(hFile, palette, sizeof(RGBQUAD) * 16, &dwBytesWritten, NULL);
     if (dwBytesWritten != sizeof(RGBQUAD) * 16)
     {
         ::free(pData);
-        return FALSE;
+        return false;
     }
     WriteFile(hFile, pData, bih.biSizeImage, &dwBytesWritten, NULL);
     ::free(pData);
     if (dwBytesWritten != bih.biSizeImage)
-        return FALSE;
+        return false;
 
     // Close file
     CloseHandle(hFile);
 
-    return TRUE;
+    return true;
 }
 
 
@@ -144,12 +144,12 @@ void SavePngChunkChecksum(BYTE * chunk)
     SaveValueMSB(crcplace, value);
 }
 
-BOOL PngFile_WriteHeader(FILE * fpFile, BYTE bitdepth, int screenWidth, int screenHeight)
+bool PngFile_WriteHeader(FILE * fpFile, BYTE bitdepth, int screenWidth, int screenHeight)
 {
     const BYTE pngheader[] = { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
     size_t dwBytesWritten = ::fwrite(pngheader, 1, sizeof(pngheader), fpFile);
     if (dwBytesWritten != sizeof(pngheader))
-        return FALSE;
+        return false;
 
     BYTE IHDRchunk[12 + 13];
     SaveValueMSB(IHDRchunk, 13);
@@ -164,12 +164,12 @@ BOOL PngFile_WriteHeader(FILE * fpFile, BYTE bitdepth, int screenWidth, int scre
     SavePngChunkChecksum(IHDRchunk);
     dwBytesWritten = ::fwrite(IHDRchunk, 1, sizeof(IHDRchunk), fpFile);
     if (dwBytesWritten != sizeof(IHDRchunk))
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
-BOOL PngFile_WriteEnd(FILE * fpFile)
+bool PngFile_WriteEnd(FILE * fpFile)
 {
     BYTE IENDchunk[12 + 0];
     *((DWORD*)IENDchunk) = 0;
@@ -177,12 +177,12 @@ BOOL PngFile_WriteEnd(FILE * fpFile)
     SavePngChunkChecksum(IENDchunk);
     size_t dwBytesWritten = ::fwrite(IENDchunk, 1, sizeof(IENDchunk), fpFile);
     if (dwBytesWritten != sizeof(IENDchunk))
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
-BOOL PngFile_WritePalette(FILE * fpFile, const DWORD* palette, int palsize)
+bool PngFile_WritePalette(FILE * fpFile, const DWORD* palette, int palsize)
 {
     int chunksize = 12 + palsize * 3;
     BYTE PLTEchunk[12 + 16 * 3];
@@ -199,12 +199,12 @@ BOOL PngFile_WritePalette(FILE * fpFile, const DWORD* palette, int palsize)
     SavePngChunkChecksum(PLTEchunk);
     size_t dwBytesWritten = ::fwrite(PLTEchunk, 1, chunksize, fpFile);
     if (dwBytesWritten != chunksize)
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
-BOOL PngFile_WriteImageData4(FILE * fpFile, DWORD framenum, const DWORD* pBits, const DWORD* palette, int screenWidth, int screenHeight)
+bool PngFile_WriteImageData4(FILE * fpFile, DWORD framenum, const DWORD* pBits, const DWORD* palette, int screenWidth, int screenHeight)
 {
     // The IDAT chunk data format defined by RFC-1950 "ZLIB Compressed Data Format Specification version 3.3"
     // http://www.ietf.org/rfc/rfc1950.txt
@@ -268,12 +268,12 @@ BOOL PngFile_WriteImageData4(FILE * fpFile, DWORD framenum, const DWORD* pBits, 
     size_t dwBytesWritten = ::fwrite(pData, 1, pDataLength, fpFile);
     ::free(pData);
     if (dwBytesWritten != pDataLength)
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
-BOOL PngFile_SaveScreenshot(
+bool PngFile_SaveScreenshot(
     const DWORD* pBits, const DWORD* palette4, LPCTSTR sFileName,
     int screenWidth, int screenHeight)
 {
@@ -284,7 +284,7 @@ BOOL PngFile_SaveScreenshot(
     // Create file
     FILE * fpFile = ::_tfopen(sFileName, _T("w+b"));
     if (fpFile == NULL)
-        return FALSE;
+        return false;
 
     // Prepare 16-color palette using the given 4-color palette and all colors from the bitmap
     DWORD palette16[16];
@@ -321,29 +321,29 @@ BOOL PngFile_SaveScreenshot(
     if (!PngFile_WriteHeader(fpFile, 4, screenWidth, screenHeight))
     {
         ::fclose(fpFile);
-        return FALSE;
+        return false;
     }
 
     if (!PngFile_WritePalette(fpFile, palette16, palsize))
     {
         ::fclose(fpFile);
-        return FALSE;
+        return false;
     }
 
     if (!PngFile_WriteImageData4(fpFile, 0, pBits, palette16, screenWidth, screenHeight))
     {
         ::fclose(fpFile);
-        return FALSE;
+        return false;
     }
 
     if (!PngFile_WriteEnd(fpFile))
     {
         ::fclose(fpFile);
-        return FALSE;
+        return false;
     }
 
     ::fclose(fpFile);
-    return TRUE;
+    return true;
 }
 
 
@@ -356,7 +356,7 @@ struct APNGFILE
     fpos_t nActlOffset;       // "acTL" chunk offset
 };
 
-BOOL PngFile_WriteActl(FILE * fpFile, DWORD numframes)
+bool PngFile_WriteActl(FILE * fpFile, DWORD numframes)
 {
     BYTE acTLchunk[12 + 8];
     SaveValueMSB(acTLchunk, 8);
@@ -366,12 +366,12 @@ BOOL PngFile_WriteActl(FILE * fpFile, DWORD numframes)
     SavePngChunkChecksum(acTLchunk);
     size_t bytesWritten = ::fwrite(acTLchunk, 1, sizeof(acTLchunk), fpFile);
     if (bytesWritten != sizeof(acTLchunk))
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
-BOOL PngFile_WriteFctl(FILE * fpFile, DWORD framenum, int screenWidth, int screenHeight)
+bool PngFile_WriteFctl(FILE * fpFile, DWORD framenum, int screenWidth, int screenHeight)
 {
     BYTE acTLchunk[12 + 26];
     SaveValueMSB(acTLchunk, 26);
@@ -388,9 +388,9 @@ BOOL PngFile_WriteFctl(FILE * fpFile, DWORD framenum, int screenWidth, int scree
     SavePngChunkChecksum(acTLchunk);
     size_t bytesWritten = ::fwrite(acTLchunk, 1, sizeof(acTLchunk), fpFile);
     if (bytesWritten != sizeof(acTLchunk))
-        return FALSE;
+        return false;
 
-    return TRUE;
+    return true;
 }
 
 

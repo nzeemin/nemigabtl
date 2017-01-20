@@ -339,8 +339,8 @@ void ScreenView_ProcessKeyboard()
     WORD keyevent = ScreenView_GetKeyEventFromQueue();
     if (keyevent != 0)
     {
-        BOOL pressed = ((keyevent & 0x8000) != 0);
-        BOOL ctrl = ((keyevent & 0x4000) != 0);
+        bool pressed = ((keyevent & 0x8000) != 0);
+        bool ctrl = ((keyevent & 0x4000) != 0);
         BYTE bkscan = LOBYTE(keyevent);
 
 //#if !defined(PRODUCT)
@@ -363,15 +363,15 @@ BOOL ScreenView_SaveScreenshot(LPCTSTR sFileName)
     ASSERT(m_bits != NULL);
 
     DWORD* pBits = (DWORD*) ::malloc(m_cxScreenWidth * m_cyScreenHeight * 4);
-    const DWORD* colors = Emulator_GetPalette(/*m_ScreenMode*/);
+    const uint32_t* colors = Emulator_GetPalette(/*m_ScreenMode*/);
     Emulator_PrepareScreenRGB32(pBits, m_ScreenMode);
 
     LPCTSTR sFileNameExt = _tcsrchr(sFileName, _T('.'));
     BOOL result = FALSE;
     if (sFileNameExt != NULL && _tcsicmp(sFileNameExt, _T(".png")) == 0)
-        result = PngFile_SaveScreenshot(pBits, colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
+        result = PngFile_SaveScreenshot(pBits, (DWORD*)colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
     else
-        result = BmpFile_SaveScreenshot(pBits, colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
+        result = BmpFile_SaveScreenshot(pBits, (DWORD*)colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
 
     ::free(pBits);
 
