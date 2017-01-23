@@ -16,6 +16,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 //////////////////////////////////////////////////////////////////////
 
+
 const TCHAR m_Settings_IniAppName[] = _T("NEMIGA");
 TCHAR m_Settings_IniPath[MAX_PATH];
 
@@ -277,7 +278,7 @@ int Settings_GetScreenHeightMode()
 
 SETTINGS_GETSET_DWORD(Autostart, _T("Autostart"), BOOL, FALSE);
 
-SETTINGS_GETSET_DWORD(RealSpeed, _T("RealSpeed"), BOOL, FALSE);
+SETTINGS_GETSET_DWORD(RealSpeed, _T("RealSpeed"), WORD, 1);
 
 SETTINGS_GETSET_DWORD(Sound, _T("Sound"), BOOL, FALSE);
 SETTINGS_GETSET_DWORD(SoundVolume, _T("SoundVolume"), WORD, 0x3fff);

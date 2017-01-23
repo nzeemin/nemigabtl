@@ -109,10 +109,15 @@ BEGIN
         MENUITEM "Reset",                       ID_EMULATOR_RESET
         MENUITEM "Autostart",                   ID_EMULATOR_AUTOSTART
         MENUITEM SEPARATOR
+        MENUITEM "Sound",                       ID_EMULATOR_SOUND
+        MENUITEM "Speed 25%",                   ID_EMULATOR_SPEED25
+        MENUITEM "Speed 50%",                   ID_EMULATOR_SPEED50
+        MENUITEM "Speed 100%",                  ID_EMULATOR_REALSPEED
+        MENUITEM "Speed 200%",                  ID_EMULATOR_SPEED200
+        MENUITEM "Speed MAX",                   ID_EMULATOR_SPEEDMAX
+        MENUITEM SEPARATOR
         MENUITEM "Parallel",                    ID_EMULATOR_PARALLEL
         MENUITEM "Serial 176500",               ID_EMULATOR_SERIAL
-        MENUITEM SEPARATOR
-        MENUITEM "Sound",                       ID_EMULATOR_SOUND
     END
     POPUP "&Configuration"
     BEGIN

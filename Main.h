@@ -104,6 +104,8 @@ BOOL Settings_GetDebug();
 void Settings_GetDebugFontName(LPTSTR buffer);
 void Settings_SetAutostart(BOOL flag);
 BOOL Settings_GetAutostart();
+void Settings_SetRealSpeed(WORD speed);
+WORD Settings_GetRealSpeed();
 void Settings_SetSound(BOOL flag);
 BOOL Settings_GetSound();
 void Settings_SetSoundVolume(WORD value);

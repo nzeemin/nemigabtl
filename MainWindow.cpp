@@ -61,6 +61,7 @@ void MainWindow_DoViewScreenMode(int newMode);
 void MainWindow_DoEmulatorRun();
 void MainWindow_DoEmulatorAutostart();
 void MainWindow_DoEmulatorReset();
+void MainWindow_DoEmulatorSpeed(WORD speed);
 void MainWindow_DoEmulatorSound();
 void MainWindow_DoEmulatorSerial();
 void MainWindow_DoEmulatorParallel();
@@ -683,6 +684,17 @@ void MainWindow_UpdateMenu()
     CheckMenuItem(hMenu, ID_EMULATOR_SERIAL, (Settings_GetSerial() ? MF_CHECKED : MF_UNCHECKED));
     SendMessage(m_hwndToolbar, TB_CHECKBUTTON, ID_EMULATOR_SERIAL, (Settings_GetSerial() ? 1 : 0));
     CheckMenuItem(hMenu, ID_EMULATOR_PARALLEL, (Settings_GetParallel() ? MF_CHECKED : MF_UNCHECKED));
+    
+    UINT speedcmd = 0;
+    switch (Settings_GetRealSpeed())
+    {
+    case 0x7ffe: speedcmd = ID_EMULATOR_SPEED25;   break;
+    case 0x7fff: speedcmd = ID_EMULATOR_SPEED50;   break;
+    case 0:      speedcmd = ID_EMULATOR_SPEEDMAX;  break;
+    case 1:      speedcmd = ID_EMULATOR_REALSPEED; break;
+    case 2:      speedcmd = ID_EMULATOR_SPEED200;  break;
+    }
+    CheckMenuRadioItem(hMenu, ID_EMULATOR_SPEED25, ID_EMULATOR_SPEED200, speedcmd, MF_BYCOMMAND);
 
     MainWindow_SetToolbarImage(ID_EMULATOR_SOUND, (Settings_GetSound() ? ToolbarImageSoundOn : ToolbarImageSoundOff));
     EnableMenuItem(hMenu, ID_DEBUG_STEPINTO, (g_okEmulatorRunning ? MF_DISABLED : MF_ENABLED));
@@ -763,6 +775,21 @@ bool MainWindow_DoCommand(int commandId)
         break;
     case ID_EMULATOR_RESET:
         MainWindow_DoEmulatorReset();
+        break;
+    case ID_EMULATOR_SPEED25:
+        MainWindow_DoEmulatorSpeed(0x7ffe);
+        break;
+    case ID_EMULATOR_SPEED50:
+        MainWindow_DoEmulatorSpeed(0x7fff);
+        break;
+    case ID_EMULATOR_SPEEDMAX:
+        MainWindow_DoEmulatorSpeed(0);
+        break;
+    case ID_EMULATOR_REALSPEED:
+        MainWindow_DoEmulatorSpeed(1);
+        break;
+    case ID_EMULATOR_SPEED200:
+        MainWindow_DoEmulatorSpeed(2);
         break;
     case ID_EMULATOR_SOUND:
         MainWindow_DoEmulatorSound();
@@ -916,6 +943,12 @@ void MainWindow_DoEmulatorAutostart()
 void MainWindow_DoEmulatorReset()
 {
     Emulator_Reset();
+}
+void MainWindow_DoEmulatorSpeed(WORD speed)
+{
+    Settings_SetRealSpeed(speed);
+
+    MainWindow_UpdateMenu();
 }
 void MainWindow_DoEmulatorSound()
 {
