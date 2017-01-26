@@ -70,15 +70,15 @@ class CFloppyController
 {
 protected:
     CFloppyDrive m_drivedata[8];  // Четыре привода по две стороны
-    int  m_drive;       // Drive number: from 0 to 7; -1 if not selected
-    CFloppyDrive* m_pDrive;  // Current drive; NULL if not selected
+    int m_drive;            // Drive number: from 0 to 7; -1 if not selected
+    CFloppyDrive* m_pDrive; // Current drive; NULL if not selected
     uint16_t m_track;       // Track number: from 0 to 79
     uint16_t m_status;      // See FLOPPY_STATUS_XXX defines
     uint16_t m_datareg;     // Read mode data register
     uint16_t m_writereg;    // Write mode data register
-    bool m_writeflag;   // Write mode data register has data
+    bool m_writeflag;       // Write mode data register has data
     uint16_t m_shiftreg;    // Write mode shift register
-    bool m_shiftflag;   // Write mode shift register has data
+    bool m_shiftflag;       // Write mode shift register has data
     bool m_trackchanged;  // TRUE = m_data was changed - need to save it into the file
     bool m_timer;       // Floppy timer bit at port 177106
     int  m_timercount;  // Floppy timer counter
@@ -86,6 +86,7 @@ protected:
     int  m_motorcount;  // Motor ON counter
     uint16_t m_operation;   // Operation code, see FLOPPY_OPER_XXX defines
     int  m_opercount;   // Operation counter - countdown or current operation stage
+    bool m_okTrace;         // Trace mode on/off
 
 public:
     CFloppyController();
@@ -108,8 +109,9 @@ public:
     void SetCommand(uint16_t cmd);  // Writing port 177104 - commands
     void SetTimer(uint16_t value);  // Writing port 177106 - timer
     void Periodic();            // Rotate disk; call it each 64 us - 15625 times per second
+    void SetTrace(bool okTrace) { m_okTrace = okTrace; }  // Set trace mode on/off
 
-protected:
+private:
     void PrepareTrack();
     void FlushChanges();  // If current track was changed - save it
 

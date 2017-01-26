@@ -14,7 +14,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "stdafx.h"
 #include "Emubase.h"
 
-void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, uint16_t address);
+void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, uint16_t address, DWORD dwTrace);
 
 
 //////////////////////////////////////////////////////////////////////
@@ -25,7 +25,7 @@ CMotherboard::CMotherboard ()
     m_pCPU = new CProcessor(this);
     m_pFloppyCtl = NULL;
 
-    m_okTraceCPU = false;
+    m_dwTrace = TRACE_NONE;
     m_SoundGenCallback = NULL;
     m_SerialInCallback = NULL;
     m_SerialOutCallback = NULL;
@@ -79,11 +79,19 @@ void CMotherboard::SetConfiguration(uint16_t conf)
     if (m_pFloppyCtl == NULL /*&& (conf & BK_COPT_FDD) != 0*/)
     {
         m_pFloppyCtl = new CFloppyController();
+        m_pFloppyCtl->SetTrace(m_dwTrace & TRACE_FLOPPY);
     }
     //if (m_pFloppyCtl != NULL /*&& (conf & BK_COPT_FDD) == 0*/)
     //{
     //    delete m_pFloppyCtl;  m_pFloppyCtl = NULL;
     //}
+}
+
+void CMotherboard::SetTrace(uint32_t dwTrace)
+{
+    m_dwTrace = dwTrace;
+    if (m_pFloppyCtl != NULL)
+        m_pFloppyCtl->SetTrace(dwTrace & TRACE_FLOPPY);
 }
 
 void CMotherboard::Reset ()
@@ -332,8 +340,8 @@ bool CMotherboard::SystemFrame()
         for (int procticks = 0; procticks < frameProcTicks; procticks++)  // CPU ticks
         {
 #if !defined(PRODUCT)
-            if (m_okTraceCPU && m_pCPU->GetInternalTick() == 0)
-                TraceInstruction(m_pCPU, this, m_pCPU->GetPC());
+            if ((m_dwTrace & TRACE_CPU) && m_pCPU->GetInternalTick() == 0)
+                TraceInstruction(m_pCPU, this, m_pCPU->GetPC(), m_dwTrace);
 #endif
             m_pCPU->Execute();
             if (m_pCPU->GetPC() == m_CPUbp)
@@ -1212,17 +1220,19 @@ void CMotherboard::SetParallelOutCallback(PARALLELOUTCALLBACK outcallback)
 
 #if !defined(PRODUCT)
 
-void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, uint16_t address)
+void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, uint16_t address, DWORD dwTrace)
 {
     bool okHaltMode = pProc->IsHaltMode();
 
     uint16_t memory[4];
     int addrtype = ADDRTYPE_RAM;
-    for (uint16_t i = 0; i < 4; i++)
-        memory[i] = pBoard->GetWordView(address + i * 2, okHaltMode, true, &addrtype);
-
-    //if (addrtype != ADDRTYPE_RAM)
-    //    return;
+    memory[0] = pBoard->GetWordView(address + 0 * 2, okHaltMode, true, &addrtype);
+    if (!(addrtype == ADDRTYPE_RAM && (dwTrace & TRACE_CPURAM)) &&
+        !(addrtype == ADDRTYPE_ROM && (dwTrace & TRACE_CPUROM)))
+        return;
+    memory[1] = pBoard->GetWordView(address + 1 * 2, okHaltMode, true, &addrtype);
+    memory[2] = pBoard->GetWordView(address + 2 * 2, okHaltMode, true, &addrtype);
+    memory[3] = pBoard->GetWordView(address + 3 * 2, okHaltMode, true, &addrtype);
 
     TCHAR bufaddr[7];
     PrintOctalValue(bufaddr, address);

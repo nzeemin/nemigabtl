@@ -31,6 +31,14 @@ class CProcessor;
 #define ADDRTYPE_MASK  255  // RAM type mask
 #define ADDRTYPE_RAMMASK 7  // RAM chunk number mask
 
+// Trace flags
+#define TRACE_NONE         0  // Turn off all tracing
+#define TRACE_CPUROM       1  // Trace CPU instructions from ROM
+#define TRACE_CPURAM       2  // Trace CPU instructions from RAM
+#define TRACE_CPU          3  // Trace CPU instructions (mask)
+#define TRACE_FLOPPY    0100  // Trace floppies
+#define TRACE_ALL    0177777  // Trace all
+
 // Emulator image constants
 #define NEMIGAIMAGE_HEADER_SIZE 32
 #define NEMIGAIMAGE_SIZE 147456
@@ -96,8 +104,8 @@ public:  // Memory access  //TODO: Make it private
 public:  // Debug
     void        DebugTicks();  // One Debug CPU tick -- use for debug step or debug breakpoint
     void        SetCPUBreakpoint(uint16_t bp) { m_CPUbp = bp; } // Set CPU breakpoint
-    bool        GetTrace() const { return m_okTraceCPU; }
-    void        SetTrace(bool okTraceCPU) { m_okTraceCPU = okTraceCPU; }
+    uint32_t    GetTrace() const { return m_dwTrace; }
+    void        SetTrace(uint32_t dwTrace);
 public:  // System control
     void        SetConfiguration(uint16_t conf);
     void        Reset();  // Reset computer
@@ -174,7 +182,7 @@ private:  // Ports: implementation
     uint16_t    m_Port177516;       // Регистр данных ИРПР
 private:
     uint16_t    m_CPUbp;  // CPU breakpoint address
-    bool        m_okTraceCPU;
+    uint32_t    m_dwTrace;  // Trace flags
     uint16_t    m_Timer1div;        // Timer 1 subcounter, based on octave value
     uint16_t    m_Timer1;           // Timer 1 counter, initial value copied from m_Port170022
     uint16_t    m_Timer2;           // Timer 2 counter
