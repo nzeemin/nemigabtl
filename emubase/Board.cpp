@@ -272,7 +272,7 @@ void CMotherboard::Tick50()  // 50 Hz timer
             m_okSoundOnOff = false;  // Судя по схеме, звук выключается по сигналу ЗПР2
             m_Port170024 = 0;
 #if !defined(PRODUCT)
-            DebugLog(_T("Tick50 Timer2 END\r\n"));
+            if (m_dwTrace & TRACE_TIMER) DebugLog(_T("Tick50 Timer2 END\r\n"));
 #endif
         }
     }
@@ -431,10 +431,13 @@ void CMotherboard::KeyboardEvent(uint8_t scancode, bool okPressed)
         //if (m_Port177560 | 0100)
         m_pCPU->FireHALT();
 #if !defined(PRODUCT)
-        if (scancode >= ' ' && scancode <= 127)
-            DebugLogFormat(_T("Keyboard '%c'\r\n"), scancode);
-        else
-            DebugLogFormat(_T("Keyboard 0x%02x\r\n"), scancode);
+        if (m_dwTrace & TRACE_KEYBOARD)
+        {
+            if (scancode >= ' ' && scancode <= 127)
+                DebugLogFormat(_T("Keyboard '%c'\r\n"), scancode);
+            else
+                DebugLogFormat(_T("Keyboard 0x%02x\r\n"), scancode);
+        }
 #endif
         return;
     }
@@ -497,7 +500,7 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("GetWord 06o\r\n"), address);
+        //DebugLogFormat(_T("GetWord %06o\r\n"), address);
 #endif
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_DENY:
@@ -725,7 +728,7 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return m_Port170024;
     case 0170026:  // RgOn -- Sound On
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
+        //DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = true;
         return 0;  //STUB
@@ -733,7 +736,7 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return m_Port170030;
     case 0170032:  // RgOff -- Sound Off
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
+        //DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = !m_okSoundOnOff;
         return 0;  //STUB
@@ -887,37 +890,37 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
 
     case 0170020:  // Timer status
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("Timer Status SET %06o\r\n"), word);
+        if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Timer Status SET %06o\r\n"), word);
 #endif
         m_Port170020 = word & 01777;
         break;
     case 0170022:
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("Timer Freq  SET %06o\r\n"), word);
+        if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Timer Freq  SET %06o\r\n"), word);
 #endif
         m_Port170022 = word;
         break;
     case 0170024:
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("Timer Len   SET %06o\r\n"), word);
+        if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Timer Len   SET %06o\r\n"), word);
 #endif
         m_Port170024 = word;
         break;
     case 0170026:  // Sound On
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
+        //DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = true;
         break;
     case 0170030:
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("Timer OctVol SET %06o\r\n"), word);
+        if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Timer OctVol SET %06o\r\n"), word);
 #endif
         m_Port170030 = word & 037;
         break;
     case 0170032:  // Sound On/Off trigger
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
+        //DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = !m_okSoundOnOff;
         break;
@@ -961,13 +964,13 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
 
     case 0177514:
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("Parallel SET STATE %06o\r\n"), word);
+        //DebugLogFormat(_T("Parallel SET STATE %06o\r\n"), word);
 #endif
         m_Port177514 = (m_Port177514 & 0100277) | (word & 037600);
         break;
     case 0177516:
 #if !defined(PRODUCT)
-        DebugLogFormat(_T("Parallel SET DATA %04x\r\n"), word);
+        //DebugLogFormat(_T("Parallel SET DATA %04x\r\n"), word);
 #endif
         m_Port177516 = word;
         m_Port177514 &= ~0240;
