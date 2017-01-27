@@ -500,7 +500,7 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
 #if !defined(PRODUCT)
-        //DebugLogFormat(_T("GetWord %06o\r\n"), address);
+        //if (m_dwTrace & 04000) DebugLogFormat(_T("GetWord %06o\r\n"), address);
 #endif
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_DENY:
@@ -536,9 +536,9 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
         else if (address == 0177566)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
-//#if !defined(PRODUCT)
-//        DebugLogFormat(_T("GetByte 06o\r\n"), address);
-//#endif
+#if !defined(PRODUCT)
+        //if (m_dwTrace & 04000) DebugLogFormat(_T("GetByte 06o\r\n"), address);
+#endif
         return GetRAMByte(offset);
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -680,9 +680,8 @@ int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool okExe
     }
 
     if ((address >= 0170006 && address <= 0170013) ||
-        //(address >= 0177560 && address <= 0177577) ||
         (address >= 0170020 && address <= 0170033) ||
-        (address >= 0176500 && address <= 0176507) ||
+        (address >= 0176500 && address <= 0176507) && m_SerialInCallback != NULL && m_SerialOutCallback != NULL ||
         (address >= 0177514 && address <= 0177517) ||
         (address >= 0177570 && address <= 0177575) ||
         (address >= 0177100 && address <= 0177107))  // Ports
@@ -691,11 +690,15 @@ int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool okExe
         return ADDRTYPE_IO;
     }
 
-    //if (okHaltMode && address >= 0177600)  // 177600-177777
-    //{
-    //    *pOffset = address - 010000;  // Ğàñïîëàãàåì ıòó îáëàñòü â ÎÇÓ "ïîä" ÏÇÓ â 167600-167777
-    //    return ADDRTYPE_RAM;
-    //}
+    if ((address >= 0170016 && address <= 0170017) ||
+        (address >= 0170034 && address <= 0177077) ||
+        (address >= 0177110 && address <= 0177513) ||
+        (address >= 0177520 && address <= 0177557) ||
+        (address >= 0177576 && address <= 0177577))  // Holes
+    {
+        *pOffset = address;
+        return ADDRTYPE_DENY;
+    }
 
     *pOffset = address;
     return ADDRTYPE_RAM;
