@@ -273,7 +273,7 @@ uint16_t CFloppyController::GetData(void)
 #if !defined(PRODUCT)
     uint16_t offset = m_pDrive->dataptr;
     if (m_okTrace && offset >= 10 && (offset - 10) % 130 == 0)
-        DebugLogFormat(_T("Floppy%d READ %02x POS%04d SC%02d TR%02d\r\n"), m_drive, m_datareg, offset, (offset - 10) / 130, m_track);
+        DebugLogFormat(_T("Floppy%d READ %02x POS%04d SC%02d TR%02d\r\n"), m_drive, m_datareg, offset, (offset - 10) / 130 + 1, m_track);
 #endif
 
     m_status &= ~FLOPPY_STATUS_TR;  // TR сбрасывается при чтении регистра данных
@@ -286,7 +286,7 @@ void CFloppyController::WriteData(uint16_t data)
 #if !defined(PRODUCT)
     uint16_t offset = m_pDrive->dataptr;
     if (m_okTrace && offset >= 10 && (offset - 10) % 130 == 0)
-        DebugLogFormat(_T("Floppy%d WRITE %02x POS%04d SC%02d TR%02d\r\n"), m_drive, data, m_pDrive->dataptr, (offset - 10) / 130, m_track);
+        DebugLogFormat(_T("Floppy%d WRITE %02x POS%04d SC%02d TR%02d\r\n"), m_drive, data, m_pDrive->dataptr, (offset - 10) / 130 + 1, m_track);
 #endif
     m_motorcount = 0;
 
@@ -582,13 +582,13 @@ static void EncodeTrackData(const uint8_t* pSrc, uint8_t* data, uint16_t track, 
     uint8_t* checksumStart = data + ptr;
     data[ptr++] = 0363;  // Marker
     data[ptr++] = (uint8_t)track;  // Track number
-    data[ptr++] = 23;  // Sectors on the track
-    data[ptr++] = 0;  // ???
+    data[ptr++] = 23;    // Sectors on the track
+    data[ptr++] = 0;     // Byte used for XOR reading
     uint16_t firstSector = track * 23;
     data[ptr++] = (uint8_t)(firstSector & 0xff);
     data[ptr++] = (uint8_t)((firstSector & 0xff00) >> 8);
-    data[ptr++] = 0xff;  // ???
-    data[ptr++] = 0;  // ???
+    data[ptr++] = 0xff;  // Byte used for XOR reading
+    data[ptr++] = 0xff;  // Byte used for XOR reading
     uint16_t checksum = CalculateChecksum(checksumStart, 8);
     data[ptr++] = (checksum & 0xff);  data[ptr++] = ((checksum & 0xff00) >> 8);
 
