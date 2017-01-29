@@ -495,7 +495,7 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
         if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
-            return GetRAMWord(offset & 0177776);
+            return 0200; //GetRAMWord(offset & 0177776);
         else if (address == 0177566)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
@@ -532,7 +532,7 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
         if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
-            return GetRAMByte(offset);
+            return 0200; //GetRAMByte(offset);
         else if (address == 0177566)
             m_Port170006 |= 040000;
         m_pCPU->FireHALT();
@@ -841,7 +841,9 @@ uint16_t CMotherboard::GetPortView(uint16_t address)
 
     case 0177560:
     case 0177562:
+        return 0;  //STUB
     case 0177564:
+        return GetRAMWord(0177564);
     case 0177566:
     case 0177570:
         return 0;  //STUB
