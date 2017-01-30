@@ -465,7 +465,7 @@ uint16_t CMotherboard::GetWordView(uint16_t address, bool okHaltMode, bool okExe
         return GetROMWord(offset);
     case ADDRTYPE_IO:
         return 0;  // I/O port, not memory
-    case ADDRTYPE_HALT:
+    case ADDRTYPE_TERM:
         return 0;
     case ADDRTYPE_DENY:
         return 0;  // This memory is inaccessible for reading
@@ -491,7 +491,7 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
     case ADDRTYPE_IO:
         //TODO: What to do if okExec == true ?
         return GetPortWord(address);
-    case ADDRTYPE_HALT:
+    case ADDRTYPE_TERM:
         if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
@@ -528,7 +528,7 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
     case ADDRTYPE_IO:
         //TODO: What to do if okExec == true ?
         return GetPortByte(address);
-    case ADDRTYPE_HALT:
+    case ADDRTYPE_TERM:
         if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
@@ -569,7 +569,7 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
     case ADDRTYPE_IO:
         SetPortWord(address, word);
         return;
-    case ADDRTYPE_HALT:
+    case ADDRTYPE_TERM:
         if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
@@ -617,7 +617,7 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
     case ADDRTYPE_IO:
         SetPortByte(address, byte);
         return;
-    case ADDRTYPE_HALT:
+    case ADDRTYPE_TERM:
         if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
@@ -676,7 +676,7 @@ int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool okExe
     if (!okHaltMode && address >= 0177562 && address <= 0177567)
     {
         *pOffset = address;
-        return ADDRTYPE_HALT;
+        return ADDRTYPE_TERM;
     }
 
     if ((address >= 0170006 && address <= 0170013) ||

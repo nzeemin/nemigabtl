@@ -283,7 +283,7 @@ void CProcessor::Execute()
                 m_HALTrq = false;
 #if !defined(PRODUCT)
                 if (m_pBoard->GetTrace())
-                    DebugLogFormat(_T("HALT interrupt 170006=%06o\r\n"), m_pBoard->GetPortView(0170006));
+                    DebugLogFormat(_T("HALT interrupt 170006=%06o 177566=%06o\r\n"), m_pBoard->GetPortView(0170006), m_pBoard->GetRAMWord(0177566));
 #endif
             }
             else if (m_BPT_rq)  // BPT command

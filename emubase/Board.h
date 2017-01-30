@@ -24,12 +24,12 @@ class CProcessor;
 // TranslateAddress result code
 #define ADDRTYPE_RAM     0  // RAM
 #define ADDRTYPE_HIRAM   1  // RAM
-#define ADDRTYPE_ROM    16  // ROM
-#define ADDRTYPE_IO     32  // I/O port
-#define ADDRTYPE_HALT   64  // Memory 177600-177777 gives HALT
+#define ADDRTYPE_ROM     8  // ROM
+#define ADDRTYPE_IO     16  // I/O port
+#define ADDRTYPE_TERM   64  // Terminal ports
+// Memory 177600-177777 gives HALT
 #define ADDRTYPE_DENY  128  // Access denied
 #define ADDRTYPE_MASK  255  // RAM type mask
-#define ADDRTYPE_RAMMASK 7  // RAM chunk number mask
 
 // Trace flags
 #define TRACE_NONE         0  // Turn off all tracing

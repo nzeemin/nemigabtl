@@ -230,7 +230,7 @@ void MemoryView_OnDraw(HDC hdc)
             //        break;
             //}
 
-            if ((addrtype & (ADDRTYPE_IO | ADDRTYPE_HALT | ADDRTYPE_DENY)) == 0)
+            if ((addrtype & (ADDRTYPE_IO | ADDRTYPE_TERM | ADDRTYPE_DENY)) == 0)
             {
                 ::SetTextColor(hdc, (wChanged != 0) ? RGB(255, 0, 0) : colorText);
                 if (m_okMemoryByteMode)
