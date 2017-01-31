@@ -123,7 +123,7 @@ void ScreenView_Create(HWND hwndParent, int x, int y, int cxWidth)
 
     int xLeft = x;
     int yTop = y;
-    int cyScreenHeight = m_cyScreenHeight;
+    int cyScreenHeight = m_cyScreenHeight + 8;
     int cyHeight = cyScreenHeight;
     cxWidth = 4 + m_cxScreenWidth + 4;
 

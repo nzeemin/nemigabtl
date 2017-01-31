@@ -500,7 +500,7 @@ void MainWindow_AdjustWindowLayout()
     if (Settings_GetDebug())  // Debug views shown -- keyboard/tape snapped to top
     {
         cxScreen = 596;
-        cyScreen = NEMIGA_SCREEN_HEIGHT;
+        cyScreen = NEMIGA_SCREEN_HEIGHT + 8;
 
         int yKeyboard = yScreen + cyScreen;
         int yConsole = yKeyboard;
