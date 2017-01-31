@@ -2059,10 +2059,15 @@ void CProcessor::SaveToImage(uint8_t* pImage)
     *pwImage++ = 0;  //m_savepsw;
     // Stopped flag
     *pwImage++ = (m_okStopped ? 1 : 0);
+    *pwImage++ = (m_waitmode ? 1 : 0);
+    *pwImage++ = (m_stepmode ? 1 : 0);
+    *pwImage++ = (m_haltmode ? 1 : 0);
 }
 
 void CProcessor::LoadFromImage(const uint8_t* pImage)
 {
+    Stop();  // Reset internal state
+
     uint16_t* pwImage = (uint16_t*) pImage;
     // PSW
     m_psw = *pwImage++;
@@ -2073,6 +2078,9 @@ void CProcessor::LoadFromImage(const uint8_t* pImage)
     pwImage++;
     // Stopped flag
     m_okStopped = (*pwImage++ != 0);
+    m_waitmode = (*pwImage++ != 0);
+    m_stepmode = (*pwImage++ != 0);
+    m_haltmode = (*pwImage++ != 0);
 }
 
 uint16_t CProcessor::GetWordAddr (uint8_t meth, uint8_t reg)

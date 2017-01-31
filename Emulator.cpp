@@ -690,6 +690,7 @@ bool Emulator_SaveImage(LPCTSTR sFilePath)
 bool Emulator_LoadImage(LPCTSTR sFilePath)
 {
     Emulator_Stop();
+    Emulator_Reset();
 
     // Open file
     FILE* fpFile = ::_tfsopen(sFilePath, _T("rb"), _SH_DENYWR);
@@ -729,6 +730,7 @@ bool Emulator_LoadImage(LPCTSTR sFilePath)
     g_pBoard->LoadFromImage(pImage);
 
     m_dwEmulatorUptime = *(uint32_t*)(pImage + 16);
+    g_wEmulatorCpuPC = g_pBoard->GetCPU()->GetPC();
 
     // Free memory, close file
     ::free(pImage);

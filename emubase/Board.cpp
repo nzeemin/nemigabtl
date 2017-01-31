@@ -106,6 +106,7 @@ void CMotherboard::Reset ()
     m_Port170020 = m_Port170022 = m_Port170024 = m_Port170030 = 0;
     m_okSoundOnOff = false;
     m_Timer1 = m_Timer1div = m_Timer2 = 0;
+    m_Port176500 = m_Port176500 = m_Port176504 = m_Port176506 = 0;
 
     ResetDevices();
 
@@ -266,7 +267,7 @@ void CMotherboard::Tick50()  // 50 Hz timer
         m_Timer2--;
         if (m_Timer2 == 0)
         {
-            m_pCPU->FireHALT();
+            m_pCPU->FireHALT();  //TODO: В каком случае должно возникать это прерывание?
             m_Port170020 &= ~01000;  // Снимаем "Фикс прерывания 2"
             m_Port170006 |= 010000;  // Сигнал Н3
             m_okSoundOnOff = false;  // Судя по схеме, звук выключается по сигналу ЗПР2

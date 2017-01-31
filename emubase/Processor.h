@@ -41,22 +41,22 @@ protected:  // Statics
 
 protected:  // Processor state
     int         m_internalTick;     // How many ticks waiting to the end of current instruction
-    uint16_t        m_psw;              // Processor Status Word (PSW)
-    uint16_t        m_R[8];             // Registers (R0..R5, R6=SP, R7=PC)
+    uint16_t    m_psw;              // Processor Status Word (PSW)
+    uint16_t    m_R[8];             // Registers (R0..R5, R6=SP, R7=PC)
     bool        m_okStopped;        // "Processor stopped" flag
     bool        m_haltmode;         // true = HALT mode, false = USER mode
     bool        m_stepmode;         // Read true if it's step mode
     bool        m_waitmode;			// WAIT
 
 protected:  // Current instruction processing
-    uint16_t        m_instruction;      // Curent instruction
-    uint16_t        m_instructionpc;    // Address of the current instruction
+    uint16_t    m_instruction;      // Curent instruction
+    uint16_t    m_instructionpc;    // Address of the current instruction
     int         m_regsrc;           // Source register number
     int         m_methsrc;          // Source address mode
-    uint16_t        m_addrsrc;          // Source address
+    uint16_t    m_addrsrc;          // Source address
     int         m_regdest;          // Destination register number
     int         m_methdest;         // Destination address mode
-    uint16_t        m_addrdest;         // Destination address
+    uint16_t    m_addrdest;         // Destination address
 
 protected:  // Interrupt processing
     bool        m_RPLYrq;           // Hangup interrupt pending
@@ -70,36 +70,36 @@ protected:  // Interrupt processing
     bool        m_EMT_rq;           // EMT command interrupt pending
     bool        m_TRAPrq;           // TRAP command interrupt pending
     int         m_virqrq;           // VIRQ pending
-    uint16_t        m_virq[16];         // VIRQ vector
+    uint16_t    m_virq[16];         // VIRQ vector
 protected:
     CMotherboard* m_pBoard;
 
 public:  // Register control
-    uint16_t        GetPSW() const { return m_psw; }
+    uint16_t    GetPSW() const { return m_psw; }
     uint8_t     GetLPSW() const { return LOBYTE(m_psw); }
     void        SetPSW(uint16_t word) { m_psw = word; }
     void        SetLPSW(uint8_t byte)
     {
         m_psw = (m_psw & 0xFF00) | (uint16_t)byte;
     }
-    uint16_t        GetReg(int regno) const { return m_R[regno]; }
+    uint16_t    GetReg(int regno) const { return m_R[regno]; }
     void        SetReg(int regno, uint16_t word) { m_R[regno] = word; }
-    uint16_t        GetSP() const { return m_R[6]; }
+    uint16_t    GetSP() const { return m_R[6]; }
     void        SetSP(uint16_t word) { m_R[6] = word; }
-    uint16_t        GetPC() const { return m_R[7]; }
+    uint16_t    GetPC() const { return m_R[7]; }
     void        SetPC(uint16_t word) { m_R[7] = word; }
-    uint16_t        GetInstructionPC() const { return m_instructionpc; }  // Address of the current instruction
+    uint16_t    GetInstructionPC() const { return m_instructionpc; }  // Address of the current instruction
 
 public:  // PSW bits control
     void        SetC(bool bFlag);
-    uint16_t        GetC() const { return (m_psw & PSW_C) != 0; }
+    uint16_t    GetC() const { return (m_psw & PSW_C) != 0; }
     void        SetV(bool bFlag);
-    uint16_t        GetV() const { return (m_psw & PSW_V) != 0; }
+    uint16_t    GetV() const { return (m_psw & PSW_V) != 0; }
     void        SetN(bool bFlag);
-    uint16_t        GetN() const { return (m_psw & PSW_N) != 0; }
+    uint16_t    GetN() const { return (m_psw & PSW_N) != 0; }
     void        SetZ(bool bFlag);
-    uint16_t        GetZ() const { return (m_psw & PSW_Z) != 0; }
-    uint16_t        GetHALT() const { return m_haltmode; }
+    uint16_t    GetZ() const { return (m_psw & PSW_Z) != 0; }
+    uint16_t    GetHALT() const { return m_haltmode; }
 
 public:  // Processor state
     // "Processor stopped" flag
@@ -121,18 +121,18 @@ protected:  // Implementation
     void        FetchInstruction();      // Read next instruction
     void        TranslateInstruction();  // Execute the instruction
 protected:  // Implementation - instruction processing
-    uint16_t        CalculateOperAddr (int meth, int reg);
-    uint16_t        CalculateOperAddrSrc (int meth, int reg);
+    uint16_t    CalculateOperAddr (int meth, int reg);
+    uint16_t    CalculateOperAddrSrc (int meth, int reg);
     uint8_t     GetByteSrc();
     uint8_t     GetByteDest();
     void        SetByteDest(uint8_t);
-    uint16_t        GetWordSrc();
-    uint16_t        GetWordDest();
+    uint16_t    GetWordSrc();
+    uint16_t    GetWordDest();
     void        SetWordDest(uint16_t);
-    uint16_t        GetDstWordArgAsBranch();
+    uint16_t    GetDstWordArgAsBranch();
 protected:  // Implementation - memory access
-    uint16_t        GetWordExec(uint16_t address) { return m_pBoard->GetWordExec(address, IsHaltMode()); }
-    uint16_t        GetWord(uint16_t address) { return m_pBoard->GetWord(address, IsHaltMode()); }
+    uint16_t    GetWordExec(uint16_t address) { return m_pBoard->GetWordExec(address, IsHaltMode()); }
+    uint16_t    GetWord(uint16_t address) { return m_pBoard->GetWord(address, IsHaltMode()); }
     void        SetWord(uint16_t address, uint16_t word) { m_pBoard->SetWord(address, IsHaltMode(), word); }
     uint8_t     GetByte(uint16_t address) { return m_pBoard->GetByte(address, IsHaltMode()); }
     void        SetByte(uint16_t address, uint8_t byte) { m_pBoard->SetByte(address, IsHaltMode(), byte); }
@@ -152,8 +152,8 @@ protected:  // PSW bits calculations
     bool static CheckSubForCarry(uint16_t a, uint16_t b);
 
 protected:
-    uint16_t		GetWordAddr (uint8_t meth, uint8_t reg);
-    uint16_t		GetByteAddr (uint8_t meth, uint8_t reg);
+    uint16_t	GetWordAddr (uint8_t meth, uint8_t reg);
+    uint16_t	GetByteAddr (uint8_t meth, uint8_t reg);
 
 protected:  // Implementation - instruction execution
     void        ExecuteUNKNOWN ();  // Нет такой инструкции - просто вызывается TRAP 10
