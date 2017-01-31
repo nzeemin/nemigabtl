@@ -492,7 +492,9 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
         //TODO: What to do if okExec == true ?
         return GetPortWord(address);
     case ADDRTYPE_TERM:
-        if (address == 0177562)
+        if (address == 0177560)
+            return GetRAMWord(address);
+        else if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
             return 0200; //GetRAMWord(offset & 0177776);
@@ -529,7 +531,9 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
         //TODO: What to do if okExec == true ?
         return GetPortByte(address);
     case ADDRTYPE_TERM:
-        if (address == 0177562)
+        if (address == 0177560 || address == 0177561)
+            return GetRAMByte(address);
+        else if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
             return 0200; //GetRAMByte(offset);
@@ -570,6 +574,11 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
         SetPortWord(address, word);
         return;
     case ADDRTYPE_TERM:
+        if (address == 0177560)
+        {
+            SetRAMWord(address, word);
+            return;
+        }
         if (address == 0177562)
             m_Port170006 |= 020000;
         else if (address == 0177564)
@@ -654,15 +663,15 @@ const uint8_t* CMotherboard::GetVideoBuffer()
 
 int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool okExec, uint16_t* pOffset)
 {
-    // ROM 4.05 expect that screen projected to memory, controlled by port 177574 bit 0
-    if ((m_Port177574 & 1) != 0 /*&& address >= 01400*/ && address <= 077777)
-    {
-        *pOffset = address + 0100000;
-        return ADDRTYPE_HIRAM;
-    }
-
     if (address < 0160000)  // 000000-157777 -- RAM
     {
+        // ROM 4.05 expect that screen projected to memory, controlled by port 177574 bit 0
+        if ((m_Port177574 & 1) != 0 && address <= 077777)
+        {
+            *pOffset = address + 0100000;
+            return ADDRTYPE_HIRAM;
+        }
+
         *pOffset = address;
         return ADDRTYPE_RAM;
     }
@@ -673,35 +682,41 @@ int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool okExe
         return ADDRTYPE_ROM;
     }
 
-    if (!okHaltMode && address >= 0177562 && address <= 0177567)
+    if (address < 0177600)  // 170000-177577 -- Ports
     {
-        *pOffset = address;
-        return ADDRTYPE_TERM;
-    }
+        if (address >= 0177560 && address <= 0177561)
+        {
+            *pOffset = address;
+            return ADDRTYPE_RAM;
+        }
+        if (address >= 0177562 && address <= 0177567)
+        {
+            *pOffset = address;
+            return okHaltMode ? ADDRTYPE_RAM : ADDRTYPE_TERM;
+        }
 
-    if ((address >= 0170006 && address <= 0170013) ||
-        (address >= 0170020 && address <= 0170033) ||
-        (address >= 0176500 && address <= 0176507) && m_SerialInCallback != NULL && m_SerialOutCallback != NULL ||
-        (address >= 0177514 && address <= 0177517) ||
-        (address >= 0177570 && address <= 0177575) ||
-        (address >= 0177100 && address <= 0177107))  // Ports
-    {
-        *pOffset = address;
-        return ADDRTYPE_IO;
-    }
+        if ((address >= 0170000 && address <= 0170015) ||
+            (address >= 0170020 && address <= 0170033) ||
+            (address >= 0176500 && address <= 0176507) && m_SerialInCallback != NULL && m_SerialOutCallback != NULL ||
+            (address >= 0177100 && address <= 0177107) ||
+            (address >= 0177514 && address <= 0177517) ||
+            (address >= 0177570 && address <= 0177575))  // Ports
+        {
+            *pOffset = address;
+            return ADDRTYPE_IO;
+        }
 
-    if ((address >= 0170016 && address <= 0170017) ||
-        (address >= 0170034 && address <= 0177077) ||
-        (address >= 0177110 && address <= 0177513) ||
-        (address >= 0177520 && address <= 0177557) ||
-        (address >= 0177576 && address <= 0177577))  // Holes
-    {
         *pOffset = address;
         return ADDRTYPE_DENY;
     }
 
-    *pOffset = address;
-    return ADDRTYPE_RAM;
+    // 177600-177777
+
+    //if (okHaltMode && address >= 0177600 && address <= 0177777)  // HALT-mode RAM
+    {
+        *pOffset = address;
+        return ADDRTYPE_RAM;
+    }
 }
 
 uint8_t CMotherboard::GetPortByte(uint16_t address)
@@ -716,12 +731,20 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
 {
     switch (address)
     {
+    case 0170000:
+    case 0170002:
+    case 0170004:
+        return 0;  //STUB
+
     case 0170006:
         return m_Port170006;
 
     case 0170010:  // RgSt -- Network
     case 0170012:  // RgL -- Network
         return 0xffff;  //STUB
+
+    case 0170014:
+        return 0;  //STUB
 
     case 0170020:  // RgStSnd -- Sound Status 10-bit register
         return m_Port170020 & 01777;
@@ -805,10 +828,18 @@ uint16_t CMotherboard::GetPortView(uint16_t address)
 {
     switch (address)
     {
+    case 0170000:
+    case 0170002:
+    case 0170004:
+        return 0;  //STUB
+
     case 0170006:
         return m_Port170006;
     case 0170010:  // Network
     case 0170012:
+        return 0;  //STUB
+
+    case 0170014:
         return 0;  //STUB
 
     case 0170020:  // Timer
@@ -882,6 +913,11 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
 {
     switch (address)
     {
+    case 0170000:
+    case 0170002:
+    case 0170004:
+        break;  //STUB
+
     case 0170006:
         m_Port170006 = 0;
         m_Port170006wr = word;
@@ -891,6 +927,9 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
 
     case 0170010:  // Network
     case 0170012:
+        break;  //STUB
+
+    case 0170014:
         break;  //STUB
 
     case 0170020:  // Timer status
