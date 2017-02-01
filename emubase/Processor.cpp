@@ -283,7 +283,11 @@ void CProcessor::Execute()
                 m_HALTrq = false;
 #if !defined(PRODUCT)
                 if (m_pBoard->GetTrace())
-                    DebugLogFormat(_T("HALT interrupt 170006=%06o 177566=%06o\r\n"), m_pBoard->GetPortView(0170006), m_pBoard->GetRAMWord(0177566));
+                {
+                    uint16_t val177566 = m_pBoard->GetRAMWord(0177566);
+                    uint8_t byte177566 = (uint8_t)(val177566 & 255);
+                    DebugLogFormat(_T("HALT interrupt 170006=%06o 177566=%06o %C\r\n"), m_pBoard->GetPortView(0170006), val177566, (byte177566 >= 32 && byte177566 < 128) ? (char)byte177566 : ' ');
+                }
 #endif
             }
             else if (m_BPT_rq)  // BPT command
@@ -705,7 +709,7 @@ void CProcessor::TranslateInstruction ()
 void CProcessor::ExecuteUNKNOWN ()  // Нет такой инструкции - просто вызывается TRAP 10
 {
 #if !defined(PRODUCT)
-    DebugPrintFormat(_T(">>Invalid OPCODE = %06o %06o\r\n"), GetPC() - 2, m_instruction);
+    DebugLogFormat(_T(">>Invalid OPCODE = %06o at %06o\r\n"), m_instruction, m_instructionpc);
 #endif
 
     m_RSVDrq = true;

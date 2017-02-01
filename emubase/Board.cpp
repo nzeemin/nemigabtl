@@ -105,7 +105,7 @@ void CMotherboard::Reset ()
     m_Port177514 = 0377;
     m_Port170020 = m_Port170022 = m_Port170024 = m_Port170030 = 0;
     m_okSoundOnOff = false;
-    m_Timer1 = m_Timer1div = m_Timer2 = 0;
+    //m_Timer1 = m_Timer1div = m_Timer2 = 0;
     m_Port176500 = m_Port176500 = m_Port176504 = m_Port176506 = 0;
 
     ResetDevices();
@@ -254,12 +254,12 @@ void CMotherboard::Tick50()  // 50 Hz timer
     {
         // Если разряды 4 и 5 равны 1 1, то запуск второго счётчика происходит по тактовому входу С2
         //if ((m_Port170020 & 060) == 060)
-        if (m_Port170024 != 0 && (m_Port170020 & 01000) == 01000)
+        if (m_Port170024 != 0 && (m_Port170020 & 060) != 060)
         {
             m_Timer2 = m_Port170024;
-//#if !defined(PRODUCT)
-//            DebugLog(_T("Tick50 Timer2 START\r\n"));
-//#endif
+#if !defined(PRODUCT)
+            if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Tick50 Timer2 START %06o\r\n"), m_Timer2);
+#endif
         }
     }
     else //if (m_Timer2 > 0)
@@ -267,11 +267,16 @@ void CMotherboard::Tick50()  // 50 Hz timer
         m_Timer2--;
         if (m_Timer2 == 0)
         {
-            m_pCPU->FireHALT();  //TODO: В каком случае должно возникать это прерывание?
-            m_Port170020 &= ~01000;  // Снимаем "Фикс прерывания 2"
-            m_Port170006 |= 010000;  // Сигнал Н3
-            m_okSoundOnOff = false;  // Судя по схеме, звук выключается по сигналу ЗПР2
+            //NOTE: Прерывание HALT с кодом Н3 должно генерироваться каждые 1/50 секунды
+            if ((m_Port170020 & 0200) == 0)
+            {
+                m_pCPU->FireHALT();
+                m_Port170020 &= ~01000;  // Снимаем "Фикс прерывания 2"
+                m_Port170006 |= 010000;  // Сигнал Н3
+            }
+            //m_okSoundOnOff = false;  // Судя по схеме, звук выключается по сигналу ЗПР2
             m_Port170024 = 0;
+            //m_Timer2 = m_Port170024;
 #if !defined(PRODUCT)
             if (m_dwTrace & TRACE_TIMER) DebugLog(_T("Tick50 Timer2 END\r\n"));
 #endif
@@ -584,6 +589,9 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
             m_Port170006 |= 020000;
         else if (address == 0177564)
         {
+#if !defined(PRODUCT)
+            DebugLogFormat(_T("WRITE 177564 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
+#endif
             SetRAMWord(offset & 0177776, word);
             return;
         }
@@ -633,6 +641,9 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
         else if (address == 0177564)
         {
             SetRAMByte(offset, byte);
+#if !defined(PRODUCT)
+            DebugLogFormat(_T("WRITE 177564 value %03o, PC=%06o\r\n"), byte, m_pCPU->GetInstructionPC());
+#endif
             return;
         }
         else if (address == 0177566)
@@ -755,7 +766,7 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return m_Port170024;
     case 0170026:  // RgOn -- Sound On
 #if !defined(PRODUCT)
-        //DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
+        if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = true;
         return 0;  //STUB
@@ -763,7 +774,7 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return m_Port170030;
     case 0170032:  // RgOff -- Sound Off
 #if !defined(PRODUCT)
-        //DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
+        if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = !m_okSoundOnOff;
         return 0;  //STUB
@@ -807,11 +818,19 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         //case 0177564:
         //case 0177566:
     case 0177574:
+#if !defined(PRODUCT)
+        if (m_pCPU->GetInstructionPC() < 0160000)
+            DebugLogFormat(_T("READ 177574 value %06o PC=%06o\r\n"), m_Port177574, m_pCPU->GetInstructionPC());
+#endif
         return m_Port177574;
         //case 0177576:
         //    return 0xffff;  //STUB
 
     case 0177572:  // Регистр адреса косвенной адресации
+#if !defined(PRODUCT)
+        if (m_pCPU->GetInstructionPC() < 0160000)
+            DebugLogFormat(_T("READ 177572 value %06o PC=%06o\r\n"), m_Port177572, m_pCPU->GetInstructionPC());
+#endif
         return m_Port177572;
     case 0177570:  // Регистр данных косвенного доступа
         return *(uint16_t*)(m_pRAM + m_Port177572 + m_Port177572);
@@ -953,7 +972,7 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
         break;
     case 0170026:  // Sound On
 #if !defined(PRODUCT)
-        //DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
+        if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = true;
         break;
@@ -965,7 +984,7 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
         break;
     case 0170032:  // Sound On/Off trigger
 #if !defined(PRODUCT)
-        //DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
+        if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
 #endif
         m_okSoundOnOff = !m_okSoundOnOff;
         break;
@@ -1027,12 +1046,20 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
     case 0177566:
         break;  //STUB
     case 0177574:
+#if !defined(PRODUCT)
+        if (m_pCPU->GetInstructionPC() < 0160000)
+            DebugLogFormat(_T("WRITE 177574 value %06o PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
+#endif
         m_Port177574 = word;
         break;
     case 0177576:
         break;  //STUB
 
     case 0177572:
+#if !defined(PRODUCT)
+        if (m_pCPU->GetInstructionPC() < 0160000)
+            DebugLogFormat(_T("WRITE 177572 value %06o PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
+#endif
         m_Port177572 = word;
         break;
     case 0177570:
