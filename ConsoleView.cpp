@@ -195,6 +195,18 @@ CProcessor* ConsoleView_GetCurrentProcessor()
     return g_pBoard->GetCPU();
 }
 
+void ConsoleView_PrintFormat(LPCTSTR pszFormat, ...)
+{
+    TCHAR buffer[512];
+
+    va_list ptr;
+    va_start(ptr, pszFormat);
+    _vsntprintf_s(buffer, 512, 512 - 1, pszFormat, ptr);
+    va_end(ptr);
+
+    ConsoleView_Print(buffer);
+}
+
 void ConsoleView_Print(LPCTSTR message)
 {
     if (m_hwndConsoleLog == INVALID_HANDLE_VALUE) return;
@@ -585,9 +597,14 @@ void DoConsoleCommand()
         break;
 #if !defined(PRODUCT)
     case _T('t'):
+        if (command[1] == _T('c'))  // "tc" -- clear trace log
+        {
+            DebugLogClear();
+            ConsoleView_Print(_T("  Trace log cleared.\r\n"));
+        }
+        else
         {
             DWORD dwTrace = (g_pBoard->GetTrace() == TRACE_NONE ? TRACE_ALL : TRACE_NONE);
-            //TODO: Implement "tc" command -- clear trace log
             if (command[1] != 0)
             {
                 WORD value;
@@ -601,10 +618,10 @@ void DoConsoleCommand()
 
             g_pBoard->SetTrace(dwTrace);
             if (dwTrace != TRACE_NONE)
-                ConsoleView_Print(_T("  Trace is ON.\r\n"));  //TODO: Print trace flags
+                ConsoleView_PrintFormat(_T("  Trace ON, trace flags %06o\r\n"), (uint16_t)g_pBoard->GetTrace());
             else
             {
-                ConsoleView_Print(_T("  Trace is OFF.\r\n"));
+                ConsoleView_Print(_T("  Trace OFF.\r\n"));
                 DebugLogCloseFile();
             }
         }
