@@ -39,16 +39,18 @@
 #define IDC_VOLUME                      1006
 #define IDC_NETWORKSTATION              1007
 #define IDC_SERIALPORT                  1008
-#define IDC_BUTTON1                     1009
-#define IDC_BUTTON2                     1010
 #define IDC_BAUDRATE                    1011
-#define IDC_PARITY                      1012
-#define IDC_STOPBITS                    1013
-#define IDC_DTRCONTROL                  1014
-#define IDC_RTSCONTROL                  1015
-#define IDC_OUTXCTSFLOW                 1016
-#define IDC_OUTXDSRFLOW                 1017
-#define IDC_DSRSENSITIVITY              1018
+#define IDC_NETWORKPORT                 1019
+#define IDC_PARITY                      1018
+#define IDC_STOPBITS                    1019
+#define IDC_DTRCONTROL                  1020
+#define IDC_RTSCONTROL                  1021
+#define IDC_OUTXCTSFLOW                 1022
+#define IDC_OUTXDSRFLOW                 1023
+#define IDC_DSRSENSITIVITY              1024
+#define IDC_BUTTON1                     1025
+#define IDC_BUTTON2                     1026
+#define IDC_DEBUGFONT                   1030
 #define ID_VIEW                         32771
 #define ID_VIEW_MEMORY                  32772
 #define ID_EMULATOR                     32773
@@ -65,7 +67,7 @@
 #define ID_FILE_SCREENSHOT              32784
 #define ID_VIEW_KEYBOARD                32787
 #define ID_VIEW_TOOLBAR                 32789
-#define ID_EMULATOR_AUTOSTART           32790
+#define ID_EMULATOR_AUTOSTART           32793
 #define ID_EMULATOR_SPEED25             32798
 #define ID_EMULATOR_SPEED50             32799
 #define ID_EMULATOR_SPEEDMAX            32800
@@ -99,7 +101,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         32833
-#define _APS_NEXT_CONTROL_VALUE         1019
+#define _APS_NEXT_CONTROL_VALUE         1031
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

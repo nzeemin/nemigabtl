@@ -417,6 +417,7 @@ void ConsoleView_ShowHelp()
 #if !defined(PRODUCT)
             _T("  t          Tracing on/off to trace.log file\r\n")
             _T("  tXXXXXX    Set tracing flags\r\n")
+            _T("  tc         Clear trace.log file\r\n")
 #endif
                      );
 }

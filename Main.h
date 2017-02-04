@@ -102,6 +102,7 @@ int  Settings_GetScreenViewMode();
 void Settings_SetDebug(BOOL flag);
 BOOL Settings_GetDebug();
 void Settings_GetDebugFontName(LPTSTR buffer);
+void Settings_SetDebugFontName(LPCTSTR sFontName);
 void Settings_SetAutostart(BOOL flag);
 BOOL Settings_GetAutostart();
 void Settings_SetRealSpeed(WORD speed);
@@ -126,6 +127,10 @@ void Settings_SetNetwork(BOOL flag);
 BOOL Settings_GetNetwork();
 int  Settings_GetNetStation();
 void Settings_SetNetStation(int value);
+void Settings_GetNetComPort(LPTSTR buffer);
+void Settings_SetNetComPort(LPCTSTR sValue);
+void Settings_GetNetComConfig(DCB * pDcb);
+void Settings_SetNetComConfig(const DCB * pDcb);
 
 
 //////////////////////////////////////////////////////////////////////

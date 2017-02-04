@@ -81,7 +81,7 @@ int APIENTRY _tWinMain(
 
     // Main message loop
     MSG msg;
-    while (true)
+    for (;;)
     {
         ::QueryPerformanceCounter(&nFrameStartTime);
 

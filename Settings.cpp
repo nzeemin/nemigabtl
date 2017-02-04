@@ -21,6 +21,7 @@ const TCHAR m_Settings_IniAppName[] = _T("NEMIGA");
 TCHAR m_Settings_IniPath[MAX_PATH];
 
 DCB  m_Settings_SerialConfig;
+DCB  m_Settings_NetComConfig;
 
 //////////////////////////////////////////////////////////////////////
 // Options
@@ -57,6 +58,25 @@ void Settings_Init()
     m_Settings_SerialConfig.fAbortOnError = 0;
     m_Settings_SerialConfig.Parity = NOPARITY;
     m_Settings_SerialConfig.StopBits = TWOSTOPBITS;
+
+    // Set m_Settings_NetComConfig defaults
+    ::memset(&m_Settings_NetComConfig, 0, sizeof(DCB));
+    m_Settings_NetComConfig.DCBlength = sizeof(DCB);
+    m_Settings_NetComConfig.BaudRate = 57600;
+    m_Settings_NetComConfig.ByteSize = 8;
+    m_Settings_NetComConfig.fBinary = 1;
+    m_Settings_NetComConfig.fParity = 1;
+    m_Settings_NetComConfig.fOutxCtsFlow = m_Settings_NetComConfig.fOutxDsrFlow = 0;
+    m_Settings_NetComConfig.fDtrControl = DTR_CONTROL_DISABLE;
+    m_Settings_NetComConfig.fDsrSensitivity = 0;
+    m_Settings_NetComConfig.fTXContinueOnXoff = 0;
+    m_Settings_NetComConfig.fOutX = m_Settings_NetComConfig.fInX = 0;
+    m_Settings_NetComConfig.fErrorChar = 0;
+    m_Settings_NetComConfig.fNull = 0;
+    m_Settings_NetComConfig.fRtsControl = RTS_CONTROL_DISABLE;
+    m_Settings_NetComConfig.fAbortOnError = 0;
+    m_Settings_NetComConfig.Parity = ODDPARITY;
+    m_Settings_NetComConfig.StopBits = TWOSTOPBITS;
 }
 void Settings_Done()
 {
@@ -265,6 +285,18 @@ SETTINGS_GETSET_DWORD(Toolbar, _T("Toolbar"), BOOL, TRUE);
 
 SETTINGS_GETSET_DWORD(Debug, _T("Debug"), BOOL, FALSE);
 
+void Settings_GetDebugFontName(LPTSTR buffer)
+{
+    if (!Settings_LoadStringValue(_T("DebugFontName"), buffer, 32))
+    {
+        _tcscpy(buffer, _T("Lucida Console"));
+    }
+}
+void Settings_SetDebugFontName(LPCTSTR sFontName)
+{
+    Settings_SaveStringValue(_T("DebugFontName"), sFontName);
+}
+
 void Settings_SetScreenHeightMode(int mode)
 {
     Settings_SaveDwordValue(_T("ScreenHeightMode"), (DWORD) mode);
@@ -327,5 +359,41 @@ void Settings_SetSerialConfig(const DCB * pDcb)
 SETTINGS_GETSET_DWORD(Network, _T("Network"), BOOL, FALSE);
 
 SETTINGS_GETSET_DWORD(NetStation, _T("NetStation"), int, 0);
+
+void Settings_GetNetComPort(LPTSTR buffer)
+{
+    Settings_LoadStringValue(_T("NetComPort"), buffer, 10);
+}
+void Settings_SetNetComPort(LPCTSTR sValue)
+{
+    Settings_SaveStringValue(_T("NetComPort"), sValue);
+}
+
+BOOL m_Settings_NetComConfig_Valid = FALSE;
+void Settings_GetNetComConfig(DCB * pDcb)
+{
+    if (!m_Settings_NetComConfig_Valid)
+    {
+        DCB dcb;
+        if (Settings_LoadBinaryValue(_T("NetComConfig"), &dcb, sizeof(DCB)))
+        {
+            ::memcpy(&m_Settings_NetComConfig, &dcb, sizeof(DCB));
+        }
+        //NOTE: else -- use defaults from m_Settings_NetComConfig
+
+        m_Settings_NetComConfig_Valid = TRUE;
+    }
+    if (m_Settings_NetComConfig_Valid)
+    {
+        ::memcpy(pDcb, &m_Settings_NetComConfig, sizeof(DCB));
+    }
+}
+void Settings_SetNetComConfig(const DCB * pDcb)
+{
+    ::memcpy(&m_Settings_NetComConfig, pDcb, sizeof(DCB));
+    Settings_SaveBinaryValue(_T("NetComConfig"), (const void *)pDcb, sizeof(DCB));
+    m_Settings_NetComConfig_Valid = TRUE;
+}
+
 
 //////////////////////////////////////////////////////////////////////
