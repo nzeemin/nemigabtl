@@ -21,8 +21,7 @@ const LPCTSTR CLASSNAME_KEYBOARDVIEW    = _T("NEMIGABTLKEYBOARD");
 const LPCTSTR CLASSNAME_DEBUGVIEW       = _T("NEMIGABTLDEBUG");
 const LPCTSTR CLASSNAME_DISASMVIEW      = _T("NEMIGABTLDISASM");
 const LPCTSTR CLASSNAME_MEMORYVIEW      = _T("NEMIGABTLMEMORY");
-//const LPCTSTR CLASSNAME_MEMORYMAPVIEW   = _T("NEMIGABTLMEMORYMAP");
-//const LPCTSTR CLASSNAME_TELETYPEVIEW    = _T("NEMIGABTLTELETYPE");
+const LPCTSTR CLASSNAME_MEMORYMAPVIEW   = _T("NEMIGABTLMEMORYMAP");
 const LPCTSTR CLASSNAME_CONSOLEVIEW     = _T("NEMIGABTLCONSOLE");
 
 
@@ -97,6 +96,17 @@ LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
 
 
 //////////////////////////////////////////////////////////////////////
+// MemoryMapView
+
+extern HWND g_hwndMemoryMap;  // MemoryMap view window handler
+
+void MemoryMapView_RegisterClass();
+void MemoryMapView_Create(int x, int y);
+LRESULT CALLBACK MemoryMapViewWndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK MemoryMapViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+void MemoryMapView_RedrawMap();
+
+
 // ConsoleView
 
 extern HWND g_hwndConsole;  // Console View window handle

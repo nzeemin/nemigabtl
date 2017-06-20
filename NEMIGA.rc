@@ -135,6 +135,7 @@ BEGIN
     POPUP "Debug"
     BEGIN
         MENUITEM "Debug Views",                 ID_VIEW_DEBUG
+        MENUITEM "Memory Map",                  ID_VIEW_MEMORYMAP
         MENUITEM SEPARATOR
         MENUITEM "Step Into\tF11",              ID_DEBUG_STEPINTO
         MENUITEM "Step Over\tShift+F11",        ID_DEBUG_STEPOVER

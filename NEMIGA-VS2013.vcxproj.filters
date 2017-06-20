@@ -41,6 +41,7 @@
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="ToolWindow.cpp" />
     <ClCompile Include="SoundGen.cpp" />
+    <ClCompile Include="MemoryMapView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="emubase\Board.h">

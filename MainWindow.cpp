@@ -54,6 +54,7 @@ LRESULT CALLBACK MainWindow_WndProc(HWND, UINT, WPARAM, LPARAM);
 void MainWindow_AdjustWindowLayout();
 bool MainWindow_DoCommand(int commandId);
 void MainWindow_DoViewDebug();
+void MainWindow_DoDebugMemoryMap();
 void MainWindow_DoViewToolbar();
 void MainWindow_DoViewKeyboard();
 void MainWindow_DoViewFullscreen();
@@ -107,7 +108,7 @@ void MainWindow_RegisterClass()
     KeyboardView_RegisterClass();
     MemoryView_RegisterClass();
     DebugView_RegisterClass();
-    //MemoryMapView_RegisterClass();
+    MemoryMapView_RegisterClass();
     DisasmView_RegisterClass();
     ConsoleView_RegisterClass();
 }
@@ -640,15 +641,15 @@ void MainWindow_ShowHideKeyboard()
 
 void MainWindow_ShowHideMemoryMap()
 {
-    //if (g_hwndMemoryMap == INVALID_HANDLE_VALUE)
-    //{
-    //    RECT rcScreen;  ::GetWindowRect(g_hwndScreen, &rcScreen);
-    //    CreateMemoryMapView(rcScreen.right, rcScreen.top);
-    //}
-    //else
-    //{
-    //    ::SetFocus(g_hwndMemoryMap);
-    //}
+    if (g_hwndMemoryMap == INVALID_HANDLE_VALUE)
+    {
+        RECT rcScreen;  ::GetWindowRect(g_hwndScreen, &rcScreen);
+        MemoryMapView_Create(rcScreen.right, rcScreen.top);
+    }
+    else
+    {
+        ::SetFocus(g_hwndMemoryMap);
+    }
 }
 
 void MainWindow_UpdateMenu()
@@ -737,6 +738,9 @@ bool MainWindow_DoCommand(int commandId)
         break;
     case ID_VIEW_DEBUG:
         MainWindow_DoViewDebug();
+        break;
+    case ID_VIEW_MEMORYMAP:
+        MainWindow_DoDebugMemoryMap();
         break;
     case ID_VIEW_TOOLBAR:
         MainWindow_DoViewToolbar();
@@ -1174,8 +1178,8 @@ void MainWindow_UpdateAllViews()
         InvalidateRect(g_hwndDisasm, NULL, TRUE);
     if (g_hwndMemory != NULL)
         InvalidateRect(g_hwndMemory, NULL, TRUE);
-    //if (g_hwndMemoryMap != NULL)
-    //    InvalidateRect(g_hwndMemoryMap, NULL, TRUE);
+    if (g_hwndMemoryMap != NULL)
+        InvalidateRect(g_hwndMemoryMap, NULL, TRUE);
 }
 
 void MainWindow_SetToolbarImage(int commandId, int imageIndex)
