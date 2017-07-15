@@ -29,6 +29,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #define COLOR_BLUE      RGB(0,0,255)
 #define COLOR_SUBTITLE  RGB(0,128,0)
 #define COLOR_VALUE     RGB(128,128,128)
+#define COLOR_VALUEROM  RGB(128,128,192)
 #define COLOR_JUMP      RGB(80,192,224)
 #define COLOR_CURRENT   RGB(255,255,224)
 
@@ -142,7 +143,7 @@ LRESULT CALLBACK DisasmViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
     default:
         return CallWindowProc(m_wndprocDisasmToolWindow, hWnd, message, wParam, lParam);
     }
-    return (LRESULT)FALSE;
+    //return (LRESULT)FALSE;
 }
 
 LRESULT CALLBACK DisasmViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -175,20 +176,10 @@ LRESULT CALLBACK DisasmViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
     return (LRESULT)FALSE;
 }
 
-BOOL DisasmView_OnKeyDown(WPARAM vkey, LPARAM lParam)
+BOOL DisasmView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
 {
     switch (vkey)
     {
-    case VK_DOWN:
-        DisasmView_SetBaseAddr(m_wDisasmNextBaseAddr);
-        break;
-    case 0x47:  // G - Go To Address
-        {
-            WORD value = m_wDisasmBaseAddr;
-            if (InputBoxOctal(m_hwndDisasmViewer, _T("Go To Address"), _T("Address (octal):"), &value))
-                DisasmView_SetBaseAddr(value);
-            break;
-        }
     case 0x53:  // S - Load/Unload Subtitles
         DisasmView_DoSubtitles();
         break;
@@ -469,7 +460,7 @@ void DisasmView_DoDraw(HDC hdc)
         GetClientRect(m_hwndDisasmViewer, &rcFocus);
         if (yFocus >= 0)
         {
-            rcFocus.top = yFocus;
+            rcFocus.top = yFocus - 1;
             rcFocus.bottom = yFocus + cyLine;
         }
         DrawFocusRect(hdc, &rcFocus);
@@ -540,11 +531,11 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previ
     // Читаем из памяти процессора в буфер
     const int nWindowSize = 30;
     WORD memory[nWindowSize + 2];
+    int addrtype[nWindowSize + 2];
     for (int idx = 0; idx < nWindowSize; idx++)
     {
-        int addrtype;
         memory[idx] = g_pBoard->GetWordView(
-                current + idx * 2 - 10, pProc->IsHaltMode(), TRUE, &addrtype);
+                (WORD)(current + idx * 2 - 10), pProc->IsHaltMode(), TRUE, addrtype + idx);
     }
 
     WORD address = current - 10;
@@ -574,7 +565,8 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previ
         DrawOctalValue(hdc, x + 5 * cxChar, y, address);  // Address
         // Value at the address
         WORD value = memory[index];
-        ::SetTextColor(hdc, COLOR_VALUE);
+        int memorytype = addrtype[index];
+        ::SetTextColor(hdc, (memorytype == ADDRTYPE_ROM) ? COLOR_VALUEROM : COLOR_VALUE);
         DrawOctalValue(hdc, x + 13 * cxChar, y, value);
         ::SetTextColor(hdc, colorText);
 
@@ -647,7 +639,7 @@ int DisasmView_DrawDisassemble(HDC hdc, CProcessor* pProc, WORD base, WORD previ
             }
             ::SetTextColor(hdc, colorText);
             if (wNextBaseAddr == 0)
-                wNextBaseAddr = address + length * 2;
+                wNextBaseAddr = (WORD)(address + length * 2);
         }
         if (length > 0) length--;
 

@@ -36,11 +36,12 @@ HWND m_hwndDebugToolbar = (HWND) INVALID_HANDLE_VALUE;
 WORD m_wDebugCpuR[9];  // Old register values - R0..R7, PSW
 BOOL m_okDebugCpuRChanged[9];  // Register change flags
 WORD m_wDebugCpuPswOld;  // PSW value on previous step
+WORD m_wDebugCpuR6Old;  // SP value on previous step
 
 void DebugView_DoDraw(HDC hdc);
 BOOL DebugView_OnKeyDown(WPARAM vkey, LPARAM lParam);
 void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WORD* arrR, BOOL* arrRChanged, WORD oldPsw);
-void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, int x, int y);
+void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, int x, int y, WORD oldValue);
 void DebugView_DrawPorts(HDC hdc, CMotherboard* pBoard, int x, int y);
 void DebugView_UpdateWindowText();
 
@@ -78,6 +79,7 @@ void DebugView_Init()
     memset(m_wDebugCpuR, 255, sizeof(m_wDebugCpuR));
     memset(m_okDebugCpuRChanged, 1, sizeof(m_okDebugCpuRChanged));
     m_wDebugCpuPswOld = 0;
+    m_wDebugCpuR6Old = 0;
 }
 
 void DebugView_Create(HWND hwndParent, int x, int y, int width, int height)
@@ -159,7 +161,7 @@ LRESULT CALLBACK DebugViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
     default:
         return CallWindowProc(m_wndprocDebugToolWindow, hWnd, message, wParam, lParam);
     }
-    return (LRESULT)FALSE;
+    //return (LRESULT)FALSE;
 }
 
 LRESULT CALLBACK DebugViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -175,7 +177,7 @@ LRESULT CALLBACK DebugViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, 
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hWnd, &ps);
 
-            DebugView_DoDraw(hdc);  // Draw memory dump
+            DebugView_DoDraw(hdc);
 
             EndPaint(hWnd, &ps);
         }
@@ -195,7 +197,7 @@ LRESULT CALLBACK DebugViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, 
     return (LRESULT)FALSE;
 }
 
-BOOL DebugView_OnKeyDown(WPARAM vkey, LPARAM lParam)
+BOOL DebugView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
 {
     switch (vkey)
     {
@@ -223,6 +225,7 @@ void DebugView_OnUpdate()
     ASSERT(pCPU != NULL);
 
     // Get new register values and set change flags
+    m_wDebugCpuR6Old = m_wDebugCpuR[6];
     for (int r = 0; r < 8; r++)
     {
         WORD value = pCPU->GetReg(r);
@@ -255,13 +258,14 @@ void DebugView_DoDraw(HDC hdc)
     WORD* arrR = m_wDebugCpuR;
     BOOL* arrRChanged = m_okDebugCpuRChanged;
     WORD oldPsw = m_wDebugCpuPswOld;
+    WORD oldSP = m_wDebugCpuR6Old;
 
     //TextOut(hdc, cxChar * 1, 2 + 1 * cyLine, _T("CPU"), 3);
 
     DebugView_DrawProcessor(hdc, pDebugPU, 30 + cxChar * 2, 2 + 1 * cyLine, arrR, arrRChanged, oldPsw);
 
     // Draw stack for the current processor
-    DebugView_DrawMemoryForRegister(hdc, 6, pDebugPU, 30 + 35 * cxChar, 2 + 0 * cyLine);
+    DebugView_DrawMemoryForRegister(hdc, 6, pDebugPU, 30 + 35 * cxChar, 2 + 0 * cyLine, oldSP);
 
     DebugView_DrawPorts(hdc, g_pBoard, 30 + 57 * cxChar, 2 + 0 * cyLine);
 
@@ -316,8 +320,8 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
     WORD psw = arrR[8]; // pProc->GetPSW();
     DrawOctalValue(hdc, x + cxChar * 3, y + 9 * cyLine, psw);
     DrawHexValue(hdc, x + cxChar * 10, y + 9 * cyLine, psw);
+    ::SetTextColor(hdc, colorText);
     TextOut(hdc, x + cxChar * 15, y + 8 * cyLine, _T("       HP  TNZVC"), 16);
-    //DrawBinaryValue(hdc, x + cxChar * 15, y + 9 * cyLine, psw);
 
     // PSW value bits colored bit-by-bit
     TCHAR buffera[2];  buffera[1] = 0;
@@ -342,12 +346,14 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
 
 }
 
-void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, int x, int y)
+void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, int x, int y, WORD oldValue)
 {
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
     COLORREF colorText = GetSysColor(COLOR_WINDOWTEXT);
+    COLORREF colorOld = SetTextColor(hdc, colorText);
 
     WORD current = pProc->GetReg(reg);
+    WORD previous = oldValue;
     BOOL okExec = (reg == 7);
 
     // Читаем из памяти процессора в буфер
@@ -363,27 +369,34 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     for (int index = 0; index < 14; index++)    // Рисуем строки
     {
         // Адрес
+        SetTextColor(hdc, colorText);
         DrawOctalValue(hdc, x + 4 * cxChar, y, address);
 
         // Значение по адресу
         WORD value = memory[index];
         WORD wChanged = Emulator_GetChangeRamStatus(address);
-        ::SetTextColor(hdc, (wChanged != 0) ? RGB(255, 0, 0) : colorText);
+        SetTextColor(hdc, (wChanged != 0) ? RGB(255, 0, 0) : colorText);
         DrawOctalValue(hdc, x + 12 * cxChar, y, value);
-        ::SetTextColor(hdc, colorText);
 
         // Текущая позиция
         if (address == current)
         {
+            SetTextColor(hdc, colorText);
             TextOut(hdc, x + 2 * cxChar, y, _T(">>"), 2);
-            ::SetTextColor(hdc, m_okDebugCpuRChanged[reg] ? COLOR_RED : colorText);
+            if (current != previous) SetTextColor(hdc, COLOR_RED);
             TextOut(hdc, x, y, REGISTER_NAME[reg], 2);
-            ::SetTextColor(hdc, colorText);
+        }
+        else if (address == previous)
+        {
+            SetTextColor(hdc, COLOR_BLUE);
+            TextOut(hdc, x + 2 * cxChar, y, _T(">"), 1);
         }
 
         address += 2;
         y += cyLine;
     }
+
+    SetTextColor(hdc, colorOld);
 }
 
 void DebugView_DrawPorts(HDC hdc, CMotherboard* pBoard, int x, int y)
