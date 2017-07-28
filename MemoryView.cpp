@@ -312,8 +312,8 @@ void MemoryView_OnDraw(HDC hdc)
     if (::GetFocus() == m_hwndMemoryViewer)
     {
         RECT rcFocus = rcClient;
-        rcFocus.left += cxChar * 5;
-        rcFocus.top += cyLine;
+        rcFocus.left += cxChar * 5 - 1;
+        rcFocus.top += cyLine - 1;
         rcFocus.right = cxChar * (63 + 24);
         DrawFocusRect(hdc, &rcFocus);
     }

@@ -85,17 +85,17 @@ void MainWindow_RegisterClass()
     WNDCLASSEX wcex;
     wcex.cbSize = sizeof(WNDCLASSEX);
 
-    wcex.style			= CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc	= MainWindow_WndProc;
-    wcex.cbClsExtra		= 0;
-    wcex.cbWndExtra		= 0;
-    wcex.hInstance		= g_hInst;
-    wcex.hIcon			= LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NEMIGABTL));
-    wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-    wcex.hbrBackground	= (HBRUSH)(COLOR_BTNFACE + 1);
-    wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_NEMIGABTL);
-    wcex.lpszClassName	= g_szWindowClass;
-    wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.style          = CS_HREDRAW | CS_VREDRAW;
+    wcex.lpfnWndProc    = MainWindow_WndProc;
+    wcex.cbClsExtra     = 0;
+    wcex.cbWndExtra     = 0;
+    wcex.hInstance      = g_hInst;
+    wcex.hIcon          = LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_NEMIGABTL));
+    wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
+    wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
+    wcex.lpszMenuName   = MAKEINTRESOURCE(IDC_NEMIGABTL);
+    wcex.lpszClassName  = g_szWindowClass;
+    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
     RegisterClassEx(&wcex);
 
@@ -313,8 +313,8 @@ void MainWindow_RestorePositionAndShow()
 
     ShowWindow(g_hwnd, Settings_GetWindowMaximized() ? SW_SHOWMAXIMIZED : SW_SHOW);
 
-    if (Settings_GetWindowFullscreen())
-        MainWindow_DoViewFullscreen();
+    //if (Settings_GetWindowFullscreen())
+    //    MainWindow_DoViewFullscreen();
 }
 
 // Processes messages for the main window
@@ -357,11 +357,7 @@ LRESULT CALLBACK MainWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
             int idCtrl = (int) wParam;
             HWND hwndFrom = ((LPNMHDR) lParam)->hwndFrom;
             UINT code = ((LPNMHDR) lParam)->code;
-            if (hwndFrom == m_hwndStatusbar && code == NM_CLICK)
-            {
-                //MainWindow_OnStatusbarClick((LPNMMOUSE) lParam);
-            }
-            else if (code == TTN_SHOW)
+            if (code == TTN_SHOW)
             {
                 return 0;
             }
@@ -390,25 +386,21 @@ LRESULT CALLBACK MainWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 
 void MainWindow_AdjustWindowSize()
 {
+    const int MAX_DEBUG_WIDTH = 1450;
+    const int MAX_DEBUG_HEIGHT = 1400;
+
     // If Fullscreen or Maximized then do nothing
-    if (m_MainWindow_Fullscreen)
-        return;
+    //if (m_MainWindow_Fullscreen)
+    //    return;
     WINDOWPLACEMENT placement;
     placement.length = sizeof(WINDOWPLACEMENT);
     ::GetWindowPlacement(g_hwnd, &placement);
     if (placement.showCmd == SW_MAXIMIZE)
         return;
 
-    const int MAX_DEBUG_WIDTH = 1450;
-    const int MAX_DEBUG_HEIGHT = 1400;
-    const int MIN_NODEBUG_WIDTH = 612;
-
     // Get metrics
-    RECT rcWorkArea;  SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0);
-    int cxBorder  = ::GetSystemMetrics(SM_CXBORDER);
-    int cyBorder  = ::GetSystemMetrics(SM_CYBORDER);
-    int cxFrame   = ::GetSystemMetrics(SM_CXDLGFRAME);
-    int cyFrame   = ::GetSystemMetrics(SM_CYDLGFRAME);
+    int cxFrame   = ::GetSystemMetrics(SM_CXSIZEFRAME);
+    int cyFrame   = ::GetSystemMetrics(SM_CYSIZEFRAME);
     int cyCaption = ::GetSystemMetrics(SM_CYCAPTION);
     int cyMenu    = ::GetSystemMetrics(SM_CYMENU);
 
@@ -419,8 +411,8 @@ void MainWindow_AdjustWindowSize()
     int cyScreen = rcScreen.bottom - rcScreen.top;
     RECT rcStatus;  GetWindowRect(m_hwndStatusbar, &rcStatus);
     int cyStatus = rcStatus.bottom - rcStatus.top;
-    int cyKeyboard = 0;
 
+    int cyKeyboard = 0;
     if (Settings_GetKeyboard())
     {
         RECT rcKeyboard;  GetWindowRect(g_hwndKeyboard, &rcKeyboard);
@@ -428,11 +420,13 @@ void MainWindow_AdjustWindowSize()
     }
 
     // Adjust main window size
-    int xLeft = rcWorkArea.left;
-    int yTop = rcWorkArea.top;
+    int xLeft, yTop;
     int cxWidth, cyHeight;
     if (Settings_GetDebug())
     {
+        RECT rcWorkArea;  SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0);
+        xLeft = rcWorkArea.left;
+        yTop = rcWorkArea.top;
         cxWidth = rcWorkArea.right - rcWorkArea.left;
         if (cxWidth > MAX_DEBUG_WIDTH) cxWidth = MAX_DEBUG_WIDTH;
         cyHeight = rcWorkArea.bottom - rcWorkArea.top;
@@ -440,13 +434,15 @@ void MainWindow_AdjustWindowSize()
     }
     else
     {
-        cxWidth = cxScreen + cxFrame * 2 + 8;
-        if (cxWidth < MIN_NODEBUG_WIDTH) cxWidth = MIN_NODEBUG_WIDTH;
-        cyHeight = cyCaption + cyMenu + cyScreen + 4 + cyStatus + cyFrame * 2;
+        RECT rcCurrent;  ::GetWindowRect(g_hwnd, &rcCurrent);
+        xLeft = rcCurrent.left;
+        yTop = rcCurrent.top;
+        cxWidth = cxScreen + cxFrame * 2;
+        cyHeight = cyCaption + cyMenu + 4 + cyScreen + 4 + cyStatus + cyFrame * 2;
         if (Settings_GetToolbar())
-            cyHeight += cyToolbar;
+            cyHeight += cyToolbar + 4;
         if (Settings_GetKeyboard())
-            cyHeight += cyKeyboard;
+            cyHeight += cyKeyboard + 4;
     }
 
     SetWindowPos(g_hwnd, NULL, xLeft, yTop, cxWidth, cyHeight, SWP_NOZORDER | SWP_NOMOVE);
@@ -472,22 +468,29 @@ void MainWindow_AdjustWindowLayout()
 
     RECT rc;  GetClientRect(g_hwnd, &rc);
 
-    if (!Settings_GetDebug())  // No debug views
+    if (!Settings_GetDebug())  // No debug views -- tape/keyboard snapped to bottom
     {
         cxScreen = rc.right;
 
         int yTape = rc.bottom - cyStatus + 4;
-        RECT rcScreen;  GetWindowRect(g_hwndScreen, &rcScreen);
-        cyScreen = rcScreen.bottom - rcScreen.top;
+        int cyTape = 0;
 
         int yKeyboard = yTape;
         int cxKeyboard = 0, cyKeyboard = 0;
-        if (Settings_GetKeyboard())  // Fills space between the screen and tape
+        if (Settings_GetKeyboard())  // Snapped to bottom
         {
+            RECT rcKeyboard;  GetWindowRect(g_hwndKeyboard, &rcKeyboard);
             cxKeyboard = cxScreen;
-            yKeyboard = yScreen + cyScreen;
-            cyKeyboard = yTape - yKeyboard - 4;
+            cyKeyboard = rcKeyboard.bottom - rcKeyboard.top;
+            yKeyboard = yTape - cyKeyboard - 4;
         }
+
+        cyScreen = yKeyboard - yScreen - (Settings_GetKeyboard() ? 0 : 4);
+        if (cyScreen < NEMIGA_SCREEN_HEIGHT) cyScreen = NEMIGA_SCREEN_HEIGHT;
+
+        //m_MainWindowMinCx = cxScreen + ::GetSystemMetrics(SM_CXSIZEFRAME) * 2;
+        //m_MainWindowMinCy = ::GetSystemMetrics(SM_CYCAPTION) + ::GetSystemMetrics(SM_CYMENU) +
+        //    cyScreen + cyStatus + ::GetSystemMetrics(SM_CYSIZEFRAME) * 2;
 
         if (Settings_GetKeyboard())
         {
@@ -500,15 +503,17 @@ void MainWindow_AdjustWindowLayout()
         cxScreen = 596;
         cyScreen = NEMIGA_SCREEN_HEIGHT + 8;
 
-        int yKeyboard = yScreen + cyScreen;
-        int yConsole = yKeyboard;
+        int yKeyboard = yScreen + cyScreen + (Settings_GetKeyboard() ? 0 : 4);
+        int yTape = yKeyboard;
+        int yConsole = yTape;
 
         if (Settings_GetKeyboard())
         {
             int cxKeyboard = cxScreen;
             int cyKeyboard = 162;
             int xKeyboard = (cxScreen - cxKeyboard) / 2;
-            SetWindowPos(g_hwndKeyboard, NULL, xKeyboard, yKeyboard, cxKeyboard, cyKeyboard, SWP_NOZORDER | SWP_NOCOPYBITS);
+            SetWindowPos(g_hwndKeyboard, NULL, xKeyboard, yKeyboard, cxKeyboard, cyKeyboard, SWP_NOZORDER);
+            yTape += cyKeyboard + 4;
             yConsole += cyKeyboard + 4;
         }
 
@@ -518,23 +523,37 @@ void MainWindow_AdjustWindowLayout()
         RECT rcDebug;  GetWindowRect(g_hwndDebug, &rcDebug);
         int cxDebug = rc.right - cxScreen - 4;
         int cyDebug = rcDebug.bottom - rcDebug.top;
-        SetWindowPos(g_hwndDebug, NULL, cxScreen + 4, 0, cxDebug, cyDebug, SWP_NOZORDER);
 
-        RECT rcDisasm;  GetWindowRect(g_hwndDisasm, &rcDisasm);
-        int yDebug = cyDebug + 4;
-        int cyDisasm = rcDisasm.bottom - rcDisasm.top;
-        SetWindowPos(g_hwndDisasm, NULL, cxScreen + 4, yDebug, cxDebug, cyDisasm, SWP_NOZORDER);
-
-        int yMemory = cyDebug + 4 + cyDisasm + 4;
+        int yMemory = 528;
+        int cxMemory = rc.right - cxScreen - 4;
         int cyMemory = rc.bottom - yMemory;
-        SetWindowPos(g_hwndMemory, NULL, cxScreen + 4, yMemory, cxDebug, cyMemory, SWP_NOZORDER);
 
+        int yDisasm = cyDebug + 4;
+        int cyDisasm = yMemory - yDisasm - 4;
+        int cxDisasm = cxDebug;
+
+        if (Settings_GetMemoryMap())
+        {
+            RECT rcMemoryMap;  GetWindowRect(g_hwndMemoryMap, &rcMemoryMap);
+            int cxMemoryMap = rcMemoryMap.right - rcMemoryMap.left;
+            int cyMemoryMap = rcMemoryMap.bottom - rcMemoryMap.top;
+            int xMemoryMap = rc.right - cxMemoryMap;
+            SetWindowPos(g_hwndMemoryMap, NULL, xMemoryMap, 0, cxMemoryMap, cyMemoryMap, SWP_NOZORDER);
+
+            cxDebug -= cxMemoryMap + 4;
+            cxDisasm -= cxMemoryMap + 4;
+            //yMemory = cyMemoryMap + 4;
+        }
+
+        SetWindowPos(g_hwndDebug, NULL, cxScreen + 4, 0, cxDebug, cyDebug, SWP_NOZORDER);
+        SetWindowPos(g_hwndDisasm, NULL, cxScreen + 4, yDisasm, cxDisasm, cyDisasm, SWP_NOZORDER);
         SetWindowPos(m_hwndSplitter, NULL, cxScreen + 4, yMemory - 4, cxDebug, 4, SWP_NOZORDER);
+        SetWindowPos(g_hwndMemory, NULL, cxScreen + 4, yMemory, cxMemory, cyMemory, SWP_NOZORDER);
     }
 
     SetWindowPos(m_hwndToolbar, NULL, 4, 4, cxScreen, cyToolbar, SWP_NOZORDER);
 
-    SetWindowPos(g_hwndScreen, NULL, 0, yScreen, cxScreen, cyScreen, SWP_NOZORDER /*| SWP_NOCOPYBITS*/);
+    SetWindowPos(g_hwndScreen, NULL, 0, yScreen, cxScreen, cyScreen, SWP_NOZORDER);
 
     int cyStatusReal = rcStatus.bottom - rcStatus.top;
     SetWindowPos(m_hwndStatusbar, NULL, 0, rc.bottom - cyStatusReal, cxScreen, cyStatusReal,
@@ -556,6 +575,8 @@ void MainWindow_ShowHideDebug()
             DestroyWindow(g_hwndDisasm);
         if (g_hwndMemory != INVALID_HANDLE_VALUE)
             DestroyWindow(g_hwndMemory);
+        if (g_hwndMemoryMap != INVALID_HANDLE_VALUE)
+            DestroyWindow(g_hwndMemoryMap);
 
         MainWindow_AdjustWindowSize();
     }
@@ -588,6 +609,8 @@ void MainWindow_ShowHideDebug()
             DisasmView_Create(g_hwnd, xDebugLeft, yDisasmTop, cxDebugWidth, cyDisasmHeight);
         if (g_hwndMemory == INVALID_HANDLE_VALUE)
             MemoryView_Create(g_hwnd, xDebugLeft, yMemoryTop, cxDebugWidth, cyMemoryHeight);
+        if (g_hwndMemoryMap == INVALID_HANDLE_VALUE && Settings_GetMemoryMap())
+            MemoryMapView_Create(g_hwnd, xDebugLeft, yMemoryTop);
         m_hwndSplitter = SplitterWindow_Create(g_hwnd, g_hwndDisasm, g_hwndMemory);
     }
 
@@ -637,15 +660,22 @@ void MainWindow_ShowHideKeyboard()
 
 void MainWindow_ShowHideMemoryMap()
 {
-    if (g_hwndMemoryMap == INVALID_HANDLE_VALUE)
+    if (!Settings_GetMemoryMap())
     {
-        RECT rcScreen;  ::GetWindowRect(g_hwndScreen, &rcScreen);
-        MemoryMapView_Create(rcScreen.right, rcScreen.top);
+        if (g_hwndMemoryMap != INVALID_HANDLE_VALUE)
+        {
+            ::DestroyWindow(g_hwndMemoryMap);
+            g_hwndMemoryMap = (HWND)INVALID_HANDLE_VALUE;
+        }
     }
-    else
+    else if (Settings_GetDebug())
     {
-        ::SetFocus(g_hwndMemoryMap);
+        if (g_hwndMemoryMap == INVALID_HANDLE_VALUE)
+            MemoryMapView_Create(g_hwnd, 0, 0);
     }
+
+    MainWindow_AdjustWindowLayout();
+    MainWindow_UpdateMenu();
 }
 
 void MainWindow_UpdateMenu()
@@ -860,6 +890,7 @@ void MainWindow_DoViewDebug()
 }
 void MainWindow_DoDebugMemoryMap()
 {
+    Settings_SetMemoryMap(!Settings_GetMemoryMap());
     MainWindow_ShowHideMemoryMap();
 }
 void MainWindow_DoViewToolbar()

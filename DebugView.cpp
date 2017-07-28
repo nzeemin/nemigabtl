@@ -16,8 +16,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Views.h"
 #include "ToolWindow.h"
 #include "Emulator.h"
-#include "emubase\Board.h"
-#include "emubase\Processor.h"
+#include "emubase\Emubase.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -42,7 +41,7 @@ void DebugView_DoDraw(HDC hdc);
 BOOL DebugView_OnKeyDown(WPARAM vkey, LPARAM lParam);
 void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WORD* arrR, BOOL* arrRChanged, WORD oldPsw);
 void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, int x, int y, WORD oldValue);
-void DebugView_DrawPorts(HDC hdc, CMotherboard* pBoard, int x, int y);
+void DebugView_DrawPorts(HDC hdc, const CMotherboard* pBoard, int x, int y);
 void DebugView_UpdateWindowText();
 
 
@@ -358,11 +357,11 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
 
     // Читаем из памяти процессора в буфер
     WORD memory[16];
+    int addrtype[16];
     for (int idx = 0; idx < 16; idx++)
     {
-        int addrtype;
         memory[idx] = g_pBoard->GetWordView(
-                current + idx * 2 - 14, pProc->IsHaltMode(), okExec, &addrtype);
+                current + idx * 2 - 14, pProc->IsHaltMode(), okExec, addrtype + idx);
     }
 
     WORD address = current - 14;
@@ -375,7 +374,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
         // Значение по адресу
         WORD value = memory[index];
         WORD wChanged = Emulator_GetChangeRamStatus(address);
-        SetTextColor(hdc, (wChanged != 0) ? RGB(255, 0, 0) : colorText);
+        SetTextColor(hdc, (wChanged != 0) ? COLOR_RED : colorText);
         DrawOctalValue(hdc, x + 12 * cxChar, y, value);
 
         // Текущая позиция
@@ -399,7 +398,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     SetTextColor(hdc, colorOld);
 }
 
-void DebugView_DrawPorts(HDC hdc, CMotherboard* pBoard, int x, int y)
+void DebugView_DrawPorts(HDC hdc, const CMotherboard* pBoard, int x, int y)
 {
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
 

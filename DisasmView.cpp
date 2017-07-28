@@ -17,9 +17,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "ToolWindow.h"
 #include "Dialogs.h"
 #include "Emulator.h"
-#include "emubase\Board.h"
-#include "emubase\Processor.h"
-#include "emubase\Disasm.h"
+#include "emubase\Emubase.h"
 
 
 //////////////////////////////////////////////////////////////////////

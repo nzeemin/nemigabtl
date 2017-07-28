@@ -320,6 +320,8 @@ SETTINGS_GETSET_DWORD(SoundVolume, _T("SoundVolume"), WORD, 0x3fff);
 
 SETTINGS_GETSET_DWORD(Keyboard, _T("Keyboard"), BOOL, TRUE);
 
+SETTINGS_GETSET_DWORD(MemoryMap, _T("MemoryMap"), BOOL, FALSE);
+
 SETTINGS_GETSET_DWORD(Serial, _T("Serial"), BOOL, FALSE);
 
 SETTINGS_GETSET_DWORD(Parallel, _T("Parallel"), BOOL, FALSE);

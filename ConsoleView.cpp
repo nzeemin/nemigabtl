@@ -15,9 +15,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Views.h"
 #include "ToolWindow.h"
 #include "Emulator.h"
-#include "emubase\Board.h"
-#include "emubase\Processor.h"
-#include "emubase\Disasm.h"
+#include "emubase\Emubase.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -362,7 +360,7 @@ int PrintDisassemble(CProcessor* pProc, WORD address, BOOL okOneInstr, BOOL okSh
 
     int lastLength = 0;
     int length = 0;
-    for (int index = 0; index < nWindowSize; index++)    // Рисуем строки
+    for (int index = 0; index < nWindowSize; index++)  // Рисуем строки
     {
         PrintOctalValue(bufaddr, address);
         WORD value = memory[index];
@@ -622,7 +620,7 @@ void DoConsoleCommand()
         else
         {
             DWORD dwTrace = (g_pBoard->GetTrace() == TRACE_NONE ? TRACE_ALL : TRACE_NONE);
-            if (command[1] != 0)
+            if (command[1] != 0)  // "tXXXXXX" -- trace with flags specified
             {
                 WORD value;
                 if (!ParseOctalValue(command + 1, &value))
