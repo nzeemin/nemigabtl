@@ -284,6 +284,9 @@ LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
                 int tableindex = 1 | (shift ? 4 : 0) | (ctrl ? 0 : 2) | (KeyboardView_IsLat() ? 0 : 8);  //TODO
                 int index = tableindex * 128 + keyscan;
                 m_nKeyboardCharPressed = m_pKeyboardRom[index];
+//#if !defined(PRODUCT)
+//                DebugPrintFormat(_T("Keyboard key: 0x%0x\r\n"), m_nKeyboardCharPressed);
+//#endif
 
                 // Fire keydown event
                 ScreenView_KeyEvent(m_nKeyboardCharPressed, TRUE);

@@ -323,10 +323,7 @@ LRESULT CALLBACK MainWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
     switch (message)
     {
     case WM_ACTIVATE:
-        if (Settings_GetDebug())
-            ConsoleView_Activate();
-        else
-            SetFocus(g_hwndScreen);
+        SetFocus(g_hwndScreen);
         break;
     case WM_COMMAND:
         {
@@ -561,9 +558,6 @@ void MainWindow_ShowHideDebug()
             DestroyWindow(g_hwndMemory);
 
         MainWindow_AdjustWindowSize();
-        MainWindow_AdjustWindowLayout();
-
-        SetFocus(g_hwndScreen);
     }
     else  // Debug Views ON
     {
@@ -595,11 +589,13 @@ void MainWindow_ShowHideDebug()
         if (g_hwndMemory == INVALID_HANDLE_VALUE)
             MemoryView_Create(g_hwnd, xDebugLeft, yMemoryTop, cxDebugWidth, cyMemoryHeight);
         m_hwndSplitter = SplitterWindow_Create(g_hwnd, g_hwndDisasm, g_hwndMemory);
-
-        MainWindow_AdjustWindowLayout();
     }
 
+    MainWindow_AdjustWindowLayout();
+
     MainWindow_UpdateMenu();
+
+    SetFocus(g_hwndScreen);
 }
 
 void MainWindow_ShowHideToolbar()
