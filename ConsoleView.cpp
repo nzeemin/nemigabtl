@@ -188,7 +188,12 @@ LRESULT CALLBACK ConsoleEditWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
         }
         if (wParam == VK_ESCAPE)
         {
-            SetFocus(g_hwndScreen);
+            TCHAR command[32];
+            GetWindowText(m_hwndConsoleEdit, command, 32);
+            if (*command == 0)  // If command is empty
+                SetFocus(g_hwndScreen);
+            else
+                SendMessage(m_hwndConsoleEdit, WM_SETTEXT, 0, (LPARAM)_T(""));  // Clear command
             return 0;
         }
         break;
@@ -528,8 +533,8 @@ void DoConsoleCommand()
         if (command[1] == 0)  // "s" - Step Into, execute one instruction
         {
             PrintDisassemble(pProc, pProc->GetPC(), TRUE, FALSE);
-            //pProc->Execute();
 
+            //pProc->Execute();
             g_pBoard->DebugTicks();
 
             okUpdateAllViews = TRUE;

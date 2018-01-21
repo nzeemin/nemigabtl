@@ -589,9 +589,9 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
             m_Port170006 |= 020000;
         else if (address == 0177564)
         {
-#if !defined(PRODUCT)
-            DebugLogFormat(_T("WRITE 177564 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-#endif
+//#if !defined(PRODUCT)
+//            DebugLogFormat(_T("WRITE 177564 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
+//#endif
             SetRAMWord(offset & 0177776, word);
             return;
         }
@@ -641,9 +641,9 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
         else if (address == 0177564)
         {
             SetRAMByte(offset, byte);
-#if !defined(PRODUCT)
-            DebugLogFormat(_T("WRITE 177564 value %03o, PC=%06o\r\n"), byte, m_pCPU->GetInstructionPC());
-#endif
+//#if !defined(PRODUCT)
+//            DebugLogFormat(_T("WRITE 177564 value %03o, PC=%06o\r\n"), byte, m_pCPU->GetInstructionPC());
+//#endif
             return;
         }
         else if (address == 0177566)
@@ -818,25 +818,28 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         //case 0177564:
         //case 0177566:
     case 0177574:
-#if !defined(PRODUCT)
-        if (m_pCPU->GetInstructionPC() < 0160000)
-            DebugLogFormat(_T("READ 177574 value %06o PC=%06o\r\n"), m_Port177574, m_pCPU->GetInstructionPC());
-#endif
+//#if !defined(PRODUCT)
+//        if (m_pCPU->GetInstructionPC() < 0160000)
+//            DebugLogFormat(_T("READ 177574 value %06o PC=%06o\r\n"), m_Port177574, m_pCPU->GetInstructionPC());
+//#endif
         return m_Port177574;
         //case 0177576:
         //    return 0xffff;  //STUB
 
     case 0177572:  // Регистр адреса косвенной адресации
-#if !defined(PRODUCT)
-        if (m_pCPU->GetInstructionPC() < 0160000)
-            DebugLogFormat(_T("READ 177572 value %06o PC=%06o\r\n"), m_Port177572, m_pCPU->GetInstructionPC());
-#endif
+//#if !defined(PRODUCT)
+//        if (m_pCPU->GetInstructionPC() < 0160000)
+//            DebugLogFormat(_T("READ 177572 value %06o PC=%06o\r\n"), m_Port177572, m_pCPU->GetInstructionPC());
+//#endif
         return m_Port177572;
     case 0177570:  // Регистр данных косвенного доступа
         return *(uint16_t*)(m_pRAM + m_Port177572 + m_Port177572);
 
     default:
+#if !defined(PRODUCT)
+        DebugLogFormat(_T("READ UNKNOWN PORT %06o PC=%06o\r\n"), address, m_pCPU->GetInstructionPC());
         m_pCPU->MemoryError();
+#endif
         return 0;
     }
 
@@ -1046,20 +1049,20 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
     case 0177566:
         break;  //STUB
     case 0177574:
-#if !defined(PRODUCT)
-        if (m_pCPU->GetInstructionPC() < 0160000)
-            DebugLogFormat(_T("WRITE 177574 value %06o PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-#endif
+//#if !defined(PRODUCT)
+//        if (m_pCPU->GetInstructionPC() < 0160000)
+//            DebugLogFormat(_T("WRITE 177574 value %06o PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
+//#endif
         m_Port177574 = word;
         break;
     case 0177576:
         break;  //STUB
 
     case 0177572:
-#if !defined(PRODUCT)
-        if (m_pCPU->GetInstructionPC() < 0160000)
-            DebugLogFormat(_T("WRITE 177572 value %06o PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-#endif
+//#if !defined(PRODUCT)
+//        if (m_pCPU->GetInstructionPC() < 0160000)
+//            DebugLogFormat(_T("WRITE 177572 value %06o PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
+//#endif
         m_Port177572 = word;
         break;
     case 0177570:

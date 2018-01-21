@@ -1142,19 +1142,10 @@ void MainWindow_DoEmulatorFloppy(int slot)
 
         // File Open dialog
         TCHAR bufFileName[MAX_PATH];
-        *bufFileName = 0;
-        OPENFILENAME ofn;
-        ZeroMemory(&ofn, sizeof(ofn));
-        ofn.lStructSize = sizeof(ofn);
-        ofn.hwndOwner = g_hwnd;
-        ofn.hInstance = g_hInst;
-        ofn.lpstrTitle = _T("Open floppy image to attach");
-        ofn.lpstrFilter = _T("NEMIGA floppy images (*.dsk)\0*.dsk\0All Files (*.*)\0*.*\0\0");
-        ofn.Flags = OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-        ofn.lpstrFile = bufFileName;
-        ofn.nMaxFile = sizeof(bufFileName) / sizeof(TCHAR);
-
-        BOOL okResult = GetOpenFileName(&ofn);
+        BOOL okResult = ShowOpenDialog(g_hwnd,
+                _T("Open floppy image to attach"),
+                _T("NEMIGA floppy images (*.dsk)\0*.dsk\0All Files (*.*)\0*.*\0\0"),
+                bufFileName);
         if (! okResult) return;
 
         if (! g_pBoard->AttachFloppyImage(slot, bufFileName))
@@ -1162,6 +1153,7 @@ void MainWindow_DoEmulatorFloppy(int slot)
             AlertWarning(_T("Failed to attach floppy image."));
             return;
         }
+
         Settings_SetFloppyFilePath(slot, bufFileName);
     }
     MainWindow_UpdateMenu();

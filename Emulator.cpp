@@ -16,8 +16,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Main.h"
 #include "Emulator.h"
 #include "Views.h"
-#include "emubase\Board.h"
-#include "emubase\Processor.h"
+#include "emubase\Emubase.h"
 #include "SoundGen.h"
 
 
