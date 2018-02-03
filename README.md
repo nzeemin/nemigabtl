@@ -1,6 +1,8 @@
 # nemigabtl
 **Nemiga Back to Life!** is emulator of **NEMIGA PK 588**, soviet computer based on PDP-11 compatible processor.
 
+[![Build status](https://ci.appveyor.com/api/projects/status/qh4x31xl9h50trea?svg=true)](https://ci.appveyor.com/project/nzeemin/nemigabtl)
+
 #### In Russian / На русском
 **Немига ПК 588** -- советский 16-разрядный персональный компьютер,
 разработан в Минском радиотехническом институте (МРТИ),
