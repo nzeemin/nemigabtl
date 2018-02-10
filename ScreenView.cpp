@@ -392,9 +392,9 @@ BOOL ScreenView_SaveScreenshot(LPCTSTR sFileName)
     LPCTSTR sFileNameExt = _tcsrchr(sFileName, _T('.'));
     BOOL result = FALSE;
     if (sFileNameExt != NULL && _tcsicmp(sFileNameExt, _T(".png")) == 0)
-        result = PngFile_SaveScreenshot(pBits, (DWORD*)colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
+        result = PngFile_SaveScreenshot((uint32_t*)pBits, colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
     else
-        result = BmpFile_SaveScreenshot(pBits, (DWORD*)colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
+        result = BmpFile_SaveScreenshot((uint32_t*)pBits, colors, sFileName, m_cxScreenWidth, m_cyScreenHeight);
 
     ::free(pBits);
 
