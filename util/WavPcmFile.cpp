@@ -120,7 +120,7 @@ HWAVPCMFILE WavPcmFile_Create(LPCTSTR filename, int sampleRate)
         return (HWAVPCMFILE) INVALID_HANDLE_VALUE;  // Failed to write consolidated header
     }
 
-    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::malloc(sizeof(WAVPCMFILE));  memset(pWavPcm, 0, sizeof(WAVPCMFILE));
+    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::calloc(1, sizeof(WAVPCMFILE));
     pWavPcm->fpFile = fpFileNew;
     pWavPcm->nChannels = channels;
     pWavPcm->nSampleFrequency = sampleRate;
@@ -232,7 +232,7 @@ HWAVPCMFILE WavPcmFile_Open(LPCTSTR filename)
         ::fseek(fpFileOpen, offset, SEEK_SET);
     }
 
-    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::malloc(sizeof(WAVPCMFILE));  ::memset(pWavPcm, 0, sizeof(WAVPCMFILE));
+    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::calloc(1, sizeof(WAVPCMFILE));
     pWavPcm->fpFile = fpFileOpen;
     pWavPcm->nChannels = channels;
     pWavPcm->nSampleFrequency = sampleFrequency;

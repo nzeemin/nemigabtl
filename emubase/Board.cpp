@@ -35,8 +35,8 @@ CMotherboard::CMotherboard ()
     m_Timer1 = m_Timer1div = m_Timer2 = 0;
 
     // Allocate memory for RAM and ROM
-    m_pRAM = (uint8_t*) ::malloc(128 * 1024);  ::memset(m_pRAM, 0, 128 * 1024);
-    m_pROM = (uint8_t*) ::malloc(4 * 1024);  ::memset(m_pROM, 0, 4 * 1024);
+    m_pRAM = (uint8_t*) ::calloc(128 * 1024, 1);
+    m_pROM = (uint8_t*) ::calloc(4 * 1024, 1);
 
     SetConfiguration(0);  // Default configuration
 

@@ -225,8 +225,8 @@ void MemoryView_OnDraw(HDC hdc)
     m_cyLineMemory = cyLine;
 
     TCHAR buffer[7];
-    const TCHAR* ADDRESS_LINE = _T(" addr     0      2      4      6      10     12     14     16");
-    TextOut(hdc, cxChar * 4, 0, ADDRESS_LINE, (int) _tcslen(ADDRESS_LINE));
+    const TCHAR* ADDRESS_LINE = _T(" addr   0      2      4      6      10     12     14     16");
+    TextOut(hdc, cxChar * 5, 0, ADDRESS_LINE, (int) _tcslen(ADDRESS_LINE));
 
     RECT rcClip;
     GetClipBox(hdc, &rcClip);
@@ -450,8 +450,7 @@ void MemoryView_Scroll(int nDelta)
 {
     if (nDelta == 0) return;
 
-    m_wBaseAddress += nDelta;
-    m_wBaseAddress = m_wBaseAddress & ((WORD)~1);
+    m_wBaseAddress = (WORD)(m_wBaseAddress + nDelta) & ((WORD)~1);
     Settings_SetDebugMemoryAddress(m_wBaseAddress);
 
     InvalidateRect(m_hwndMemoryViewer, NULL, TRUE);

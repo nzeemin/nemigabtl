@@ -49,7 +49,7 @@ bool BmpFile_SaveScreenshot(
 
     DWORD dwBytesWritten = 0;
 
-    BYTE * pData = (BYTE *) ::malloc(bih.biSizeImage);
+    BYTE * pData = (BYTE *) ::calloc(bih.biSizeImage, 1);
 
     // Prepare the image data
     const DWORD * psrc = pBits;
@@ -212,7 +212,7 @@ bool PngFile_WriteImageData4(FILE * fpFile, DWORD framenum, const DWORD* pBits, 
     // http://tools.ietf.org/html/rfc1951
     DWORD pDataLength = 8 + 2 + (6 + screenWidth / 2) * screenHeight + 4/*adler*/ + 4;
     if (framenum > 1) pDataLength += 4;
-    BYTE * pData = (BYTE *) ::malloc(pDataLength);
+    BYTE * pData = (BYTE *) ::calloc(pDataLength, 1);
     SaveValueMSB(pData, pDataLength - 12);
     memcpy(pData + 4, (framenum <= 1) ? "IDAT" : "fdAT", 4);
     if (framenum > 1) SaveValueMSB(pData + 8, framenum);

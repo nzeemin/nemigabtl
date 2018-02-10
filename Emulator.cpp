@@ -128,8 +128,8 @@ bool Emulator_Init()
     g_pBoard = new CMotherboard();
 
     // Allocate memory for old RAM values
-    g_pEmulatorRam = (BYTE*) ::malloc(65536);  ::memset(g_pEmulatorRam, 0, 65536);
-    g_pEmulatorChangedRam = (BYTE*) ::malloc(65536);  ::memset(g_pEmulatorChangedRam, 0, 65536);
+    g_pEmulatorRam = (BYTE*) ::calloc(65536, 1);
+    g_pEmulatorChangedRam = (BYTE*) ::calloc(65536, 1);
 
     g_pBoard->Reset();
 
@@ -659,7 +659,7 @@ bool Emulator_SaveImage(LPCTSTR sFilePath)
         return false;
 
     // Allocate memory
-    BYTE* pImage = (BYTE*) ::malloc(NEMIGAIMAGE_SIZE);
+    BYTE* pImage = (BYTE*) ::calloc(NEMIGAIMAGE_SIZE, 1);
     if (pImage == NULL)
     {
         ::fclose(fpFile);
@@ -708,7 +708,7 @@ bool Emulator_LoadImage(LPCTSTR sFilePath)
     //TODO: Check version and size
 
     // Allocate memory
-    BYTE* pImage = (BYTE*) ::malloc(NEMIGAIMAGE_SIZE);
+    BYTE* pImage = (BYTE*) ::calloc(NEMIGAIMAGE_SIZE, 1);
     if (pImage == NULL)
     {
         ::fclose(fpFile);

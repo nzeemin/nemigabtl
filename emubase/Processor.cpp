@@ -74,7 +74,7 @@ CProcessor::ExecuteMethodRef* CProcessor::m_pExecuteMethodMap = NULL;
 void CProcessor::Init()
 {
     ASSERT(m_pExecuteMethodMap == NULL);
-    m_pExecuteMethodMap = (CProcessor::ExecuteMethodRef*) ::malloc(sizeof(CProcessor::ExecuteMethodRef) * 65536);
+    m_pExecuteMethodMap = (CProcessor::ExecuteMethodRef*) ::calloc(65536, sizeof(CProcessor::ExecuteMethodRef));
 
     // Сначала заполняем таблицу ссылками на метод ExecuteUNKNOWN
     RegisterMethodRef( 0000000, 0177777, &CProcessor::ExecuteUNKNOWN );
