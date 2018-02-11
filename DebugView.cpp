@@ -361,7 +361,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     for (int idx = 0; idx < 16; idx++)
     {
         memory[idx] = g_pBoard->GetWordView(
-                current + idx * 2 - 14, pProc->IsHaltMode(), okExec, addrtype + idx);
+                WORD(current + idx * 2 - 14), pProc->IsHaltMode(), okExec, addrtype + idx);
     }
 
     WORD address = current - 14;
@@ -398,7 +398,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     SetTextColor(hdc, colorOld);
 }
 
-void DebugView_DrawPorts(HDC hdc, const CMotherboard* pBoard, int x, int y)
+void DebugView_DrawPorts(HDC hdc, const CMotherboard* /*pBoard*/, int x, int y)
 {
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
 

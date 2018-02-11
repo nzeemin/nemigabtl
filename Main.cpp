@@ -162,7 +162,7 @@ endprog:
 //        In this function, we save the instance handle in a global variable and
 //        create and display the main program window.
 //
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL InitInstance(HINSTANCE /*hInstance*/, int /*nCmdShow*/)
 {
     INITCOMMONCONTROLSEX ics;  ics.dwSize = sizeof(ics);
     ics.dwICC = ICC_WIN95_CLASSES;
@@ -177,7 +177,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
     if (!Emulator_Init())
         return FALSE;
-    int conf = Settings_GetConfiguration();
+    WORD conf = (WORD) Settings_GetConfiguration();
     if (conf == 0) conf = EMU_CONF_NEMIGA303;
     if (!Emulator_InitConfiguration(conf))
         return FALSE;

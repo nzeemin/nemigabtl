@@ -255,7 +255,7 @@ LRESULT CALLBACK SplitterWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, 
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
-    return (LRESULT)FALSE;
+    //return (LRESULT)FALSE;
 }
 
 

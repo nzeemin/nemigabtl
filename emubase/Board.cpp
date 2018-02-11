@@ -338,7 +338,7 @@ bool CMotherboard::SystemFrame()
     const int frameProcTicks = 16;
     const int audioticks = 20286 / (SOUNDSAMPLERATE / 25);
     const int floppyTicks = 32;
-    const int serialOutTicks = 20000 / (9600 / 25);
+    //const int serialOutTicks = 20000 / (9600 / 25);
     int serialTxCount = 0;
 
     for (int frameticks = 0; frameticks < 20000; frameticks++)
@@ -673,7 +673,7 @@ const uint8_t* CMotherboard::GetVideoBuffer()
     return (m_pRAM + 0140000 + 0140000);
 }
 
-int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool okExec, uint16_t* pOffset)
+int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool /*okExec*/, uint16_t* pOffset)
 {
     if (address < 0160000)  // 000000-157777 -- RAM
     {
@@ -843,7 +843,7 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return 0;
     }
 
-    return 0;
+    //return 0;
 }
 
 // Read word from port for debugger

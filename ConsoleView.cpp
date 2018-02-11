@@ -272,7 +272,7 @@ void PrintRegister(LPCTSTR strName, WORD value)
     ConsoleView_Print(buffer);
 }
 
-void SaveMemoryDump(CProcessor *pProc)
+void SaveMemoryDump(CProcessor * /*pProc*/)
 {
     // Create file
     HANDLE file;
@@ -280,20 +280,18 @@ void SaveMemoryDump(CProcessor *pProc)
             GENERIC_WRITE, FILE_SHARE_READ, NULL,
             OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    //SetFilePointer(Common_LogFile, 0, NULL, FILE_END);
-
     WORD buf[32768];
     DWORD dwBytesWritten = 0;
 
     for (int i = 0; i < 32768; i++)
     {
-        buf[i] = g_pBoard->GetWord(i * 2, TRUE);
+        buf[i] = g_pBoard->GetWord(WORD(i * 2), TRUE);
     }
     WriteFile(file, buf, 65536, &dwBytesWritten, NULL);
 
     for (int i = 0; i < 32768; i++)
     {
-        buf[i] = g_pBoard->GetHIRAMWord(i * 2);
+        buf[i] = g_pBoard->GetHIRAMWord(WORD(i * 2));
     }
     WriteFile(file, buf, 65536, &dwBytesWritten, NULL);
 
@@ -311,7 +309,7 @@ void PrintMemoryDump(CProcessor* pProc, WORD address, int lines)
     {
         WORD dump[8];
         for (int i = 0; i < 8; i++)
-            dump[i] = g_pBoard->GetWord(address + i * 2, okHaltMode);
+            dump[i] = g_pBoard->GetWord(WORD(address + i * 2), okHaltMode);
 
         TCHAR buffer[2 + 6 + 2 + 7 * 8 + 1 + 16 + 1 + 2];
         TCHAR* pBuf = buffer;
@@ -357,7 +355,7 @@ int PrintDisassemble(CProcessor* pProc, WORD address, BOOL okOneInstr, BOOL okSh
     WORD memory[nWindowSize + 2];
     int addrtype;
     for (int i = 0; i < nWindowSize + 2; i++)
-        memory[i] = g_pBoard->GetWordView(address + i * 2, okHaltMode, TRUE, &addrtype);
+        memory[i] = g_pBoard->GetWordView(WORD(address + i * 2), okHaltMode, TRUE, &addrtype);
 
     TCHAR bufaddr[7];
     TCHAR bufvalue[7];
@@ -542,7 +540,7 @@ void DoConsoleCommand()
         else if (command[1] == _T('o'))  // "so" - Step Over
         {
             int instrLength = PrintDisassemble(pProc, pProc->GetPC(), TRUE, FALSE);
-            WORD bpaddress = pProc->GetPC() + instrLength * 2;
+            WORD bpaddress = (WORD)(pProc->GetPC() + instrLength * 2);
 
             Emulator_SetCPUBreakpoint(bpaddress);
             Emulator_Start();

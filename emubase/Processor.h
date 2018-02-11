@@ -51,11 +51,11 @@ protected:  // Processor state
 protected:  // Current instruction processing
     uint16_t    m_instruction;      // Curent instruction
     uint16_t    m_instructionpc;    // Address of the current instruction
-    int         m_regsrc;           // Source register number
-    int         m_methsrc;          // Source address mode
+    uint8_t     m_regsrc;           // Source register number
+    uint8_t     m_methsrc;          // Source address mode
     uint16_t    m_addrsrc;          // Source address
-    int         m_regdest;          // Destination register number
-    int         m_methdest;         // Destination address mode
+    uint8_t     m_regdest;          // Destination register number
+    uint8_t     m_methdest;         // Destination address mode
     uint16_t    m_addrdest;         // Destination address
 
 protected:  // Interrupt processing
@@ -84,6 +84,7 @@ public:  // Register control
     }
     uint16_t    GetReg(int regno) const { return m_R[regno]; }
     void        SetReg(int regno, uint16_t word) { m_R[regno] = word; }
+    uint8_t     GetLReg(int regno) const { return (uint8_t)(m_R[regno] & 0xff); }
     uint16_t    GetSP() const { return m_R[6]; }
     void        SetSP(uint16_t word) { m_R[6] = word; }
     uint16_t    GetPC() const { return m_R[7]; }
@@ -99,7 +100,6 @@ public:  // PSW bits control
     uint16_t    GetN() const { return (m_psw & PSW_N) != 0; }
     void        SetZ(bool bFlag);
     uint16_t    GetZ() const { return (m_psw & PSW_Z) != 0; }
-    uint16_t    GetHALT() const { return m_haltmode; }
 
 public:  // Processor state
     // "Processor stopped" flag

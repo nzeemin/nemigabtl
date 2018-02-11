@@ -706,8 +706,8 @@ void DisasmView_RegisterHint(const CProcessor * pProc,
 }
 
 void DisasmView_RegisterHintPC(const CProcessor * pProc,
-        LPTSTR hint1, LPTSTR hint2,
-        int regmod, bool byteword, WORD value, WORD indexval)
+        LPTSTR hint1, LPTSTR /*hint2*/,
+        int regmod, bool /*byteword*/, WORD value, WORD /*indexval*/)
 {
     int addrtype = 0;
     WORD srcval2 = 0;

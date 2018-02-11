@@ -269,7 +269,7 @@ LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         {
             int x = LOWORD(lParam);
             int y = HIWORD(lParam);
-            WORD fwkeys = wParam;
+            WORD fwkeys = (WORD) wParam;
 
             int keyindex = KeyboardView_GetKeyByPoint(x, y);
             if (keyindex == -1) break;

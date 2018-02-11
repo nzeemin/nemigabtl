@@ -166,7 +166,7 @@ void Emulator_Done()
     ::free(g_pEmulatorChangedRam);
 }
 
-bool Emulator_InitConfiguration(int configuration)
+bool Emulator_InitConfiguration(uint16_t configuration)
 {
     g_pBoard->SetConfiguration(configuration);
 

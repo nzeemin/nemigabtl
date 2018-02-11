@@ -69,7 +69,7 @@ void MainWindow_DoEmulatorParallel();
 void MainWindow_DoFileSaveState();
 void MainWindow_DoFileLoadState();
 void MainWindow_DoEmulatorFloppy(int slot);
-void MainWindow_DoEmulatorConf(int configuration);
+void MainWindow_DoEmulatorConf(WORD configuration);
 void MainWindow_DoFileScreenshot();
 void MainWindow_DoFileScreenshotSaveAs();
 void MainWindow_DoFileCreateDisk();
@@ -354,7 +354,7 @@ LRESULT CALLBACK MainWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
         break;
     case WM_NOTIFY:
         {
-            int idCtrl = (int) wParam;
+            //int idCtrl = (int) wParam;
             HWND hwndFrom = ((LPNMHDR) lParam)->hwndFrom;
             UINT code = ((LPNMHDR) lParam)->code;
             if (code == TTN_SHOW)
@@ -371,7 +371,7 @@ LRESULT CALLBACK MainWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
         break;
     case WM_DRAWITEM:
         {
-            int idCtrl = (int) wParam;
+            //int idCtrl = (int) wParam;
             HWND hwndItem = ((LPDRAWITEMSTRUCT) lParam)->hwndItem;
             if (hwndItem == m_hwndStatusbar)
                 ; //MainWindow_OnStatusbarDrawItem((LPDRAWITEMSTRUCT) lParam);
@@ -473,7 +473,7 @@ void MainWindow_AdjustWindowLayout()
         cxScreen = rc.right;
 
         int yTape = rc.bottom - cyStatus + 4;
-        int cyTape = 0;
+        //int cyTape = 0;
 
         int yKeyboard = yTape;
         int cxKeyboard = 0, cyKeyboard = 0;
@@ -1105,7 +1105,7 @@ void MainWindow_DoFileSettings()
     ShowSettingsDialog();
 }
 
-void MainWindow_DoEmulatorConf(int configuration)
+void MainWindow_DoEmulatorConf(WORD configuration)
 {
     // Check if configuration changed
     if (g_nEmulatorConfiguration == configuration)

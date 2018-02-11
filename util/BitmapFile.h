@@ -16,12 +16,16 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 // Save screenshot as .BMP file
 bool BmpFile_SaveScreenshot(
-    const uint32_t* bits, const uint32_t* colors, LPCTSTR sFileName,
+    const uint32_t* bits,
+    const uint32_t* colors,
+    LPCTSTR sFileName,
     int screenWidth, int screenHeight);
 
 // Save screenshot as .PNG file
 bool PngFile_SaveScreenshot(
-    const uint32_t* bits, const uint32_t* colors, LPCTSTR sFileName,
+    const uint32_t* bits,
+    const uint32_t* colors,
+    LPCTSTR sFileName,
     int screenWidth, int screenHeight);
 
 
