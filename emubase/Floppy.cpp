@@ -56,6 +56,7 @@ CFloppyController::CFloppyController()
     m_writeflag = m_shiftflag = false;
     m_trackchanged = false;
     m_status = 0;
+    m_okTrace = false;
 }
 
 CFloppyController::~CFloppyController()

@@ -106,7 +106,7 @@ void CMotherboard::Reset ()
     m_Port170020 = m_Port170022 = m_Port170024 = m_Port170030 = 0;
     m_okSoundOnOff = false;
     //m_Timer1 = m_Timer1div = m_Timer2 = 0;
-    m_Port176500 = m_Port176500 = m_Port176504 = m_Port176506 = 0;
+    m_Port176500 = m_Port176502 = m_Port176504 = m_Port176506 = 0;
 
     ResetDevices();
 

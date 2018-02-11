@@ -135,7 +135,7 @@ BOOL CreateMainWindow()
     KeyboardView_Init();
 
     // Create screen window as a child of the main window
-    ScreenView_Create(g_hwnd, 0, 0, 576);
+    ScreenView_Create(g_hwnd, 0, 0);
 
     MainWindow_RestoreSettings();
 

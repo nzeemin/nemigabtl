@@ -617,7 +617,7 @@ BOOL DisasmView_GetJumpConditionHint(const WORD* memory, const CProcessor * pPro
         return TRUE;
     }
     if (instr == 000003 || instr == 000004 ||  // IOT, BPT
-        instr >= 0104000 && instr <= 0104777)  // TRAP, EMT
+        (instr >= 0104000 && instr <= 0104777))  // TRAP, EMT
     {
         WORD intvec;
         if (instr == 000003) intvec = 000014;
