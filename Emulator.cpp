@@ -62,6 +62,7 @@ typedef void (CALLBACK* PREPARE_SCREEN_CALLBACK)(const BYTE* pVideoBuffer, const
 void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
 void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
 void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW896x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
 void CALLBACK Emulator_PrepareScreenBW1024x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
 
 struct ScreenModeStruct
@@ -75,6 +76,7 @@ static ScreenModeReference[] =
     {  512, 256, Emulator_PrepareScreenBW512x256 },
     {  512, 312, Emulator_PrepareScreenBW512x312 },
     {  768, 468, Emulator_PrepareScreenBW768x468 },
+    {  896, 624, Emulator_PrepareScreenBW896x624 },
     { 1024, 624, Emulator_PrepareScreenBW1024x624 },
 };
 
@@ -607,6 +609,39 @@ void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const ui
             }
             psrc1++;
             psrc2++;
+        }
+    }
+}
+
+void CALLBACK Emulator_PrepareScreenBW896x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
+{
+    for (int y = 0; y < 256; y++)
+    {
+        const uint16_t* psrc1 = (uint16_t*)(pVideoBuffer + y * 512 / 4);
+        uint32_t* pdest1 = ((uint32_t*)pImageBits) + (568 - 1 - y * 2) * 896;
+        uint32_t* pdest2 = pdest1 - 896;
+        for (int x = 0; x < 512 / 8; x++)
+        {
+            uint16_t src1 = *psrc1;
+            for (int bit = 0; bit < 2; bit++)
+            {
+                int colorindex1 = (src1 & 0x80) >> 7 | (src1 & 0x8000) >> 14;  src1 = src1 << 1;
+                int colorindex2 = (src1 & 0x80) >> 7 | (src1 & 0x8000) >> 14;  src1 = src1 << 1;
+                int colorindex3 = (src1 & 0x80) >> 7 | (src1 & 0x8000) >> 14;  src1 = src1 << 1;
+                int colorindex4 = (src1 & 0x80) >> 7 | (src1 & 0x8000) >> 14;  src1 = src1 << 1;
+                uint32_t c1 = palette[colorindex1];
+                uint32_t c2 = palette[colorindex2];
+                uint32_t c3 = palette[colorindex3];
+                uint32_t c4 = palette[colorindex4];
+                *(pdest1++) = *(pdest2++) = c1;
+                *(pdest1++) = *(pdest2++) = AVERAGERGB(c1, c2);
+                *(pdest1++) = *(pdest2++) = c2;
+                *(pdest1++) = *(pdest2++) = AVERAGERGB(c2, c3);
+                *(pdest1++) = *(pdest2++) = c3;
+                *(pdest1++) = *(pdest2++) = AVERAGERGB(c3, c4);
+                *(pdest1++) = *(pdest2++) = c4;
+            }
+            psrc1++;
         }
     }
 }

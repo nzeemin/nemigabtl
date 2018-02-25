@@ -101,7 +101,8 @@ BEGIN
         MENUITEM "512 x 256 Short",             ID_VIEW_SCREENMODE0
         MENUITEM "512 x 312 Normal",            ID_VIEW_SCREENMODE1
         MENUITEM "768 x 468 Scale 1.5",         ID_VIEW_SCREENMODE2
-        MENUITEM "1024 x 624 Scale 2",          ID_VIEW_SCREENMODE3
+        MENUITEM "896 x 624 Scale 1.75 x 2",    ID_VIEW_SCREENMODE3
+        MENUITEM "1024 x 624 Scale 2",          ID_VIEW_SCREENMODE4
     END
     POPUP "&Emulator"
     BEGIN
