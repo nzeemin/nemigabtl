@@ -61,7 +61,6 @@
     </ClInclude>
     <ClInclude Include="Common.h" />
     <ClInclude Include="Dialogs.h" />
-    <ClInclude Include="emubase\Disasm.h" />
     <ClInclude Include="emubase\Emubase.h" />
     <ClInclude Include="Emulator.h" />
     <ClInclude Include="Main.h" />

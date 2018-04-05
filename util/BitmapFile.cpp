@@ -193,7 +193,7 @@ bool PngFile_WriteEnd(FILE * fpFile)
 
 bool PngFile_WritePalette(FILE * fpFile, const uint32_t* palette, int palsize)
 {
-    int chunksize = 12 + palsize * 3;
+    size_t chunksize = 12 + palsize * 3;
     uint8_t PLTEchunk[12 + 16 * 3];
     SaveValueMSB(PLTEchunk, palsize * 3);
     memcpy(PLTEchunk + 4, "PLTE", 4);

@@ -13,7 +13,6 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "stdafx.h"
 #include "Processor.h"
-#include "Disasm.h"
 
 
 // Timings ///////////////////////////////////////////////////////////
@@ -70,6 +69,12 @@ uint16_t DIV_TIMING[8] =
 
 
 CProcessor::ExecuteMethodRef* CProcessor::m_pExecuteMethodMap = NULL;
+
+#define RegisterMethodRef(/*uint16_t*/ opstart, /*uint16_t*/ opend, /*CProcessor::ExecuteMethodRef*/ methodref) \
+	{ \
+		for (uint32_t opcode = (opstart); opcode <= (opend); opcode++) \
+			m_pExecuteMethodMap[opcode] = (methodref); \
+	}
 
 void CProcessor::Init()
 {
@@ -175,12 +180,6 @@ void CProcessor::Init()
 void CProcessor::Done()
 {
     ::free(m_pExecuteMethodMap);  m_pExecuteMethodMap = NULL;
-}
-
-void CProcessor::RegisterMethodRef(uint16_t start, uint16_t end, CProcessor::ExecuteMethodRef methodref)
-{
-    for (int opcode = start; opcode <= end; opcode++ )
-        m_pExecuteMethodMap[opcode] = methodref;
 }
 
 //////////////////////////////////////////////////////////////////////

@@ -27,8 +27,8 @@ public:  // Constructor / initialization
     CProcessor(CMotherboard* pBoard);
     void        FireHALT() { m_HALTrq = true; }  // Fire HALT interrupt request, same as HALT command
     void        SetHaltMode(bool halt) { m_haltmode = halt; }
-    void		MemoryError();
-    int			GetInternalTick() const { return m_internalTick; }
+    void        MemoryError();
+    int	        GetInternalTick() const { return m_internalTick; }
     void        SetInternalTick (uint16_t tick) { m_internalTick = tick; }
 
 public:
@@ -37,7 +37,6 @@ public:
 protected:  // Statics
     typedef void ( CProcessor::*ExecuteMethodRef )();
     static ExecuteMethodRef* m_pExecuteMethodMap;
-    static void RegisterMethodRef(uint16_t start, uint16_t end, CProcessor::ExecuteMethodRef methodref);
 
 protected:  // Processor state
     int         m_internalTick;     // How many ticks waiting to the end of current instruction
@@ -46,7 +45,7 @@ protected:  // Processor state
     bool        m_okStopped;        // "Processor stopped" flag
     bool        m_haltmode;         // true = HALT mode, false = USER mode
     bool        m_stepmode;         // Read true if it's step mode
-    bool        m_waitmode;			// WAIT
+    bool        m_waitmode;         // WAIT
 
 protected:  // Current instruction processing
     uint16_t    m_instruction;      // Curent instruction
@@ -64,7 +63,7 @@ protected:  // Interrupt processing
     bool        m_TBITrq;           // T-bit interrupt pending
     bool        m_HALTrq;           // HALT command or HALT signal
     bool        m_RPL2rq;           // Double hangup interrupt pending
-    bool		m_IRQ2rq;           // Timer event interrupt pending
+    bool        m_IRQ2rq;           // Timer event interrupt pending
     bool        m_BPT_rq;           // BPT command interrupt pending
     bool        m_IOT_rq;           // IOT command interrupt pending
     bool        m_EMT_rq;           // EMT command interrupt pending
@@ -152,8 +151,8 @@ protected:  // PSW bits calculations
     bool static CheckSubForCarry(uint16_t a, uint16_t b);
 
 protected:
-    uint16_t	GetWordAddr (uint8_t meth, uint8_t reg);
-    uint16_t	GetByteAddr (uint8_t meth, uint8_t reg);
+    uint16_t    GetWordAddr (uint8_t meth, uint8_t reg);
+    uint16_t    GetByteAddr (uint8_t meth, uint8_t reg);
 
 protected:  // Implementation - instruction execution
     void        ExecuteUNKNOWN ();  // Нет такой инструкции - просто вызывается TRAP 10

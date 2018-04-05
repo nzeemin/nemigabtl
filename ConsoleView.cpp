@@ -37,7 +37,7 @@ void ClearConsole();
 void PrintConsolePrompt();
 void PrintRegister(LPCTSTR strName, WORD value);
 void PrintMemoryDump(CProcessor* pProc, WORD address, int lines);
-void SaveMemoryDump(CProcessor* pProc);
+BOOL SaveMemoryDump(CProcessor* pProc);
 void DoConsoleCommand();
 void ConsoleView_AdjustWindowLayout();
 LRESULT CALLBACK ConsoleEditWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -272,11 +272,10 @@ void PrintRegister(LPCTSTR strName, WORD value)
     ConsoleView_Print(buffer);
 }
 
-void SaveMemoryDump(CProcessor * /*pProc*/)
+BOOL SaveMemoryDump(CProcessor * /*pProc*/)
 {
-    // Create file
-    HANDLE file;
-    file = CreateFile(_T("memdump.bin"),
+    const TCHAR fname[] = _T("memdump.bin");
+    HANDLE file = ::CreateFile(fname,
             GENERIC_WRITE, FILE_SHARE_READ, NULL,
             OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
@@ -287,15 +286,24 @@ void SaveMemoryDump(CProcessor * /*pProc*/)
     {
         buf[i] = g_pBoard->GetWord(WORD(i * 2), TRUE);
     }
-    WriteFile(file, buf, 65536, &dwBytesWritten, NULL);
+    ::WriteFile(file, buf, 65536, &dwBytesWritten, NULL);
+    if (dwBytesWritten != 65536)
+    {
+        ::CloseHandle(file);
+        return FALSE;
+    }
 
     for (int i = 0; i < 32768; i++)
     {
         buf[i] = g_pBoard->GetHIRAMWord(WORD(i * 2));
     }
-    WriteFile(file, buf, 65536, &dwBytesWritten, NULL);
 
-    CloseHandle(file);
+    ::WriteFile(file, buf, 65536, &dwBytesWritten, NULL);
+    ::CloseHandle(file);
+    if (dwBytesWritten != 65536)
+        return FALSE;
+
+    return TRUE;
 }
 
 // Print memory dump

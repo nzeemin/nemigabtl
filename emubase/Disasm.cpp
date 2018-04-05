@@ -12,7 +12,6 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 // See defines in header file Emubase.h
 
 #include "stdafx.h"
-#include "Disasm.h"
 #include "Defines.h"
 
 
