@@ -111,6 +111,8 @@ void CMotherboard::Reset ()
     ResetDevices();
 
     m_pCPU->Start();
+    if (m_Configuration >= 400)
+        m_pCPU->FireHALT();
 }
 
 // Load 4 KB ROM image from the buffer
