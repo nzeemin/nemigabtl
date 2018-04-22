@@ -22,6 +22,8 @@ BKBTL. If not, see <http://www.gnu.org/licenses/>. */
 
 static void EncodeTrackData(const uint8_t* pSrc, uint8_t* data, uint16_t track, uint16_t side);
 static bool DecodeTrackData(const uint8_t* pRaw, uint8_t* pDest, uint16_t track);
+static void EncodeTrackDataMX(const uint8_t* pSrc, uint8_t* data, uint16_t track, uint16_t side);
+static bool DecodeTrackDataMX(const uint8_t* pRaw, uint8_t* pDest, uint16_t track);
 
 //////////////////////////////////////////////////////////////////////
 
@@ -455,27 +457,38 @@ void CFloppyController::PrepareTrack()
     m_pDrive->dataptr = 0;
     m_pDrive->datatrack = m_track;
 
-    // Track has 23 sectors, 128 bytes each; track 0 has only 22 data sectors
-    long foffset = 0;
-    int sectors = 22;
-    if (m_track > 0)
-    {
-        foffset = (m_track * 23 - 1) * 128;
-        sectors = 23;
-    }
-
     uint8_t data[23 * 128];
     memset(data, 0, 23 * 128);
 
-    if (m_pDrive->fpFile != NULL)
+    //if (m_drive < 2)  // MD
     {
-        ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-        count = ::fread(&data, 1, sectors * 128, m_pDrive->fpFile);
-        //TODO: Контроль ошибок чтения
-    }
+        // Track has 23 sectors, 128 bytes each; track 0 has only 22 data sectors
+        long foffset = 0;
+        int sectors = 22;
+        if (m_track > 0)
+        {
+            foffset = (m_track * 23 - 1) * 128;
+            sectors = 23;
+        }
+        if (m_pDrive->fpFile != NULL)
+        {
+            ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
+            count = ::fread(&data, 1, sectors * 128, m_pDrive->fpFile);
+            //TODO: Контроль ошибок чтения
+        }
 
-    // Fill m_data array with data
-    EncodeTrackData(data, m_pDrive->data, m_track, 0);
+        // Fill m_data array with data
+        EncodeTrackData(data, m_pDrive->data, m_track, 0);
+    }
+    //else  // MX
+    //{
+    //    long foffset = m_track * 11 * 256;
+    //    ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
+    //    count = ::fread(&data, 1, 11 * 256, m_pDrive->fpFile);
+
+    //    // Fill m_data array with data
+    //    EncodeTrackDataMX(data, m_pDrive->data, m_track, 0);
+    //}
 
     //FILE* fpTrack = ::_tfopen(_T("RawTrack.bin"), _T("w+b"));
     //::fwrite(m_pDrive->data, 1, FLOPPY_RAWTRACKSIZE, fpTrack);
@@ -505,20 +518,62 @@ void CFloppyController::FlushChanges()
     if (m_okTrace) DebugLogFormat(_T("Floppy%d FLUSH\r\n"), m_drive);  //DEBUG
 #endif
 
+    //TCHAR filename[32];  wsprintf(filename, _T("rawtrack%02d.bin"), (int)m_pDrive->datatrack);
+    //FILE* fpTrack = ::_tfopen(filename, _T("w+b"));
+    //::fwrite(m_pDrive->data, 1, FLOPPY_RAWTRACKSIZE, fpTrack);
+    //::fclose(fpTrack);
+
     // Decode track data from m_data
     uint8_t data[128 * 23];  memset(data, 0, 128 * 23);
-    bool decoded = DecodeTrackData(m_pDrive->data, data, m_pDrive->datatrack);
-
-    if (decoded)  // Write to the file only if the track was correctly decoded from raw data
+    //if (m_drive < 2)  // MD
     {
-        // Track has 23 sectors, 128 bytes each; track 0 has only 22 data sectors
-        long foffset = 0;
-        int sectors = 22;
-        if (m_pDrive->datatrack > 0)
+        bool decoded = DecodeTrackData(m_pDrive->data, data, m_pDrive->datatrack);
+        if (decoded)  // Write to the file only if the track was correctly decoded from raw data
         {
-            foffset = (m_pDrive->datatrack * 23 - 1) * 128;
-            sectors = 23;
+            // Track has 23 sectors, 128 bytes each; track 0 has only 22 data sectors
+            long foffset = 0;
+            int sectors = 22;
+            if (m_pDrive->datatrack > 0)
+            {
+                foffset = (m_pDrive->datatrack * 23 - 1) * 128;
+                sectors = 23;
+            }
+            // Save data into the file
+            ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
+            uint32_t dwBytesWritten = ::fwrite(&data, 1, 128 * sectors, m_pDrive->fpFile);
+            //TODO: Проверка на ошибки записи
         }
+        else
+        {
+#if !defined(PRODUCT)
+            if (m_okTrace) DebugLog(_T("Floppy FLUSH MD FAILED\r\n"));  //DEBUG
+#endif
+        }
+    }
+//    else  // MX
+//    {
+//        TCHAR filename[32];  wsprintf(filename, _T("rawtrack%d-%02d.bin"), (int)m_drive, (int)m_pDrive->datatrack);
+//        FILE* fpTrack = ::_tfopen(filename, _T("w+b"));
+//        ::fwrite(m_pDrive->data, 1, FLOPPY_RAWTRACKSIZE, fpTrack);
+//        ::fclose(fpTrack);
+//
+//        bool decoded = DecodeTrackDataMX(m_pDrive->data, data, m_pDrive->datatrack);
+//        if (decoded)  // Write to the file only if the track was correctly decoded from raw data
+//        {
+//            // Track has 11 sectors, 256 bytes each
+//            long foffset = m_pDrive->datatrack * 11 * 256;
+//            // Save data into the file
+//            ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
+//            uint32_t dwBytesWritten = ::fwrite(&data, 1, 256 * 11, m_pDrive->fpFile);
+//            //TODO: Проверка на ошибки записи
+//        }
+//        else
+//        {
+//#if !defined(PRODUCT)
+//            if (m_okTrace) DebugLog(_T("Floppy FLUSH MX FAILED\r\n"));  //DEBUG
+//#endif
+//        }
+//    }
 
 //        // Check file length
 //        ::fseek(m_pDrive->fpFile, 0, SEEK_END);
@@ -532,18 +587,6 @@ void CFloppyController::FlushChanges()
 //            //TODO: Проверка на ошибки записи
 //            currentFileSize += bytesToWrite;
 //        }
-
-        // Save data into the file
-        ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-        uint32_t dwBytesWritten = ::fwrite(&data, 1, 128 * sectors, m_pDrive->fpFile);
-        //TODO: Проверка на ошибки записи
-    }
-    else
-    {
-#if !defined(PRODUCT)
-        if (m_okTrace) DebugLog(_T("Floppy FLUSH FAILED\r\n"));  //DEBUG
-#endif
-    }
 
     m_trackchanged = false;
 }
@@ -573,7 +616,7 @@ uint16_t CalculateChecksum(const uint8_t* buffer, int length)
 // Fill data array and marker array with marked data
 // pSrc array length is 23 * 128, for track 0 is 22 * 128
 // data array length is 3125 == FLOPPY_RAWTRACKSIZE
-static void EncodeTrackData(const uint8_t* pSrc, uint8_t* data, uint16_t track, uint16_t side)
+static void EncodeTrackData(const uint8_t* pSrc, uint8_t* data, uint16_t track, uint16_t /*side*/)
 {
     memset(data, 0, FLOPPY_RAWTRACKSIZE);
     uint32_t count;
@@ -652,6 +695,78 @@ static bool DecodeTrackData(const uint8_t* pRaw, uint8_t* pDest, uint16_t track)
                 pDest[destptr++] = pRaw[dataptr];
             }
             dataptr++;
+            if (dataptr >= FLOPPY_RAWTRACKSIZE)
+                return false;  // Something wrong
+        }
+        if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Checksum
+        if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Checksum
+    }
+    if (dataptr >= FLOPPY_RAWTRACKSIZE)
+        return false;  // Something wrong
+
+    return true;
+}
+
+// Fill data array and marker array with marked data for MX disk
+// pSrc array length is 11 * 256
+// data array length is 3125 == FLOPPY_RAWTRACKSIZE
+static void EncodeTrackDataMX(const uint8_t* pSrc, uint8_t* data, uint16_t track, uint16_t /*side*/)
+{
+    memset(data, 0, FLOPPY_RAWTRACKSIZE);
+    uint32_t count;
+    int ptr = 0;
+
+    data[ptr++] = 0363;
+    data[ptr++] = 0;
+    data[ptr++] = (uint8_t)track;
+
+    for (int sect = 0; sect < 11; sect++)
+    {
+        // Sector data
+        uint16_t checksum = 0;
+        for (count = 0; count < 128; count++)
+        {
+            uint8_t lovalue = pSrc[(sect * 256) + count * 2];
+            uint8_t hivalue = pSrc[(sect * 256) + count * 2 + 1];
+            data[ptr++] = hivalue;
+            data[ptr++] = lovalue;
+            checksum += ((uint16_t)lovalue) | (((uint16_t)hivalue) << 8);
+        }
+        data[ptr++] = HIBYTE(checksum);
+        data[ptr++] = LOBYTE(checksum);
+    }
+    data[ptr++] = 0x20;
+    data[ptr++] = 0x4f;
+    data[ptr++] = 0x54;
+    data[ptr++] = 0x01;
+    data[ptr++] = 0x00;
+    data[ptr++] = (uint8_t)(track * 2);
+
+    // Fill to the end of the track
+    while (ptr < FLOPPY_RAWTRACKSIZE) data[ptr++] = 0xff;
+}
+
+// Decode track data from raw data for MX disk
+// pRaw is array of FLOPPY_RAWTRACKSIZE bytes
+// pDest is array of 11*256 = 2816 bytes
+// Returns: true - decoded, false - parse error
+static bool DecodeTrackDataMX(const uint8_t* pRaw, uint8_t* pDest, uint16_t /*track*/)
+{
+    uint16_t dataptr = 0;  // Offset in m_data array
+    uint16_t destptr = 0;  // Offset in data array
+
+    if (pRaw[dataptr++] != 0363) return false;  // Marker not found
+    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Track Number hi
+    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Track Number lo
+
+    for (int sect = 0; sect < 11; sect++)  // Copy sectors
+    {
+        for (int count = 0; count < 128; count++)
+        {
+            uint8_t hivalue = pRaw[dataptr++];
+            uint8_t lovalue = pRaw[dataptr++];
+            pDest[destptr++] = lovalue;
+            pDest[destptr++] = hivalue;
             if (dataptr >= FLOPPY_RAWTRACKSIZE)
                 return false;  // Something wrong
         }
