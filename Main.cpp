@@ -93,10 +93,9 @@ int APIENTRY _tWinMain(
                 Emulator_Stop();
             else
             {
-                if (Emulator_SystemFrame())
-                {
-                    ScreenView_RedrawScreen();
-                }
+                Emulator_SystemFrame();
+
+                ScreenView_RedrawScreen();
             }
         }
 
@@ -182,6 +181,7 @@ BOOL InitInstance(HINSTANCE /*hInstance*/, int /*nCmdShow*/)
     if (!Emulator_InitConfiguration(conf))
         return FALSE;
     Emulator_SetSound(Settings_GetSound());
+    Emulator_SetSpeed(Settings_GetRealSpeed());
 
     if (!CreateMainWindow())
         return FALSE;

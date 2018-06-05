@@ -62,10 +62,8 @@ void SoundGen_Initialize(WORD volume)
             GetProcessHeap(),
             HEAP_ZERO_MEMORY,
             totalBufferSize);
-    if (mbuffer == NULL)
-    {
+    if (mbuffer == nullptr)
         return;
-    }
 
     waveBlocks = (WAVEHDR*)mbuffer;
     mbuffer += sizeof(WAVEHDR) * BLOCK_COUNT;
@@ -120,7 +118,7 @@ void SoundGen_Finalize()
     waveOutClose(hWaveOut);
 
     HeapFree(GetProcessHeap(), 0, waveBlocks);
-    waveBlocks = NULL;
+    waveBlocks = nullptr;
 
     m_SoundGenInitialized = false;
 }
@@ -131,6 +129,15 @@ void SoundGen_SetVolume(WORD volume)
         return;
 
     waveOutSetVolume(hWaveOut, ((DWORD)volume << 16) | ((DWORD)volume));
+}
+
+void SoundGen_SetSpeed(WORD speedpercent)
+{
+    DWORD dwRate = 0x00010000;
+    if (speedpercent > 0 && speedpercent < 1000)
+        dwRate = (((DWORD)speedpercent / 100) << 16) | ((speedpercent % 100) * 0x00010000 / 100);
+
+    waveOutSetPlaybackRate(hWaveOut, dwRate);
 }
 
 void CALLBACK SoundGen_FeedDAC(unsigned short L, unsigned short R)
