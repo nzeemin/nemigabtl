@@ -34,6 +34,7 @@ void MainWindow_RegisterClass();
 BOOL CreateMainWindow();
 void MainWindow_RestoreSettings();
 void MainWindow_UpdateMenu();
+void MainWindow_UpdateWindowTitle(LPCTSTR emustate);
 void MainWindow_UpdateAllViews();
 BOOL MainWindow_InitToolbar();
 BOOL MainWindow_InitStatusbar();
@@ -55,6 +56,7 @@ enum ToolbarButtons
     // Separator
     ToolbarButtonColor = 3,
 };
+
 enum ToolbarButtonImages
 {
     ToolbarImageRun = 0,
@@ -70,6 +72,10 @@ enum ToolbarButtonImages
     ToolbarImageColorScreen = 10,
     ToolbarImageBWScreen = 11,
     ToolbarImageScreenshot = 12,
+    ToolbarImageStepInto = 15,
+    ToolbarImageStepOver = 16,
+    ToolbarImageWordByte = 18,
+    ToolbarImageGotoAddress = 19,
 };
 
 enum StatusbarParts

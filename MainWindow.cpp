@@ -209,7 +209,7 @@ BOOL MainWindow_InitToolbar()
     buttons[6].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("3"));
     buttons[7].fsStyle = BTNS_SEP;
     buttons[8].idCommand = ID_EMULATOR_SOUND;
-    buttons[8].iBitmap = 8;
+    buttons[8].iBitmap = ToolbarImageSoundOff;
     buttons[8].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[8].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Sound"));
     buttons[9].idCommand = ID_FILE_SCREENSHOT;

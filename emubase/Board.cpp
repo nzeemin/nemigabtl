@@ -751,7 +751,7 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return 0;  //STUB
 
     case 0170006:
-        return m_Port170006;
+        return m_Port170006 | 01400;
 
     case 0170010:  // RgSt -- Network
     case 0170012:  // RgL -- Network
@@ -859,7 +859,7 @@ uint16_t CMotherboard::GetPortView(uint16_t address)
         return 0;  //STUB
 
     case 0170006:
-        return m_Port170006;
+        return m_Port170006 | 01400;
     case 0170010:  // Network
     case 0170012:
         return 0;  //STUB
