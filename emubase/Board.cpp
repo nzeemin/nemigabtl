@@ -819,14 +819,6 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         //    return m_Port177562;
         //case 0177564:
         //case 0177566:
-    case 0177574:
-//#if !defined(PRODUCT)
-//        if (m_pCPU->GetInstructionPC() < 0160000)
-//            DebugLogFormat(_T("READ 177574 value %06o PC=%06o\r\n"), m_Port177574, m_pCPU->GetInstructionPC());
-//#endif
-        return m_Port177574;
-        //case 0177576:
-        //    return 0xffff;  //STUB
 
     case 0177572:  // Регистр адреса косвенной адресации
 //#if !defined(PRODUCT)
@@ -836,6 +828,13 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return m_Port177572;
     case 0177570:  // Регистр данных косвенного доступа
         return *(uint16_t*)(m_pRAM + m_Port177572 + m_Port177572);
+
+    case 0177574:
+//#if !defined(PRODUCT)
+//        if (m_pCPU->GetInstructionPC() < 0160000)
+//            DebugLogFormat(_T("READ 177574 value %06o PC=%06o\r\n"), m_Port177574, m_pCPU->GetInstructionPC());
+//#endif
+        return m_Port177574;
 
     default:
 #if !defined(PRODUCT)

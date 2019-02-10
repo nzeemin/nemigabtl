@@ -128,10 +128,10 @@ BEGIN
     END
     POPUP "&Drives"
     BEGIN
-        MENUITEM "Floppy 0",                    ID_EMULATOR_FLOPPY0
-        MENUITEM "Floppy 1",                    ID_EMULATOR_FLOPPY1
-        MENUITEM "Floppy 2",                    ID_EMULATOR_FLOPPY2
-        MENUITEM "Floppy 3",                    ID_EMULATOR_FLOPPY3
+        MENUITEM "Floppy MD0",                  ID_EMULATOR_FLOPPY0
+        MENUITEM "Floppy MD1",                  ID_EMULATOR_FLOPPY1
+        MENUITEM "Floppy MD2",                  ID_EMULATOR_FLOPPY2
+        MENUITEM "Floppy MD3",                  ID_EMULATOR_FLOPPY3
     END
     POPUP "Debug"
     BEGIN
