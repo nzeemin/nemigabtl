@@ -261,6 +261,19 @@ void Settings_SetFloppyFilePath(int slot, LPCTSTR sFilePath)
     Settings_SaveStringValue(bufValueName, sFilePath);
 }
 
+void Settings_GetFloppyMXFilePath(int slot, LPTSTR buffer)
+{
+    TCHAR bufValueName[] = _T("FloppyMX0");
+    bufValueName[8] = _T('0') + (TCHAR)slot;
+    Settings_LoadStringValue(bufValueName, buffer, MAX_PATH);
+}
+void Settings_SetFloppyMXFilePath(int slot, LPCTSTR sFilePath)
+{
+    TCHAR bufValueName[] = _T("FloppyMX0");
+    bufValueName[8] = _T('0') + (TCHAR)slot;
+    Settings_SaveStringValue(bufValueName, sFilePath);
+}
+
 void Settings_GetCartridgeFilePath(int slot, LPTSTR buffer)
 {
     TCHAR bufValueName[] = _T("Cartridge0");

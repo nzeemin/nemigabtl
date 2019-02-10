@@ -125,9 +125,10 @@ public:
     void        KeyboardEvent(uint8_t scancode, bool okPressed);  // Key pressed or released
     //uint16_t        GetPrinterOutPort() const { return m_Port177714out; }
 public:  // Floppy
-    bool        AttachFloppyImage(int slot, LPCTSTR sFileName);
+    bool        AttachFloppyImage(int slot, LPCTSTR sFileName);  // Attach MD image
+    bool        AttachFloppyMXImage(int slot, LPCTSTR sFileName);  // Attach MX image
     void        DetachFloppyImage(int slot);
-    bool        IsFloppyImageAttached(int slot) const;
+    uint8_t     GetFloppyType(int slot) const;
     bool        IsFloppyReadOnly(int slot) const;
     bool        IsFloppyEngineOn() const;
 public:  // Callbacks

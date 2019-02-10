@@ -32,6 +32,7 @@ CFloppyDrive::CFloppyDrive()
 {
     fpFile = NULL;
     okReadOnly = false;
+    floppytype = FLOPPY_TYPE_NONE;
     datatrack = 0;
     dataptr = 0;
     memset(data, 0, sizeof(data));
@@ -85,15 +86,24 @@ void CFloppyController::Reset()
     m_status = FLOPPY_STATUS_TR;
 }
 
-bool CFloppyController::AttachImage(int drive, LPCTSTR sFileName)
+bool CFloppyController::AttachImage(int drive, LPCTSTR sFileName, uint8_t floppyType)
 {
+    ASSERT(drive >= 0 && drive < 4);
     ASSERT(sFileName != NULL);
+    ASSERT(floppyType == FLOPPY_TYPE_MD || floppyType == FLOPPY_TYPE_MX);
+    if (floppyType == FLOPPY_TYPE_MX)
+        ASSERT(drive == 0 || drive == 2);
 
     // If image attached - detach one first
     if (m_drivedata[drive].fpFile != NULL)
+    {
         DetachImage(drive);
+        if (floppyType == FLOPPY_TYPE_MX)
+            DetachImage(drive + 1);
+    }
 
     // Open file
+    m_drivedata[drive].floppytype = floppyType;
     m_drivedata[drive].okReadOnly = false;
     m_drivedata[drive].fpFile = ::_tfopen(sFileName, _T("r+b"));
     if (m_drivedata[drive].fpFile == NULL)
@@ -103,6 +113,14 @@ bool CFloppyController::AttachImage(int drive, LPCTSTR sFileName)
     }
     if (m_drivedata[drive].fpFile == NULL)
         return false;
+
+    // For MX drive, soft-attach the other side
+    if (floppyType == FLOPPY_TYPE_MX)
+    {
+        m_drivedata[drive + 1].floppytype = FLOPPY_TYPE_MX;
+        m_drivedata[drive + 1].okReadOnly = m_drivedata[drive].okReadOnly;
+        m_drivedata[drive + 1].fpFile = m_drivedata[drive].fpFile;
+    }
 
     m_track = m_drivedata[drive].datatrack = 0;
     m_drivedata[drive].dataptr = 0;
@@ -119,6 +137,17 @@ bool CFloppyController::AttachImage(int drive, LPCTSTR sFileName)
 
 void CFloppyController::DetachImage(int drive)
 {
+    ASSERT(drive >= 0 && drive < 8);
+
+    // For MX drive, soft-detach other side first
+    if (m_drivedata[drive].floppytype == FLOPPY_TYPE_MX && (drive & 1) == 0)
+    {
+        m_drivedata[drive + 1].floppytype = FLOPPY_TYPE_NONE;
+        m_drivedata[drive + 1].fpFile = NULL;
+    }
+
+    m_drivedata[drive].floppytype = FLOPPY_TYPE_NONE;
+
     if (m_drivedata[drive].fpFile == NULL) return;
 
     FlushChanges();
@@ -369,7 +398,7 @@ void CFloppyController::Periodic()
 
     // Далее обрабатываем операции на текущем драйве
     if (m_pDrive == NULL) return;
-    if (!IsAttached(m_drive)) return;
+    if (m_pDrive->fpFile == NULL) return;
 
     if (m_opercount == 0) return;  // Нет текущей операции
     if (m_opercount == -1) return;  // Операция задана, но пока не запущена
@@ -446,6 +475,7 @@ void CFloppyController::PrepareTrack()
     FlushChanges();
 
     if (m_pDrive == NULL) return;
+    if (m_pDrive->fpFile == NULL) return;
 
 #if !defined(PRODUCT)
     if (m_okTrace) DebugLogFormat(_T("Floppy%d PREPARE TRACK %d\r\n"), m_drive, m_track);
@@ -460,7 +490,7 @@ void CFloppyController::PrepareTrack()
     uint8_t data[23 * 128];
     memset(data, 0, 23 * 128);
 
-    //if (m_drive < 2)  // MD
+    if (m_pDrive->floppytype == FLOPPY_TYPE_MD)
     {
         // Track has 23 sectors, 128 bytes each; track 0 has only 22 data sectors
         long foffset = 0;
@@ -480,15 +510,17 @@ void CFloppyController::PrepareTrack()
         // Fill m_data array with data
         EncodeTrackData(data, m_pDrive->data, m_track, 0);
     }
-    //else  // MX
-    //{
-    //    long foffset = m_track * 11 * 256;
-    //    ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-    //    count = ::fread(&data, 1, 11 * 256, m_pDrive->fpFile);
+    else if (m_pDrive->floppytype == FLOPPY_TYPE_MX)
+    {
+        // Track has 11 sectors, 256 bytes each
+        int side = m_drive & 1;
+        long foffset = (m_track * 2 + side) * 11 * 256;
+        ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
+        count = ::fread(&data, 1, 11 * 256, m_pDrive->fpFile);
 
-    //    // Fill m_data array with data
-    //    EncodeTrackDataMX(data, m_pDrive->data, m_track, 0);
-    //}
+        // Fill m_data array with data
+        EncodeTrackDataMX(data, m_pDrive->data, m_track, 0);
+    }
 
     //FILE* fpTrack = ::_tfopen(_T("RawTrack.bin"), _T("w+b"));
     //::fwrite(m_pDrive->data, 1, FLOPPY_RAWTRACKSIZE, fpTrack);
@@ -511,7 +543,7 @@ void CFloppyController::PrepareTrack()
 void CFloppyController::FlushChanges()
 {
     if (m_drive == -1) return;
-    if (!IsAttached(m_drive)) return;
+    if (m_pDrive->fpFile == NULL) return;
     if (!m_trackchanged) return;
 
 #if !defined(PRODUCT)
@@ -525,7 +557,13 @@ void CFloppyController::FlushChanges()
 
     // Decode track data from m_data
     uint8_t data[128 * 23];  memset(data, 0, 128 * 23);
-    //if (m_drive < 2)  // MD
+
+    //TCHAR filename[32];  wsprintf(filename, _T("rawtrack%d-%02d.bin"), (int)m_drive, (int)m_pDrive->datatrack);
+    //FILE* fpTrack = ::_tfopen(filename, _T("w+b"));
+    //::fwrite(m_pDrive->data, 1, FLOPPY_RAWTRACKSIZE, fpTrack);
+    //::fclose(fpTrack);
+
+    if (m_pDrive->floppytype == FLOPPY_TYPE_MD)
     {
         bool decoded = DecodeTrackData(m_pDrive->data, data, m_pDrive->datatrack);
         if (decoded)  // Write to the file only if the track was correctly decoded from raw data
@@ -550,30 +588,26 @@ void CFloppyController::FlushChanges()
 #endif
         }
     }
-//    else  // MX
-//    {
-//        TCHAR filename[32];  wsprintf(filename, _T("rawtrack%d-%02d.bin"), (int)m_drive, (int)m_pDrive->datatrack);
-//        FILE* fpTrack = ::_tfopen(filename, _T("w+b"));
-//        ::fwrite(m_pDrive->data, 1, FLOPPY_RAWTRACKSIZE, fpTrack);
-//        ::fclose(fpTrack);
-//
-//        bool decoded = DecodeTrackDataMX(m_pDrive->data, data, m_pDrive->datatrack);
-//        if (decoded)  // Write to the file only if the track was correctly decoded from raw data
-//        {
-//            // Track has 11 sectors, 256 bytes each
-//            long foffset = m_pDrive->datatrack * 11 * 256;
-//            // Save data into the file
-//            ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-//            uint32_t dwBytesWritten = ::fwrite(&data, 1, 256 * 11, m_pDrive->fpFile);
-//            //TODO: Проверка на ошибки записи
-//        }
-//        else
-//        {
-//#if !defined(PRODUCT)
-//            if (m_okTrace) DebugLog(_T("Floppy FLUSH MX FAILED\r\n"));  //DEBUG
-//#endif
-//        }
-//    }
+    else if (m_pDrive->floppytype == FLOPPY_TYPE_MX)
+    {
+        bool decoded = DecodeTrackDataMX(m_pDrive->data, data, m_pDrive->datatrack);
+        if (decoded)  // Write to the file only if the track was correctly decoded from raw data
+        {
+            // Track has 11 sectors, 256 bytes each
+            int side = m_drive & 1;
+            long foffset = (m_track * 2 + side) * 11 * 256;
+            // Save data into the file
+            ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
+            uint32_t dwBytesWritten = ::fwrite(&data, 1, 256 * 11, m_pDrive->fpFile);
+            //TODO: Проверка на ошибки записи
+        }
+        else
+        {
+#if !defined(PRODUCT)
+            if (m_okTrace) DebugLog(_T("Floppy FLUSH MX FAILED\r\n"));  //DEBUG
+#endif
+        }
+    }
 
 //        // Check file length
 //        ::fseek(m_pDrive->fpFile, 0, SEEK_END);

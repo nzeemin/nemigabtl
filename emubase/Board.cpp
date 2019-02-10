@@ -133,12 +133,12 @@ void CMotherboard::LoadRAM(int startbank, const uint8_t* pBuffer, int length)
 
 // Floppy ////////////////////////////////////////////////////////////
 
-bool CMotherboard::IsFloppyImageAttached(int slot) const
+uint8_t CMotherboard::GetFloppyType(int slot) const
 {
     ASSERT(slot >= 0 && slot < 4);
-    if (m_pFloppyCtl == NULL)
-        return false;
-    return m_pFloppyCtl->IsAttached(slot);
+    if (m_pFloppyCtl == NULL || slot < 0 || slot >= 4)
+        return FLOPPY_TYPE_NONE;
+    return m_pFloppyCtl->GetFloppyType(slot);
 }
 
 bool CMotherboard::IsFloppyReadOnly(int slot) const
@@ -154,7 +154,15 @@ bool CMotherboard::AttachFloppyImage(int slot, LPCTSTR sFileName)
     ASSERT(slot >= 0 && slot < 4);
     if (m_pFloppyCtl == NULL)
         return false;
-    return m_pFloppyCtl->AttachImage(slot, sFileName);
+    return m_pFloppyCtl->AttachImage(slot, sFileName, FLOPPY_TYPE_MD);
+}
+
+bool CMotherboard::AttachFloppyMXImage(int slot, LPCTSTR sFileName)
+{
+    ASSERT(slot == 0 || slot == 2);
+    if (m_pFloppyCtl == NULL)
+        return false;
+    return m_pFloppyCtl->AttachImage(slot, sFileName, FLOPPY_TYPE_MX);
 }
 
 void CMotherboard::DetachFloppyImage(int slot)

@@ -53,10 +53,15 @@ int DisassembleInstruction(uint16_t* pMemory, uint16_t addr, TCHAR* sInstr, TCHA
 #define FLOPPY_RAWTRACKSIZE             3125    // Track length, bytes
 #define FLOPPY_INDEXLENGTH              15      // Index mark length
 
+const uint8_t FLOPPY_TYPE_NONE = 0;
+const uint8_t FLOPPY_TYPE_MD = 1;
+const uint8_t FLOPPY_TYPE_MX = 2;
+
 struct CFloppyDrive
 {
     FILE* fpFile;
-    bool okReadOnly;    // Write protection flag
+    bool okReadOnly;        // Write protection flag
+    uint8_t floppytype;     // See FLOPPY_TYPE_XX constants
     uint16_t dataptr;       // Data offset within m_data - "head" position
     uint8_t data[FLOPPY_RAWTRACKSIZE];  // Raw track image for the current track
     uint16_t datatrack;     // Track number of data in m_data array
@@ -94,9 +99,9 @@ public:
     void Reset();
 
 public:
-    bool AttachImage(int drive, LPCTSTR sFileName);
+    bool AttachImage(int drive, LPCTSTR sFileName, uint8_t floppyType);
     void DetachImage(int drive);
-    bool IsAttached(int drive) { return (m_drivedata[drive].fpFile != NULL); }
+    uint8_t GetFloppyType(int drive) { return m_drivedata[drive].floppytype; }
     bool IsReadOnly(int drive) { return m_drivedata[drive].okReadOnly; } // return (m_status & FLOPPY_STATUS_WRITEPROTECT) != 0; }
     bool IsEngineOn() const { return m_motoron; }
     uint16_t GetState();            // Reading port 177100 - status

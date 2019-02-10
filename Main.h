@@ -45,6 +45,7 @@ void MainWindow_ShowHideMemoryMap();
 void MainWindow_AdjustWindowSize();
 
 void MainWindow_SetToolbarImage(int commandId, int imageIndex);
+void MainWindow_EnableToolbarItem(int commandId, BOOL enable);
 void MainWindow_SetStatusbarText(int part, LPCTSTR message);
 void MainWindow_SetStatusbarBitmap(int part, UINT resourceId);
 void MainWindow_SetStatusbarIcon(int part, HICON hIcon);
@@ -102,6 +103,8 @@ void Settings_SetConfiguration(int configuration);
 int  Settings_GetConfiguration();
 void Settings_SetFloppyFilePath(int slot, LPCTSTR sFilePath);
 void Settings_GetFloppyFilePath(int slot, LPTSTR buffer);
+void Settings_SetFloppyMXFilePath(int slot, LPCTSTR sFilePath);
+void Settings_GetFloppyMXFilePath(int slot, LPTSTR buffer);
 void Settings_SetCartridgeFilePath(int slot, LPCTSTR sFilePath);
 void Settings_GetCartridgeFilePath(int slot, LPTSTR buffer);
 void Settings_SetScreenViewMode(int mode);

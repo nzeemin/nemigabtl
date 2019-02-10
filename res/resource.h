@@ -75,10 +75,12 @@
 #define ID_EMULATOR_REALSPEED           32801
 #define ID_EMULATOR_SPEED200            32802
 #define ID_EMULATOR_CONF                32803
-#define ID_EMULATOR_FLOPPY0             32804
-#define ID_EMULATOR_FLOPPY1             32805
-#define ID_EMULATOR_FLOPPY2             32806
-#define ID_EMULATOR_FLOPPY3             32807
+#define ID_EMULATOR_FLOPPYMD0           32804
+#define ID_EMULATOR_FLOPPYMD1           32805
+#define ID_EMULATOR_FLOPPYMD2           32806
+#define ID_EMULATOR_FLOPPYMD3           32807
+#define ID_EMULATOR_FLOPPYMX0           32808
+#define ID_EMULATOR_FLOPPYMX1           32809
 #define ID_CONF_NEMIGA303               32813
 #define ID_CONF_NEMIGA405               32814
 #define ID_CONF_NEMIGA406               32815

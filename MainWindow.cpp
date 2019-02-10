@@ -19,6 +19,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include <commctrl.h>
 
 #include "Main.h"
+#include "emubase\Emubase.h"
 #include "Emulator.h"
 #include "Dialogs.h"
 #include "Views.h"
@@ -68,7 +69,8 @@ void MainWindow_DoEmulatorSerial();
 void MainWindow_DoEmulatorParallel();
 void MainWindow_DoFileSaveState();
 void MainWindow_DoFileLoadState();
-void MainWindow_DoEmulatorFloppy(int slot);
+void MainWindow_DoEmulatorFloppyMD(int slot);
+void MainWindow_DoEmulatorFloppyMX(int slot);
 void MainWindow_DoEmulatorConf(WORD configuration);
 void MainWindow_DoFileScreenshot();
 void MainWindow_DoFileScreenshotSaveAs();
@@ -175,7 +177,7 @@ BOOL MainWindow_InitToolbar()
     addbitmap.nID = IDB_TOOLBAR;
     SendMessage(m_hwndToolbar, TB_ADDBITMAP, 2, (LPARAM) &addbitmap);
 
-    TBBUTTON buttons[10];
+    TBBUTTON buttons[12];
     ZeroMemory(buttons, sizeof(buttons));
     for (int i = 0; i < sizeof(buttons) / sizeof(TBBUTTON); i++)
     {
@@ -191,30 +193,38 @@ BOOL MainWindow_InitToolbar()
     buttons[1].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[1].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Reset"));
     buttons[2].fsStyle = BTNS_SEP;
-    buttons[3].idCommand = ID_EMULATOR_FLOPPY0;
+    buttons[3].idCommand = ID_EMULATOR_FLOPPYMD0;
     buttons[3].iBitmap = ToolbarImageFloppySlot;
     buttons[3].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[3].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("MD0"));
-    buttons[4].idCommand = ID_EMULATOR_FLOPPY1;
+    buttons[4].idCommand = ID_EMULATOR_FLOPPYMD1;
     buttons[4].iBitmap = ToolbarImageFloppySlot;
     buttons[4].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[4].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("MD1"));
-    buttons[5].idCommand = ID_EMULATOR_FLOPPY2;
+    buttons[5].idCommand = ID_EMULATOR_FLOPPYMD2;
     buttons[5].iBitmap = ToolbarImageFloppySlot;
     buttons[5].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[5].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("MD2"));
-    buttons[6].idCommand = ID_EMULATOR_FLOPPY3;
+    buttons[6].idCommand = ID_EMULATOR_FLOPPYMD3;
     buttons[6].iBitmap = ToolbarImageFloppySlot;
     buttons[6].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
     buttons[6].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("MD3"));
-    buttons[7].fsStyle = BTNS_SEP;
-    buttons[8].idCommand = ID_EMULATOR_SOUND;
-    buttons[8].iBitmap = ToolbarImageSoundOff;
+    buttons[7].idCommand = ID_EMULATOR_FLOPPYMX0;
+    buttons[7].iBitmap = ToolbarImageFloppySlot;
+    buttons[7].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
+    buttons[7].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("MX0"));
+    buttons[8].idCommand = ID_EMULATOR_FLOPPYMX1;
+    buttons[8].iBitmap = ToolbarImageFloppySlot;
     buttons[8].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
-    buttons[8].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Sound"));
-    buttons[9].idCommand = ID_FILE_SCREENSHOT;
-    buttons[9].iBitmap = ToolbarImageScreenshot;
-    buttons[9].fsStyle = BTNS_BUTTON;
+    buttons[8].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("MX1"));
+    buttons[9].fsStyle = BTNS_SEP;
+    buttons[10].idCommand = ID_EMULATOR_SOUND;
+    buttons[10].iBitmap = ToolbarImageSoundOff;
+    buttons[10].fsStyle = BTNS_BUTTON | BTNS_SHOWTEXT;
+    buttons[10].iString = (int)SendMessage(m_hwndToolbar, TB_ADDSTRING, (WPARAM)0, (LPARAM)_T("Sound"));
+    buttons[11].idCommand = ID_FILE_SCREENSHOT;
+    buttons[11].iBitmap = ToolbarImageScreenshot;
+    buttons[11].fsStyle = BTNS_BUTTON;
     SendMessage(m_hwndToolbar, TB_ADDBUTTONS, (WPARAM) sizeof(buttons) / sizeof(TBBUTTON), (LPARAM) &buttons);
 
     if (Settings_GetToolbar())
@@ -248,7 +258,7 @@ void MainWindow_RestoreSettings()
 {
     TCHAR buf[MAX_PATH];
 
-    // Reattach floppy images
+    // Reattach floppy MD images
     for (int slot = 0; slot < 4; slot++)
     {
         buf[0] = _T('\0');
@@ -256,6 +266,17 @@ void MainWindow_RestoreSettings()
         if (buf[0] != _T('\0'))
         {
             if (! g_pBoard->AttachFloppyImage(slot, buf))
+                Settings_SetFloppyFilePath(slot, NULL);
+        }
+    }
+    // Reattach floppy MX images
+    for (int slot = 0; slot < 2; slot++)
+    {
+        buf[0] = _T('\0');
+        Settings_GetFloppyMXFilePath(slot, buf);
+        if (buf[0] != _T('\0'))
+        {
+            if (!g_pBoard->AttachFloppyMXImage(slot * 2, buf))
                 Settings_SetFloppyFilePath(slot, NULL);
         }
     }
@@ -736,19 +757,42 @@ void MainWindow_UpdateMenu()
     }
     CheckMenuRadioItem(hMenu, ID_CONF_NEMIGA303, ID_CONF_NEMIGA406, configcmd, MF_BYCOMMAND);
 
-    // Emulator|FloppyX
-    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPY0, (g_pBoard->IsFloppyImageAttached(0) ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPY1, (g_pBoard->IsFloppyImageAttached(1) ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPY2, (g_pBoard->IsFloppyImageAttached(2) ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPY3, (g_pBoard->IsFloppyImageAttached(3) ? MF_CHECKED : MF_UNCHECKED));
-    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPY0,
-            g_pBoard->IsFloppyImageAttached(0) ? (g_pBoard->IsFloppyReadOnly(0) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
-    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPY1,
-            g_pBoard->IsFloppyImageAttached(1) ? (g_pBoard->IsFloppyReadOnly(1) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
-    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPY2,
-            g_pBoard->IsFloppyImageAttached(2) ? (g_pBoard->IsFloppyReadOnly(2) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
-    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPY3,
-            g_pBoard->IsFloppyImageAttached(3) ? (g_pBoard->IsFloppyReadOnly(3) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
+    uint8_t floppy0type = g_pBoard->GetFloppyType(0);
+    uint8_t floppy1type = g_pBoard->GetFloppyType(1);
+    uint8_t floppy2type = g_pBoard->GetFloppyType(2);
+    uint8_t floppy3type = g_pBoard->GetFloppyType(3);
+    // Drives|Floppy MDx
+    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPYMD0, (floppy0type == FLOPPY_TYPE_MD ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPYMD1, (floppy1type == FLOPPY_TYPE_MD ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPYMD2, (floppy2type == FLOPPY_TYPE_MD ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPYMD3, (floppy3type == FLOPPY_TYPE_MD ? MF_CHECKED : MF_UNCHECKED));
+    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPYMD0,
+            floppy0type == FLOPPY_TYPE_MD ? (g_pBoard->IsFloppyReadOnly(0) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
+    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPYMD1,
+            floppy1type == FLOPPY_TYPE_MD ? (g_pBoard->IsFloppyReadOnly(1) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
+    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPYMD2,
+            floppy2type == FLOPPY_TYPE_MD ? (g_pBoard->IsFloppyReadOnly(2) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
+    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPYMD3,
+            floppy3type == FLOPPY_TYPE_MD ? (g_pBoard->IsFloppyReadOnly(3) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
+    bool floppyMD01enable = (floppy0type != FLOPPY_TYPE_MX);
+    bool floppyMD23enable = (floppy2type != FLOPPY_TYPE_MX);
+    MainWindow_EnableToolbarItem(ID_EMULATOR_FLOPPYMD0, floppyMD01enable);
+    MainWindow_EnableToolbarItem(ID_EMULATOR_FLOPPYMD1, floppyMD01enable);
+    MainWindow_EnableToolbarItem(ID_EMULATOR_FLOPPYMD2, floppyMD23enable);
+    MainWindow_EnableToolbarItem(ID_EMULATOR_FLOPPYMD3, floppyMD23enable);
+    // Drives|Floppy MXx
+    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPYMX0, (floppy0type == FLOPPY_TYPE_MX ? MF_CHECKED : MF_UNCHECKED));
+    CheckMenuItem(hMenu, ID_EMULATOR_FLOPPYMX1, (floppy2type == FLOPPY_TYPE_MX ? MF_CHECKED : MF_UNCHECKED));
+    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPYMX0,
+            floppy0type == FLOPPY_TYPE_MX ? (g_pBoard->IsFloppyReadOnly(0) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
+    MainWindow_SetToolbarImage(ID_EMULATOR_FLOPPYMX1,
+            floppy2type == FLOPPY_TYPE_MX ? (g_pBoard->IsFloppyReadOnly(2) ? ToolbarImageFloppyDiskWP : ToolbarImageFloppyDisk) : ToolbarImageFloppySlot);
+    bool floppyMX0enable = (floppy0type != FLOPPY_TYPE_MD && floppy1type != FLOPPY_TYPE_MD);
+    bool floppyMX1enable = (floppy2type != FLOPPY_TYPE_MD && floppy3type != FLOPPY_TYPE_MD);
+    EnableMenuItem(hMenu, ID_EMULATOR_FLOPPYMX0, floppyMX0enable ? MF_ENABLED : MF_DISABLED);
+    EnableMenuItem(hMenu, ID_EMULATOR_FLOPPYMX1, floppyMX1enable ? MF_ENABLED : MF_DISABLED);
+    MainWindow_EnableToolbarItem(ID_EMULATOR_FLOPPYMX0, floppyMX0enable);
+    MainWindow_EnableToolbarItem(ID_EMULATOR_FLOPPYMX1, floppyMX1enable);
 }
 
 // Process menu command
@@ -840,17 +884,23 @@ bool MainWindow_DoCommand(int commandId)
     case ID_EMULATOR_PARALLEL:
         MainWindow_DoEmulatorParallel();
         break;
-    case ID_EMULATOR_FLOPPY0:
-        MainWindow_DoEmulatorFloppy(0);
+    case ID_EMULATOR_FLOPPYMD0:
+        MainWindow_DoEmulatorFloppyMD(0);
         break;
-    case ID_EMULATOR_FLOPPY1:
-        MainWindow_DoEmulatorFloppy(1);
+    case ID_EMULATOR_FLOPPYMD1:
+        MainWindow_DoEmulatorFloppyMD(1);
         break;
-    case ID_EMULATOR_FLOPPY2:
-        MainWindow_DoEmulatorFloppy(2);
+    case ID_EMULATOR_FLOPPYMD2:
+        MainWindow_DoEmulatorFloppyMD(2);
         break;
-    case ID_EMULATOR_FLOPPY3:
-        MainWindow_DoEmulatorFloppy(3);
+    case ID_EMULATOR_FLOPPYMD3:
+        MainWindow_DoEmulatorFloppyMD(3);
+        break;
+    case ID_EMULATOR_FLOPPYMX0:
+        MainWindow_DoEmulatorFloppyMX(0);
+        break;
+    case ID_EMULATOR_FLOPPYMX1:
+        MainWindow_DoEmulatorFloppyMX(1);
         break;
     case ID_FILE_LOADSTATE:
         MainWindow_DoFileLoadState();
@@ -1128,33 +1178,27 @@ void MainWindow_DoEmulatorConf(WORD configuration)
     MainWindow_UpdateAllViews();
 }
 
-void MainWindow_DoEmulatorFloppy(int slot)
+void MainWindow_DoEmulatorFloppyMD(int slot)
 {
-    BOOL okImageAttached = g_pBoard->IsFloppyImageAttached(slot);
-    if (okImageAttached)
+    uint8_t floppyType = g_pBoard->GetFloppyType(slot);
+    if (floppyType != FLOPPY_TYPE_NONE)
     {
         g_pBoard->DetachFloppyImage(slot);
         Settings_SetFloppyFilePath(slot, NULL);
     }
     else
     {
-        //if ((g_nEmulatorConfiguration & BK_COPT_FDD) == 0)
-        //{
-        //    AlertWarning(_T("Current configuration has no floppy controller."));
-        //    return;
-        //}
-
         // File Open dialog
         TCHAR bufFileName[MAX_PATH];
         BOOL okResult = ShowOpenDialog(g_hwnd,
-                _T("Open floppy image to attach"),
+                _T("Open floppy MD image to attach"),
                 _T("NEMIGA floppy images (*.dsk)\0*.dsk\0All Files (*.*)\0*.*\0\0"),
                 bufFileName);
         if (! okResult) return;
 
         if (! g_pBoard->AttachFloppyImage(slot, bufFileName))
         {
-            AlertWarning(_T("Failed to attach floppy image."));
+            AlertWarning(_T("Failed to attach floppy MD image."));
             return;
         }
 
@@ -1163,23 +1207,55 @@ void MainWindow_DoEmulatorFloppy(int slot)
     MainWindow_UpdateMenu();
 }
 
+void MainWindow_DoEmulatorFloppyMX(int slot)
+{
+    int realslot = slot * 2;  // MX0 -> 0, MX1 -> 2
+    uint8_t floppyType = g_pBoard->GetFloppyType(realslot);
+    if (floppyType != FLOPPY_TYPE_NONE)
+    {
+        g_pBoard->DetachFloppyImage(realslot);
+        g_pBoard->DetachFloppyImage(realslot + 1);
+        Settings_SetFloppyMXFilePath(slot, NULL);
+    }
+    else
+    {
+        // File Open dialog
+        TCHAR bufFileName[MAX_PATH];
+        BOOL okResult = ShowOpenDialog(g_hwnd,
+                _T("Open floppy MX image to attach"),
+                _T("NEMIGA floppy images (*.dsk)\0*.dsk\0All Files (*.*)\0*.*\0\0"),
+                bufFileName);
+        if (!okResult) return;
+
+        if (!g_pBoard->AttachFloppyMXImage(realslot, bufFileName))
+        {
+            AlertWarning(_T("Failed to attach floppy MX image."));
+            return;
+        }
+
+        Settings_SetFloppyMXFilePath(slot, bufFileName);
+    }
+    MainWindow_UpdateMenu();
+}
+
 void MainWindow_OnToolbarGetInfoTip(LPNMTBGETINFOTIP lpnm)
 {
     int commandId = lpnm->iItem;
 
-    if (commandId == ID_EMULATOR_FLOPPY0 || commandId == ID_EMULATOR_FLOPPY1 ||
-        commandId == ID_EMULATOR_FLOPPY2 || commandId == ID_EMULATOR_FLOPPY3)
+    if (commandId == ID_EMULATOR_FLOPPYMD0 || commandId == ID_EMULATOR_FLOPPYMD1 ||
+        commandId == ID_EMULATOR_FLOPPYMD2 || commandId == ID_EMULATOR_FLOPPYMD3)
     {
         int floppyslot = 0;
         switch (commandId)
         {
-        case ID_EMULATOR_FLOPPY0: floppyslot = 0; break;
-        case ID_EMULATOR_FLOPPY1: floppyslot = 1; break;
-        case ID_EMULATOR_FLOPPY2: floppyslot = 2; break;
-        case ID_EMULATOR_FLOPPY3: floppyslot = 3; break;
+        case ID_EMULATOR_FLOPPYMD0: floppyslot = 0; break;
+        case ID_EMULATOR_FLOPPYMD1: floppyslot = 1; break;
+        case ID_EMULATOR_FLOPPYMD2: floppyslot = 2; break;
+        case ID_EMULATOR_FLOPPYMD3: floppyslot = 3; break;
         }
 
-        if (g_pBoard->IsFloppyImageAttached(floppyslot))
+        uint8_t floppyType = g_pBoard->GetFloppyType(floppyslot);
+        if (floppyType == FLOPPY_TYPE_MD)
         {
             TCHAR buffilepath[MAX_PATH];
             Settings_GetFloppyFilePath(floppyslot, buffilepath);
@@ -1218,6 +1294,15 @@ void MainWindow_SetToolbarImage(int commandId, int imageIndex)
     info.iImage = imageIndex;
     info.dwMask = TBIF_IMAGE;
     SendMessage(m_hwndToolbar, TB_SETBUTTONINFO, commandId, (LPARAM) &info);
+}
+
+void MainWindow_EnableToolbarItem(int commandId, BOOL enable)
+{
+    TBBUTTONINFO info;
+    info.cbSize = sizeof(info);
+    info.fsState = enable ? TBSTATE_ENABLED : 0;
+    info.dwMask = TBIF_STATE;
+    SendMessage(m_hwndToolbar, TB_SETBUTTONINFO, commandId, (LPARAM)&info);
 }
 
 void MainWindow_SetStatusbarText(int part, LPCTSTR message)
