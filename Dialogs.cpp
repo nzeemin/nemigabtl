@@ -23,9 +23,12 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 INT_PTR CALLBACK AboutBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK InputBoxProc(HWND, UINT, WPARAM, LPARAM);
-BOOL InputBoxValidate(HWND hDlg);
+INT_PTR CALLBACK CreateDiskProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK SettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DcbEditorProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);
+
+void Dialogs_DoCreateDisk(LONG fileSize);
+BOOL InputBoxValidate(HWND hDlg);
 
 LPCTSTR m_strInputBoxTitle = NULL;
 LPCTSTR m_strInputBoxPrompt = NULL;
@@ -187,7 +190,41 @@ BOOL ShowOpenDialog(HWND hwndOwner, LPCTSTR strTitle, LPCTSTR strFilter, TCHAR* 
 //////////////////////////////////////////////////////////////////////
 // Create Disk Dialog
 
-void Dialogs_DoCreateDisk()
+void ShowCreateDiskDialog()
+{
+    DialogBox(g_hInst, MAKEINTRESOURCE(IDD_CREATEDISK), g_hwnd, CreateDiskProc);
+}
+
+INT_PTR CALLBACK CreateDiskProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    UNREFERENCED_PARAMETER(lParam);
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        {
+            CheckRadioButton(hDlg, IDC_DISKMD, IDC_DISKMX, IDC_DISKMD);
+            return (INT_PTR)FALSE;
+        }
+    case WM_COMMAND:
+        switch (LOWORD(wParam))
+        {
+        case IDOK:
+            Dialogs_DoCreateDisk(IsDlgButtonChecked(hDlg, IDC_DISKMD) == BST_CHECKED ? 235392 : 450560);
+
+            EndDialog(hDlg, LOWORD(wParam));
+            return (INT_PTR)TRUE;
+        case IDCANCEL:
+            EndDialog(hDlg, LOWORD(wParam));
+            return (INT_PTR)TRUE;
+        default:
+            return (INT_PTR)FALSE;
+        }
+        break;
+    }
+    return (INT_PTR) FALSE;
+}
+
+void Dialogs_DoCreateDisk(LONG fileSize)
 {
     TCHAR bufFileName[MAX_PATH];
     BOOL okResult = ShowSaveDialog(g_hwnd,
@@ -198,7 +235,6 @@ void Dialogs_DoCreateDisk()
     if (! okResult) return;
 
     // Create the file
-    LONG fileSize = 235392; // = 80 * 23 * 128 - 128
     HANDLE hFile = ::CreateFile(bufFileName,
             GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)

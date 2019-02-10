@@ -28,10 +28,9 @@
 #define IDC_EDIT1                       1000
 #define IDC_BUILDDATE                   1001
 #define IDC_EDITADDR                    1001
-#define IDC_TRACKS40                    1002
+#define IDC_DISKMD                      1002
 #define IDC_EDITSIZE                    1002
-#define IDC_RADIO2                      1003
-#define IDC_TRACKS80                    1003
+#define IDC_DISKMX                      1003
 #define IDC_EDITNAME                    1003
 #define IDC_EDITSTACK                   1003
 #define IDC_BUTTONBROWSE                1004

@@ -1151,7 +1151,7 @@ void MainWindow_DoFileScreenshotSaveAs()
 
 void MainWindow_DoFileCreateDisk()
 {
-    Dialogs_DoCreateDisk();
+    ShowCreateDiskDialog();
 }
 
 void MainWindow_DoFileSettings()
