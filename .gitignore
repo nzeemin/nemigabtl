@@ -13,5 +13,4 @@
 /*.opensdf
 /*.dsk
 /*.nmst
-/docs
-/screenshot/201*.png
+/x-*

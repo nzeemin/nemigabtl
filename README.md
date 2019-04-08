@@ -3,7 +3,7 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/qh4x31xl9h50trea?svg=true)](https://ci.appveyor.com/project/nzeemin/nemigabtl)
 
-![](screenshot/NemigaBTL.png)
+![](docs/NemigaBTL.png)
 
 #### In Russian / На русском
 **Немига ПК 588** – советский 16-разрядный персональный компьютер,
