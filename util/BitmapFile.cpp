@@ -1,12 +1,12 @@
-/*  This file is part of UKNCBTL.
-    UKNCBTL is free software: you can redistribute it and/or modify it under the terms
+/*  This file is part of NEMIGABTL.
+    NEMIGABTL is free software: you can redistribute it and/or modify it under the terms
 of the GNU Lesser General Public License as published by the Free Software Foundation,
 either version 3 of the License, or (at your option) any later version.
-    UKNCBTL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+    NEMIGABTL is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 See the GNU Lesser General Public License for more details.
     You should have received a copy of the GNU Lesser General Public License along with
-UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
+NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 // BitmapFile.cpp
 
@@ -362,13 +362,6 @@ bool PngFile_SaveScreenshot(
 
 //////////////////////////////////////////////////////////////////////
 
-struct APNGFILE
-{
-    FILE* fpFile;
-    uint32_t dwNextFrameNumber;
-    fpos_t nActlOffset;       // "acTL" chunk offset
-};
-
 bool PngFile_WriteActl(FILE * fpFile, uint32_t numframes)
 {
     uint8_t acTLchunk[12 + 8];
@@ -417,13 +410,10 @@ int crc_table_computed = 0;
 /* Make the table for a fast CRC. */
 void make_crc_table(void)
 {
-    unsigned long c;
-    int n, k;
-
-    for (n = 0; n < 256; n++)
+    for (int n = 0; n < 256; n++)
     {
-        c = (unsigned long) n;
-        for (k = 0; k < 8; k++)
+        unsigned long c = (unsigned long) n;
+        for (int k = 0; k < 8; k++)
         {
             if (c & 1)
                 c = 0xedb88320L ^ (c >> 1);

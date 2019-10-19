@@ -119,7 +119,6 @@ public:
 private:
     void PrepareTrack();
     void FlushChanges();  // If current track was changed - save it
-
 };
 
 

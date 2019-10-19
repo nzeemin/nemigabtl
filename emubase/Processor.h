@@ -22,7 +22,6 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 class CProcessor  // KM1801VM1 processor
 {
-
 public:  // Constructor / initialization
     CProcessor(CMotherboard* pBoard);
     void        FireHALT() { m_HALTrq = true; }  // Fire HALT interrupt request, same as HALT command
@@ -254,7 +253,6 @@ protected:  // Implementation - instruction execution
     void		ExecuteDIV ();      //  0003
     void		ExecuteASH ();      //  0003
     void		ExecuteASHC ();     //  0003
-
 };
 
 // PSW bits control - implementation

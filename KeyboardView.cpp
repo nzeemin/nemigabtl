@@ -453,7 +453,6 @@ void KeyboardView_OnDraw(HDC hdc)
     // Draw indicators
     for (int i = 0; i < m_nKeyboardIndicatorsCount; i++)
     {
-
         RECT rcRadio;
         rcRadio.left = m_nKeyboardBitmapLeft + m_arrKeyboardIndicators[i].x;
         rcRadio.top = m_nKeyboardBitmapTop + m_arrKeyboardIndicators[i].y;
