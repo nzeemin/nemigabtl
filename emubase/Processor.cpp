@@ -195,7 +195,7 @@ CProcessor::CProcessor (CMotherboard* pBoard)
     m_internalTick = 0;
     m_waitmode = false;
     m_stepmode = false;
-    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_IRQ2rq = false;
+    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_EVNTrq = false;
     m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = false;
     m_virqrq = 0;
 
@@ -212,7 +212,7 @@ void CProcessor::Start ()
 
     m_stepmode = false;
     m_waitmode = false;
-    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_IRQ2rq = false;
+    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_EVNTrq = false;
     m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = false;
     m_virqrq = 0;  memset(m_virq, 0, sizeof(m_virq));
 
@@ -231,7 +231,7 @@ void CProcessor::Stop ()
     m_waitmode = false;
     m_psw = 0340;
     m_internalTick = 0;
-    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_IRQ2rq = false;
+    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_EVNTrq = false;
     m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = false;
     m_virqrq = 0;  memset(m_virq, 0, sizeof(m_virq));
 }
@@ -274,20 +274,12 @@ void CProcessor::Execute()
 
             // Calculate interrupt vector and mode accoding to priority
             uint16_t intrVector = 0;
-            bool currMode = m_haltmode;  // Current processor mode: true = HALT mode, false = USER mode
+            //bool currMode = m_haltmode;  // Current processor mode: true = HALT mode, false = USER mode
             bool intrMode = false;  // true = HALT mode interrupt, false = USER mode interrupt
             if (m_HALTrq)  // HALT command
             {
                 intrVector = 0002;  intrMode = true;
                 m_HALTrq = false;
-#if !defined(PRODUCT)
-                if (m_pBoard->GetTrace())
-                {
-                    uint16_t val177566 = m_pBoard->GetRAMWord(0177566);
-                    uint8_t byte177566 = (uint8_t)(val177566 & 255);
-                    DebugLogFormat(_T("HALT interrupt 170006=%06o 177566=%06o %C\r\n"), m_pBoard->GetPortView(0170006), val177566, (byte177566 >= 32 && byte177566 < 128) ? (char)byte177566 : ' ');
-                }
-#endif
             }
             else if (m_BPT_rq)  // BPT command
             {
@@ -309,12 +301,7 @@ void CProcessor::Execute()
                 intrVector = 0000034;  intrMode = false;
                 m_TRAPrq = false;
             }
-            else if (m_RPLYrq && currMode)  // Зависание в HALT, priority 1
-            {
-                intrVector = 0000004;  intrMode = true;
-                m_RPLYrq = false;
-            }
-            else if (m_RPLYrq && !currMode)  // Зависание в USER, priority 1
+            else if (m_RPLYrq)  // Зависание
             {
                 intrVector = 0000004;  intrMode = false;
                 m_RPLYrq = false;
@@ -329,15 +316,15 @@ void CProcessor::Execute()
                 intrVector = 000010;  intrMode = false;
                 m_RSVDrq = false;
             }
-            else if (m_TBITrq && (!m_waitmode))  // T-bit, priority 3
+            else if (m_TBITrq && (!m_waitmode))  // T-bit
             {
                 intrVector = 000014;  intrMode = false;
                 m_TBITrq = false;
             }
-            else if (m_IRQ2rq && (m_psw & 0200) != 0200)  // EVNT signal, priority 6
+            else if (m_EVNTrq && (m_psw & 0200) != 0200)  // EVNT signal
             {
                 intrVector = 0000100;  intrMode = false;
-                m_IRQ2rq = false;
+                m_EVNTrq = false;
             }
             else if (m_virqrq > 0 && (m_psw & 0200) != 0200)  // VIRQ, priority 7
             {
@@ -376,6 +363,30 @@ void CProcessor::Execute()
 
                 SetPC(GetWord(intrVector));
                 m_psw = GetWord(intrVector + 2) & 0377;
+#if !defined(PRODUCT)
+                if (intrVector == 0160002)  // HALT
+                {
+                    uint16_t port170006 = m_pBoard->GetPortView(0170006);
+                    if (port170006 & 002000)  // keyboard
+                    {
+                        uint8_t keybyte = (uint8_t)(port170006 & 255);
+                        DebugLogFormat(_T("CPU HALT interrupt vector=%06o PC=%06o PSW=%06o 170006=%06o %C\r\n"), intrVector, GetPC(), GetPSW(), port170006, keybyte >= 32 && keybyte < 128 ? (char)keybyte : ' ');
+                    }
+                }
+                //if (m_pBoard->GetTrace() & TRACE_CPUINT)
+                //{
+                //    if (intrVector == 0160002)  // HALT
+                //    {
+                //        uint16_t port170006 = m_pBoard->GetPortView(0170006);
+                //        uint8_t keybyte = (uint8_t)(port170006 & 255);
+                //        DebugLogFormat(_T("CPU HALT interrupt vector=%06o PC=%06o PSW=%06o 170006=%06o %C\r\n"), intrVector, GetPC(), GetPSW(), port170006, keybyte >= 32 && keybyte < 128 ? (char)keybyte : ' ');
+                //    }
+                //    else
+                //    {
+                //        DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
+                //    }
+                //}
+#endif
             }
             else  // USER mode interrupt
             {
@@ -390,16 +401,23 @@ void CProcessor::Execute()
 
                 SetPC(GetWord(intrVector));
                 m_psw = GetWord(intrVector + 2) & 0377;
+//#if !defined(PRODUCT)
+//                if (m_pBoard->GetTrace() & TRACE_CPUINT)
+//                {
+//                    if (intrVector != 000020 && intrVector != 000030 && intrVector != 000034)  // skip IOT/EMT/TRAP
+//                        DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
+//                }
+//#endif
             }
         }  // end while
     }
 }
 
-void CProcessor::TickIRQ2()
+void CProcessor::TickEVNT()
 {
     if (m_okStopped) return;  // Processor is stopped - nothing to do
 
-    m_IRQ2rq = true;
+    m_EVNTrq = true;
 }
 
 void CProcessor::InterruptVIRQ(int que, uint16_t interrupt)

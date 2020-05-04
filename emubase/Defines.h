@@ -29,19 +29,6 @@ inline uint16_t GetDigit(uint16_t word, int pos)
 
 //////////////////////////////////////////////////////////////////////
 
-// Interrupts
-#define NO_INTERRUPT	0000
-#define INTERRUPT_4		0004
-#define INTERRUPT_10	0010
-#define INTERRUPT_14	0014
-#define INTERRUPT_20	0020
-#define INTERRUPT_24	0024
-#define INTERRUPT_30	0030
-#define INTERRUPT_34	0034
-#define INTERRUPT_60	0060
-#define INTERRUPT_100	0100
-#define INTERRUPT_274	0274
-
 // Process Status Word (PSW) bits
 #define PSW_C           1      // Carry
 #define PSW_V           2      // Arithmetic overflow
@@ -169,15 +156,10 @@ inline uint16_t GetDigit(uint16_t word, int pos)
 #define PI_DIV          0071000
 #define PI_ASH          0072000
 #define PI_ASHC         0073000
-#define PI_FADD         0075000
-#define PI_FSUB         0075010
-#define PI_FMUL         0075020
-#define PI_FDIV         0075030
 
 // Commands -- special commands, HALT mode only
 #define PI_GO           0000012  // Return to USER mode;  PC := CPC; PSW := CPS
 #define PI_STEP         0000016
-#define PI_RSEL         0000020  // R0 := SEL  - Read SEL register
 #define PI_MFUS         0000021  // R0 := (R5)+
 #define PI_RCPC         0000022  // R0 := CPC
 #define PI_RCPS         0000024  // R0 := CPS

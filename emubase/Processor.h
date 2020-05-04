@@ -62,7 +62,7 @@ protected:  // Interrupt processing
     bool        m_TBITrq;           // T-bit interrupt pending
     bool        m_HALTrq;           // HALT command or HALT signal
     bool        m_RPL2rq;           // Double hangup interrupt pending
-    bool        m_IRQ2rq;           // Timer event interrupt pending
+    bool        m_EVNTrq;           // Timer event interrupt pending
     bool        m_BPT_rq;           // BPT command interrupt pending
     bool        m_IOT_rq;           // IOT command interrupt pending
     bool        m_EMT_rq;           // EMT command interrupt pending
@@ -107,7 +107,7 @@ public:  // Processor state
 public:  // Processor control
     void        Start();     // Start processor
     void        Stop();      // Stop processor
-    void        TickIRQ2();  // IRQ2 signal
+    void        TickEVNT();  // EVNT signal
     void        InterruptVIRQ(int que, uint16_t interrupt);  // External interrupt via VIRQ signal
     void        Execute();   // Execute one instruction - for debugger only
 

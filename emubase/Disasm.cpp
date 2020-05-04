@@ -171,17 +171,6 @@ int DisassembleInstruction(uint16_t* pMemory, uint16_t addr, TCHAR* strInstr, TC
     case PI_SENZC:  _tcscpy(strInstr, _T("SENZC"));  return 1;
     case PI_SENZV:  _tcscpy(strInstr, _T("SENZV"));  return 1;
     case PI_SCC:    _tcscpy(strInstr, _T("SCC"));    return 1;
-
-        // Спецкоманды режима HALT ВМ2
-    case PI_GO:     _tcscpy(strInstr, _T("GO"));     return 1;
-    case PI_STEP:   _tcscpy(strInstr, _T("STEP"));   return 1;
-    case PI_RSEL:   _tcscpy(strInstr, _T("RSEL"));   return 1;
-    case PI_MFUS:   _tcscpy(strInstr, _T("MFUS"));   return 1;
-    case PI_RCPC:   _tcscpy(strInstr, _T("RCPC"));   return 1;
-    case PI_RCPS:   _tcscpy(strInstr, _T("RCPS"));   return 1;
-    case PI_MTUS:   _tcscpy(strInstr, _T("MTUS"));   return 1;
-    case PI_WCPC:   _tcscpy(strInstr, _T("WCPC"));   return 1;
-    case PI_WCPS:   _tcscpy(strInstr, _T("WCPS"));   return 1;
     }
 
     // One field

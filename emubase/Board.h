@@ -36,6 +36,7 @@ class CProcessor;
 #define TRACE_CPUROM       1  // Trace CPU instructions from ROM
 #define TRACE_CPURAM       2  // Trace CPU instructions from RAM
 #define TRACE_CPU          3  // Trace CPU instructions (mask)
+#define TRACE_CPUINT       7  // Trace CPU interrupts
 #define TRACE_TIMER      010  // Trace timer events
 #define TRACE_FLOPPY    0100  // Trace floppies
 #define TRACE_KEYBOARD 01000  // Trace keyboard events

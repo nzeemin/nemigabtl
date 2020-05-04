@@ -257,7 +257,14 @@ void CMotherboard::Tick50()  // 50 Hz timer
 {
     if (m_okTimer50OnOff)
     {
-        m_pCPU->TickIRQ2();
+        m_pCPU->TickEVNT();
+    }
+
+    //NOTE: Прерывание HALT с кодом Н3 должно генерироваться каждые 1/50 секунды
+    m_Port170006 |= 010000;  // Сигнал Н3
+    if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
+    {
+        m_pCPU->FireHALT();
     }
 
     if (m_Timer2 == 0)
@@ -277,13 +284,6 @@ void CMotherboard::Tick50()  // 50 Hz timer
         m_Timer2--;
         if (m_Timer2 == 0)
         {
-            //NOTE: Прерывание HALT с кодом Н3 должно генерироваться каждые 1/50 секунды
-            if ((m_Port170020 & 0200) == 0)
-            {
-                m_pCPU->FireHALT();
-                m_Port170020 &= ~01000;  // Снимаем "Фикс прерывания 2"
-                m_Port170006 |= 010000;  // Сигнал Н3
-            }
             //m_okSoundOnOff = false;  // Судя по схеме, звук выключается по сигналу ЗПР2
             m_Port170024 = 0;
             //m_Timer2 = m_Port170024;
@@ -499,6 +499,10 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
     switch (addrtype & ADDRTYPE_MASK)
     {
     case ADDRTYPE_RAM:
+#if !defined(PRODUCT)
+        if (address == 0177562)
+            DebugLogFormat(_T("GetWord %06o %03o\r\n"), address, GetRAMWord(offset & 0177776));
+#endif
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_HIRAM:
         return GetHIRAMWord(offset & 0177776);
@@ -516,9 +520,10 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
             return 0200; //GetRAMWord(offset & 0177776);
         else if (address == 0177566)
             m_Port170006 |= 040000;
-        m_pCPU->FireHALT();
+        if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
+            m_pCPU->FireHALT();
 #if !defined(PRODUCT)
-        //if (m_dwTrace & 04000) DebugLogFormat(_T("GetWord %06o\r\n"), address);
+        DebugLogFormat(_T("GetWord %06o\r\n"), address);
 #endif
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_DENY:
@@ -538,6 +543,10 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
     switch (addrtype & ADDRTYPE_MASK)
     {
     case ADDRTYPE_RAM:
+#if !defined(PRODUCT)
+        if (address == 0177562)
+            DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, (uint16_t)GetRAMByte(offset));
+#endif
         return GetRAMByte(offset);
     case ADDRTYPE_HIRAM:
         return GetHIRAMByte(offset);
@@ -555,9 +564,10 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
             return 0200; //GetRAMByte(offset);
         else if (address == 0177566)
             m_Port170006 |= 040000;
-        m_pCPU->FireHALT();
+        if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
+            m_pCPU->FireHALT();
 #if !defined(PRODUCT)
-        //if (m_dwTrace & 04000) DebugLogFormat(_T("GetByte 06o\r\n"), address);
+        DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, (uint16_t)GetRAMByte(offset));
 #endif
         return GetRAMByte(offset);
     case ADDRTYPE_DENY:
@@ -596,7 +606,14 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
             return;
         }
         if (address == 0177562)
+        {
+#if !defined(PRODUCT)
+            DebugLogFormat(_T("SetWord 177562 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
+#endif
             m_Port170006 |= 020000;
+            if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
+                m_pCPU->FireHALT();
+        }
         else if (address == 0177564)
         {
 //#if !defined(PRODUCT)
@@ -607,12 +624,13 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
         }
         else if (address == 0177566)
         {
-            m_Port170006 |= 040000;
 //#if !defined(PRODUCT)
 //            DebugLogFormat(_T("177566 TERMOUT %04x\r\n"), word);
 //#endif
+            m_Port170006 |= 040000;
+            if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
+                m_pCPU->FireHALT();
         }
-        m_pCPU->FireHALT();
 //#if !defined(PRODUCT)
 //        DebugLogFormat(_T("SetWord 06o\r\n"), address);
 //#endif
@@ -647,23 +665,31 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
         return;
     case ADDRTYPE_TERM:
         if (address == 0177562)
+        {
+#if !defined(PRODUCT)
+            DebugLogFormat(_T("SetByte 177562 value %03o, PC=%06o\r\n"), (uint16_t)byte, m_pCPU->GetInstructionPC());
+#endif
             m_Port170006 |= 020000;
+            if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
+                m_pCPU->FireHALT();
+        }
         else if (address == 0177564)
         {
-            SetRAMByte(offset, byte);
 //#if !defined(PRODUCT)
 //            DebugLogFormat(_T("WRITE 177564 value %03o, PC=%06o\r\n"), byte, m_pCPU->GetInstructionPC());
 //#endif
+            SetRAMByte(offset, byte);
             return;
         }
         else if (address == 0177566)
         {
-            m_Port170006 |= 040000;
 //#if !defined(PRODUCT)
 //            DebugLogFormat(_T("177566 TERMOUT %02x\r\n"), byte);
 //#endif
+            m_Port170006 |= 040000;
+            if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
+                m_pCPU->FireHALT();
         }
-        m_pCPU->FireHALT();
         SetRAMByte(offset, byte);
 //#if !defined(PRODUCT)
 //        DebugLogFormat(_T("SetByte 06o\r\n"), address);
