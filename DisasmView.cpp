@@ -782,7 +782,7 @@ void DisasmView_InstructionHint(const WORD* memory, const CProcessor * pProc,
     if (*srchint2 != 0 && *dsthint2 != 0)
     {
         if (_tcscmp(srchint2, dsthint2) == 0)
-            _tcscpy_s(buffer, 42, srchint2);
+            _tcscpy_s(buffer2, 42, srchint2);
         else
             _sntprintf(buffer2, 42, _T("%s, %s"), srchint2, dsthint2);
     }
@@ -797,7 +797,7 @@ void DisasmView_InstructionHint(const WORD* memory, const CProcessor * pProc,
 int DisasmView_GetInstructionHint(const WORD* memory, const CProcessor * pProc,
         LPTSTR buffer, LPTSTR buffer2)
 {
-    *buffer = 0;
+    *buffer = 0;  *buffer2 = 0;
     WORD instr = *memory;
 
     // Source and Destination
@@ -845,10 +845,10 @@ int DisasmView_GetInstructionHint(const WORD* memory, const CProcessor * pProc,
         int dstmod = (instr >> 3) & 7;
         if (dstreg != 7)
         {
-            TCHAR tempbuf[32];
+            TCHAR tempbuf[42];
             DisasmView_InstructionHint(memory, pProc, tempbuf, buffer2, -1, -1, dstreg, dstmod);
             WORD psw = pProc->GetPSW();
-            _sntprintf(buffer, 32, _T("%s, C=%c"), tempbuf, (psw & PSW_C) ? '1' : '0');  // "..., C=X"
+            _sntprintf(buffer, 42, _T("%s, C=%c"), tempbuf, (psw & PSW_C) ? '1' : '0');  // "..., C=X"
         }
     }
 

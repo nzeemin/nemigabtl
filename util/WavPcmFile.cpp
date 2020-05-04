@@ -120,7 +120,7 @@ HWAVPCMFILE WavPcmFile_Create(LPCTSTR filename, int sampleRate)
         return (HWAVPCMFILE) INVALID_HANDLE_VALUE;  // Failed to write consolidated header
     }
 
-    WAVPCMFILE* pWavPcm = (WAVPCMFILE*) ::calloc(1, sizeof(WAVPCMFILE));
+    WAVPCMFILE* pWavPcm = static_cast<WAVPCMFILE*>(::calloc(1, sizeof(WAVPCMFILE)));
     if (pWavPcm == NULL)
     {
         ::fclose(fpFileNew);
@@ -147,7 +147,7 @@ HWAVPCMFILE WavPcmFile_Open(LPCTSTR filename)
         return (HWAVPCMFILE) INVALID_HANDLE_VALUE;  // Failed to open file
 
     uint32_t offset = 0;
-    uint32_t bytesRead;
+    size_t bytesRead;
     ::fseek(fpFileOpen, 0, SEEK_END);
     uint32_t fileSize = ::ftell(fpFileOpen);
     ::fseek(fpFileOpen, 0, SEEK_SET);

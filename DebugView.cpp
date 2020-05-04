@@ -354,7 +354,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     WORD previous = oldValue;
     BOOL okExec = (reg == 7);
 
-    // Читаем из памяти процессора в буфер
+    // Reading from CPU memory into the buffer
     WORD memory[16];
     int addrtype[16];
     for (int idx = 0; idx < 16; idx++)
@@ -364,19 +364,19 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     }
 
     WORD address = current - 14;
-    for (int index = 0; index < 14; index++)    // Рисуем строки
+    for (int index = 0; index < 14; index++)    // Draw strings
     {
-        // Адрес
+        // Address
         SetTextColor(hdc, colorText);
         DrawOctalValue(hdc, x + 4 * cxChar, y, address);
 
-        // Значение по адресу
+        // Value at the address
         WORD value = memory[index];
         WORD wChanged = Emulator_GetChangeRamStatus(address);
         SetTextColor(hdc, (wChanged != 0) ? COLOR_RED : colorText);
         DrawOctalValue(hdc, x + 12 * cxChar, y, value);
 
-        // Текущая позиция
+        // Current position
         if (address == current)
         {
             SetTextColor(hdc, colorText);

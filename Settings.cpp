@@ -121,7 +121,7 @@ BOOL Settings_LoadDwordValue(LPCTSTR sName, DWORD* dwValue)
 
 BOOL Settings_SaveBinaryValue(LPCTSTR sName, const void * pData, int size)
 {
-    TCHAR* buffer = (TCHAR*) ::calloc(size * 2 + 1, sizeof(TCHAR));
+    TCHAR* buffer = static_cast<TCHAR*>(::calloc(size * 2 + 1, sizeof(TCHAR)));
     if (buffer == NULL)
         return FALSE;
     const BYTE* p = (const BYTE*)pData;
@@ -144,7 +144,7 @@ BOOL Settings_SaveBinaryValue(LPCTSTR sName, const void * pData, int size)
 BOOL Settings_LoadBinaryValue(LPCTSTR sName, void * pData, int size)
 {
     size_t buffersize = size * 2 + 1;
-    TCHAR* buffer = (TCHAR*) ::calloc(buffersize, sizeof(TCHAR));
+    TCHAR* buffer = static_cast<TCHAR*>(::calloc(buffersize, sizeof(TCHAR)));
     if (buffer == NULL)
         return FALSE;
     if (!Settings_LoadStringValue(sName, buffer, buffersize))
@@ -237,26 +237,19 @@ SETTINGS_GETSET_DWORD(WindowMaximized, _T("WindowMaximized"), BOOL, FALSE);
 
 SETTINGS_GETSET_DWORD(WindowFullscreen, _T("WindowFullscreen"), BOOL, FALSE);
 
-void Settings_SetConfiguration(int configuration)
-{
-    Settings_SaveDwordValue(_T("Configuration"), (DWORD) configuration);
-}
-int Settings_GetConfiguration()
-{
-    DWORD dwValue = 0;
-    Settings_LoadDwordValue(_T("Configuration"), &dwValue);
-    return (int) dwValue;
-}
+SETTINGS_GETSET_DWORD(Configuration, _T("Configuration"), int, 0);
 
 void Settings_GetFloppyFilePath(int slot, LPTSTR buffer)
 {
-    TCHAR bufValueName[] = _T("Floppy0");
+    TCHAR bufValueName[8];
+    lstrcpy(bufValueName, _T("Floppy0"));
     bufValueName[6] = _T('0') + (TCHAR)slot;
     Settings_LoadStringValue(bufValueName, buffer, MAX_PATH);
 }
 void Settings_SetFloppyFilePath(int slot, LPCTSTR sFilePath)
 {
-    TCHAR bufValueName[] = _T("Floppy0");
+    TCHAR bufValueName[8];
+    lstrcpy(bufValueName, _T("Floppy0"));
     bufValueName[6] = _T('0') + (TCHAR)slot;
     Settings_SaveStringValue(bufValueName, sFilePath);
 }
@@ -287,16 +280,9 @@ void Settings_SetCartridgeFilePath(int slot, LPCTSTR sFilePath)
     Settings_SaveStringValue(bufValueName, sFilePath);
 }
 
-void Settings_SetScreenViewMode(int mode)
-{
-    Settings_SaveDwordValue(_T("ScreenViewMode"), (DWORD) mode);
-}
-int Settings_GetScreenViewMode()
-{
-    DWORD dwValue = 0;
-    Settings_LoadDwordValue(_T("ScreenViewMode"), &dwValue);
-    return (int) dwValue;
-}
+SETTINGS_GETSET_DWORD(ScreenViewMode, _T("ScreenViewMode"), int, 0);
+
+SETTINGS_GETSET_DWORD(ScreenHeightMode, _T("ScreenHeightMode"), int, 0);
 
 SETTINGS_GETSET_DWORD(Toolbar, _T("Toolbar"), BOOL, TRUE);
 
@@ -314,18 +300,7 @@ void Settings_SetDebugFontName(LPCTSTR sFontName)
     Settings_SaveStringValue(_T("DebugFontName"), sFontName);
 }
 
-void Settings_SetScreenHeightMode(int mode)
-{
-    Settings_SaveDwordValue(_T("ScreenHeightMode"), (DWORD) mode);
-}
-int Settings_GetScreenHeightMode()
-{
-    DWORD dwValue;
-    Settings_LoadDwordValue(_T("ScreenHeightMode"), &dwValue);
-    return (int) dwValue;
-}
-
-SETTINGS_GETSET_DWORD(DebugMemoryAddress, _T("DebugMemoryAddress"), WORD, 3);
+SETTINGS_GETSET_DWORD(DebugMemoryAddress, _T("DebugMemoryAddress"), WORD, 0);
 SETTINGS_GETSET_DWORD(DebugMemoryByte, _T("DebugMemoryByte"), BOOL, FALSE);
 
 SETTINGS_GETSET_DWORD(Autostart, _T("Autostart"), BOOL, FALSE);

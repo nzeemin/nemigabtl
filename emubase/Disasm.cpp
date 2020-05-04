@@ -27,7 +27,7 @@ const LPCTSTR ADDRESS_MODE_PC_FORMAT[] =
 };
 
 //   strSrc - at least 24 characters
-BOOL ConvertSrcToString(uint16_t instr, uint16_t addr, TCHAR* strSrc, uint16_t code)
+bool ConvertSrcToString(uint16_t instr, uint16_t addr, TCHAR* strSrc, uint16_t code)
 {
     int reg = GetDigit(instr, 2);
     int param = GetDigit(instr, 3);
@@ -42,7 +42,7 @@ BOOL ConvertSrcToString(uint16_t instr, uint16_t addr, TCHAR* strSrc, uint16_t c
         {
             uint16_t word = code;  //TODO: pMemory
             _sntprintf(strSrc, 24, format, word, pszReg);
-            return TRUE;
+            return true;
         }
         else
             _sntprintf(strSrc, 24, format, pszReg);
@@ -55,23 +55,23 @@ BOOL ConvertSrcToString(uint16_t instr, uint16_t addr, TCHAR* strSrc, uint16_t c
         {
             uint16_t word = code;  //TODO: pMemory
             _sntprintf(strSrc, 24, format, word);
-            return TRUE;
+            return true;
         }
         else if (param == 6 || param == 7)
         {
             uint16_t word = code;  //TODO: pMemory
             _sntprintf(strSrc, 24, format, (uint16_t)(addr + word + 2));
-            return TRUE;
+            return true;
         }
         else
             _sntprintf(strSrc, 24, format, pszReg);
     }
 
-    return FALSE;
+    return false;
 }
 
 //   strDst - at least 24 characters
-BOOL ConvertDstToString (uint16_t instr, uint16_t addr, TCHAR* strDst, uint16_t code)
+bool ConvertDstToString (uint16_t instr, uint16_t addr, TCHAR* strDst, uint16_t code)
 {
     int reg = GetDigit(instr, 0);
     int param = GetDigit(instr, 1);
@@ -85,7 +85,7 @@ BOOL ConvertDstToString (uint16_t instr, uint16_t addr, TCHAR* strDst, uint16_t 
         if (param == 6 || param == 7)
         {
             _sntprintf(strDst, 24, format, code, pszReg);
-            return TRUE;
+            return true;
         }
         else
             _sntprintf(strDst, 24, format, pszReg);
@@ -97,18 +97,18 @@ BOOL ConvertDstToString (uint16_t instr, uint16_t addr, TCHAR* strDst, uint16_t 
         if (param == 2 || param == 3)
         {
             _sntprintf(strDst, 24, format, code);
-            return TRUE;
+            return true;
         }
         else if (param == 6 || param == 7)
         {
             _sntprintf(strDst, 24, format, (uint16_t)(addr + code + 2));
-            return TRUE;
+            return true;
         }
         else
             _sntprintf(strDst, 24, format, pszReg);
     }
 
-    return FALSE;
+    return false;
 }
 
 // Disassemble one instruction
@@ -127,7 +127,7 @@ int DisassembleInstruction(uint16_t* pMemory, uint16_t addr, TCHAR* strInstr, TC
     LPCTSTR strReg = NULL;
     TCHAR strSrc[24];
     TCHAR strDst[24];
-    BOOL okByte;
+    bool okByte;
 
     // No fields
     switch (instr)
@@ -231,7 +231,7 @@ int DisassembleInstruction(uint16_t* pMemory, uint16_t addr, TCHAR* strInstr, TC
     }
 
     length = 1;
-    _sntprintf(strDst, 24, _T("%06o"), addr + ((short)(char)LOBYTE (instr) * 2) + 2);
+    _sntprintf(strDst, 24, _T("%06o"), addr + ((short)(char)(instr & 0xff) * 2) + 2);
 
     // Branchs & interrupts
     switch (instr & ~(uint16_t)0377)
@@ -253,7 +253,7 @@ int DisassembleInstruction(uint16_t* pMemory, uint16_t addr, TCHAR* strInstr, TC
     case PI_BLO:  _tcscpy(strInstr, _T("BLO"));  _tcscpy(strArg, strDst);  return 1;
     }
 
-    _sntprintf(strDst, 24, _T("%06o"), LOBYTE (instr));
+    _sntprintf(strDst, 24, _T("%06o"), (instr & 0xff));
 
     switch (instr & ~(uint16_t)0377)
     {
@@ -322,7 +322,7 @@ int DisassembleInstruction(uint16_t* pMemory, uint16_t addr, TCHAR* strInstr, TC
     okByte = (instr & 0100000);
 
     length += ConvertSrcToString(instr, addr + 2, strSrc, pMemory[1]);
-    length += ConvertDstToString(instr, addr + 2 + (length - 1) * 2, strDst, pMemory[length]);
+    length += ConvertDstToString(instr, (uint16_t)(addr + 2 + (length - 1) * 2), strDst, pMemory[length]);
 
     switch (instr & ~(uint16_t)0107777)
     {

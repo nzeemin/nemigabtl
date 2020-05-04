@@ -38,6 +38,10 @@ BOOL AssertFailedLine(LPCSTR lpszFileName, int nLine)
     return FALSE;
 }
 
+void AlertInfo(LPCTSTR sMessage)
+{
+    ::MessageBox(NULL, sMessage, g_szTitle, MB_OK | MB_ICONINFORMATION | MB_TOPMOST);
+}
 void AlertWarning(LPCTSTR sMessage)
 {
     ::MessageBox(NULL, sMessage, g_szTitle, MB_OK | MB_ICONEXCLAMATION | MB_TOPMOST);
@@ -51,7 +55,7 @@ void AlertWarningFormat(LPCTSTR sFormat, ...)
     _vsntprintf_s(buffer, 512, 512 - 1, sFormat, ptr);
     va_end(ptr);
 
-    ::MessageBox(NULL, buffer, g_szTitle, MB_OK | MB_ICONEXCLAMATION);
+    ::MessageBox(NULL, buffer, g_szTitle, MB_OK | MB_ICONEXCLAMATION | MB_TOPMOST);
 }
 BOOL AlertOkCancel(LPCTSTR sMessage)
 {
