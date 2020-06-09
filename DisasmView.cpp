@@ -836,7 +836,6 @@ int DisasmView_GetInstructionHint(const WORD* memory, const CProcessor * pProc,
         (instr & ~(uint16_t)0100077) == PI_INC || (instr & ~(uint16_t)0100077) == PI_DEC || (instr & ~(uint16_t)0100077) == PI_NEG ||
         (instr & ~(uint16_t)0100077) == PI_TST ||
         (instr & ~(uint16_t)0100077) == PI_ASR || (instr & ~(uint16_t)0100077) == PI_ASL ||
-        (instr & ~(uint16_t)077) == PI_JMP ||
         (instr & ~(uint16_t)077) == PI_SWAB || (instr & ~(uint16_t)077) == PI_SXT ||
         (instr & ~(uint16_t)077) == PI_MTPS || (instr & ~(uint16_t)077) == PI_MFPS)
     {
@@ -866,6 +865,15 @@ int DisasmView_GetInstructionHint(const WORD* memory, const CProcessor * pProc,
         WORD psw = pProc->GetPSW();
         _sntprintf(buffer, 32, _T("C=%c, V=%c, Z=%c, N=%c"),
                 (psw & PSW_C) ? '1' : '0', (psw & PSW_V) ? '1' : '0', (psw & PSW_Z) ? '1' : '0', (psw & PSW_N) ? '1' : '0');
+    }
+
+    // JSR, JMP -- show non-trivial cases only
+    if ((instr & ~(uint16_t)0777) == PI_JSR && (instr & 077) != 067 && (instr & 077) != 037 ||
+        (instr & ~(uint16_t)077) == PI_JMP && (instr & 077) != 067 && (instr & 077) != 037)
+    {
+        int dstreg = instr & 7;
+        int dstmod = (instr >> 3) & 7;
+        DisasmView_InstructionHint(memory, pProc, buffer, buffer2, -1, -1, dstreg, dstmod);
     }
 
     //TODO: MARK

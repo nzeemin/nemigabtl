@@ -1,6 +1,7 @@
 # nemigabtl
 **Nemiga Back to Life!** is emulator of **NEMIGA PK 588**, soviet computer based on PDP-11 compatible processor.
 
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 [![Build status](https://ci.appveyor.com/api/projects/status/qh4x31xl9h50trea?svg=true)](https://ci.appveyor.com/project/nzeemin/nemigabtl)
 [![CodeFactor](https://www.codefactor.io/repository/github/nzeemin/nemigabtl/badge)](https://www.codefactor.io/repository/github/nzeemin/nemigabtl)
 

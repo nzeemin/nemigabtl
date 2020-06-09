@@ -44,8 +44,8 @@ uint32_t m_dwTickCount = 0;
 uint32_t m_dwEmulatorUptime = 0;  // Machine uptime, seconds, from turn on or reset, increments every 25 frames
 long m_nUptimeFrameCount = 0;
 
-BYTE* g_pEmulatorRam;  // RAM values - for change tracking
-BYTE* g_pEmulatorChangedRam;  // RAM change flags
+uint8_t* g_pEmulatorRam;  // RAM values - for change tracking
+uint8_t* g_pEmulatorChangedRam;  // RAM change flags
 uint16_t g_wEmulatorCpuPC = 0177777;      // Current PC value
 uint16_t g_wEmulatorPrevCpuPC = 0177777;  // Previous PC value
 
@@ -58,13 +58,13 @@ void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R);
 //   pVideoBuffer   Исходные данные, биты экрана БК
 //   pPalette       Палитра
 //   pImageBits     Результат, 32-битный цвет, размер для каждой функции свой
-typedef void (CALLBACK* PREPARE_SCREEN_CALLBACK)(const BYTE* pVideoBuffer, const uint32_t* pPalette, void* pImageBits);
+typedef void (CALLBACK* PREPARE_SCREEN_CALLBACK)(const uint8_t* pVideoBuffer, const uint32_t* pPalette, void* pImageBits);
 
-void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
-void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
-void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
-void CALLBACK Emulator_PrepareScreenBW896x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
-void CALLBACK Emulator_PrepareScreenBW1024x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW512x256(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW512x312(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW768x468(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW896x624(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits);
+void CALLBACK Emulator_PrepareScreenBW1024x624(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits);
 
 struct ScreenModeStruct
 {
@@ -97,7 +97,7 @@ const LPCTSTR FILENAME_ROM_406 = _T("nemiga-406.rom");
 
 //////////////////////////////////////////////////////////////////////
 
-bool Emulator_LoadRomFile(LPCTSTR strFileName, BYTE* buffer, uint32_t fileOffset, uint32_t bytesToRead)
+bool Emulator_LoadRomFile(LPCTSTR strFileName, uint8_t* buffer, uint32_t fileOffset, uint32_t bytesToRead)
 {
     FILE* fpRomFile = ::_tfsopen(strFileName, _T("rb"), _SH_DENYWR);
     if (fpRomFile == NULL)
@@ -131,8 +131,8 @@ bool Emulator_Init()
     g_pBoard = new CMotherboard();
 
     // Allocate memory for old RAM values
-    g_pEmulatorRam = (BYTE*) ::calloc(65536, 1);
-    g_pEmulatorChangedRam = (BYTE*) ::calloc(65536, 1);
+    g_pEmulatorRam = (uint8_t*) ::calloc(65536, 1);
+    g_pEmulatorChangedRam = (uint8_t*) ::calloc(65536, 1);
 
     g_pBoard->Reset();
 
@@ -195,7 +195,7 @@ bool Emulator_InitConfiguration(uint16_t configuration)
         break;
     }
 
-    BYTE buffer[4096];
+    uint8_t buffer[4096];
 
     // Load ROM file
     if (!Emulator_LoadRomFile(szRomFileName, buffer, 0, 4096))
@@ -318,15 +318,15 @@ void Emulator_SetSound(bool soundOnOff)
     m_okEmulatorSound = soundOnOff;
 }
 
-bool CALLBACK Emulator_SerialIn_Callback(BYTE* pByte)
+bool CALLBACK Emulator_SerialIn_Callback(uint8_t* pByte)
 {
     DWORD dwBytesRead;
-    BOOL result = ::ReadFile(m_hEmulatorComPort, pByte, 1, &dwBytesRead, NULL);
+    bool result = ::ReadFile(m_hEmulatorComPort, pByte, 1, &dwBytesRead, NULL);
 
     return result && (dwBytesRead == 1);
 }
 
-bool CALLBACK Emulator_SerialOut_Callback(BYTE byte)
+bool CALLBACK Emulator_SerialOut_Callback(uint8_t byte)
 {
     DWORD dwBytesWritten;
     ::WriteFile(m_hEmulatorComPort, &byte, 1, &dwBytesWritten, NULL);
@@ -405,7 +405,7 @@ bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
     return true;
 }
 
-bool CALLBACK Emulator_ParallelOut_Callback(BYTE byte)
+bool CALLBACK Emulator_ParallelOut_Callback(uint8_t byte)
 {
     if (m_fpEmulatorParallelOut != NULL)
     {
@@ -512,13 +512,13 @@ void Emulator_OnUpdate()
 
     // Update memory change flags
     {
-        BYTE* pOld = g_pEmulatorRam;
-        BYTE* pChanged = g_pEmulatorChangedRam;
+        uint8_t* pOld = g_pEmulatorRam;
+        uint8_t* pChanged = g_pEmulatorChangedRam;
         uint16_t addr = 0;
         do
         {
-            BYTE newvalue = g_pBoard->GetRAMByte(addr);
-            BYTE oldvalue = *pOld;
+            uint8_t newvalue = g_pBoard->GetRAMByte(addr);
+            uint8_t oldvalue = *pOld;
             *pChanged = (newvalue != oldvalue) ? 255 : 0;
             *pOld = newvalue;
             addr++;
@@ -548,7 +548,7 @@ void Emulator_PrepareScreenRGB32(void* pImageBits, int screenMode)
 {
     if (pImageBits == NULL) return;
 
-    const BYTE* pVideoBuffer = g_pBoard->GetVideoBuffer();
+    const uint8_t* pVideoBuffer = g_pBoard->GetVideoBuffer();
     ASSERT(pVideoBuffer != NULL);
 
     // Render to bitmap
@@ -563,7 +563,7 @@ const uint32_t * Emulator_GetPalette()
 
 #define AVERAGERGB(a, b)  ( (((a) & 0xfefefeffUL) + ((b) & 0xfefefeffUL)) >> 1 )
 
-void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW512x256(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
     for (int y = 0; y < 256; y++)
     {
@@ -587,13 +587,13 @@ void CALLBACK Emulator_PrepareScreenBW512x256(const BYTE* pVideoBuffer, const ui
     }
 }
 
-void CALLBACK Emulator_PrepareScreenBW512x312(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW512x312(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
     uint32_t * pImageStart = ((uint32_t *)pImageBits) + 512 * 28;
     Emulator_PrepareScreenBW512x256(pVideoBuffer, palette, pImageStart);
 }
 
-void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW768x468(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
     for (int y = 0; y < 256; y += 2)
     {
@@ -633,7 +633,7 @@ void CALLBACK Emulator_PrepareScreenBW768x468(const BYTE* pVideoBuffer, const ui
     }
 }
 
-void CALLBACK Emulator_PrepareScreenBW896x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW896x624(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
     for (int y = 0; y < 256; y++)
     {
@@ -666,7 +666,7 @@ void CALLBACK Emulator_PrepareScreenBW896x624(const BYTE* pVideoBuffer, const ui
     }
 }
 
-void CALLBACK Emulator_PrepareScreenBW1024x624(const BYTE* pVideoBuffer, const uint32_t* palette, void* pImageBits)
+void CALLBACK Emulator_PrepareScreenBW1024x624(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
     for (int y = 0; y < 256; y++)
     {
@@ -714,7 +714,7 @@ bool Emulator_SaveImage(LPCTSTR sFilePath)
         return false;
 
     // Allocate memory
-    BYTE* pImage = (BYTE*) ::calloc(NEMIGAIMAGE_SIZE, 1);
+    uint8_t* pImage = (uint8_t*) ::calloc(NEMIGAIMAGE_SIZE, 1);
     if (pImage == NULL)
     {
         ::fclose(fpFile);
@@ -763,7 +763,7 @@ bool Emulator_LoadImage(LPCTSTR sFilePath)
     //TODO: Check version and size
 
     // Allocate memory
-    BYTE* pImage = (BYTE*) ::calloc(NEMIGAIMAGE_SIZE, 1);
+    uint8_t* pImage = (uint8_t*) ::calloc(NEMIGAIMAGE_SIZE, 1);
     if (pImage == NULL)
     {
         ::fclose(fpFile);
