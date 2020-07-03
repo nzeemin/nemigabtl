@@ -22,5 +22,5 @@ environment:
     - toolchain: msvc13
 
 build:
-  project: NEMIGA-VS2013.sln
+  project: emulator\NEMIGA-VS2013.sln
 
