@@ -716,9 +716,16 @@ void DisasmView_RegisterHintPC(const CProcessor * pProc,
     //TODO: else if (regmod == 2)
     if (regmod == 3)
     {
-        //TODO: if (byteword)
         srcval2 = g_pBoard->GetWordView(value, pProc->IsHaltMode(), false, &addrtype);
-        _sntprintf(hint1, 20, _T("(%06o)=%06o"), value, srcval2);  // "(NNNNNN)=XXXXXX"
+        if (byteword)
+        {
+            srcval2 = (value & 1) ? (srcval2 >> 8) : (srcval2 & 0xff);
+            _sntprintf(hint1, 20, _T("(%06o)=%03o"), value, srcval2);  // "(NNNNNN)=XXX"
+        }
+        else
+        {
+            _sntprintf(hint1, 20, _T("(%06o)=%06o"), value, srcval2);  // "(NNNNNN)=XXXXXX"
+        }
     }
     else if (regmod == 6)
     {

@@ -23,7 +23,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 //////////////////////////////////////////////////////////////////////
 
 
-CMotherboard* g_pBoard = NULL;
+CMotherboard* g_pBoard = nullptr;
 int g_nEmulatorConfiguration;  // Current configuration
 bool g_okEmulatorRunning = false;
 
@@ -37,15 +37,15 @@ bool m_okEmulatorParallel = false;
 bool m_okEmulatorSerial = false;
 HANDLE m_hEmulatorComPort = INVALID_HANDLE_VALUE;
 
-FILE* m_fpEmulatorParallelOut = NULL;
+FILE* m_fpEmulatorParallelOut = nullptr;
 
 long m_nFrameCount = 0;
 uint32_t m_dwTickCount = 0;
 uint32_t m_dwEmulatorUptime = 0;  // Machine uptime, seconds, from turn on or reset, increments every 25 frames
 long m_nUptimeFrameCount = 0;
 
-uint8_t* g_pEmulatorRam;  // RAM values - for change tracking
-uint8_t* g_pEmulatorChangedRam;  // RAM change flags
+uint8_t* g_pEmulatorRam = nullptr;  // RAM values - for change tracking
+uint8_t* g_pEmulatorChangedRam = nullptr;  // RAM change flags
 uint16_t g_wEmulatorCpuPC = 0177777;      // Current PC value
 uint16_t g_wEmulatorPrevCpuPC = 0177777;  // Previous PC value
 
@@ -100,7 +100,7 @@ const LPCTSTR FILENAME_ROM_406 = _T("nemiga-406.rom");
 bool Emulator_LoadRomFile(LPCTSTR strFileName, uint8_t* buffer, uint32_t fileOffset, uint32_t bytesToRead)
 {
     FILE* fpRomFile = ::_tfsopen(strFileName, _T("rb"), _SH_DENYWR);
-    if (fpRomFile == NULL)
+    if (fpRomFile == nullptr)
         return false;
 
     ::memset(buffer, 0, bytesToRead);
@@ -124,7 +124,7 @@ bool Emulator_LoadRomFile(LPCTSTR strFileName, uint8_t* buffer, uint32_t fileOff
 
 bool Emulator_Init()
 {
-    ASSERT(g_pBoard == NULL);
+    ASSERT(g_pBoard == nullptr);
 
     CProcessor::Init();
 
@@ -147,14 +147,14 @@ bool Emulator_Init()
 
 void Emulator_Done()
 {
-    ASSERT(g_pBoard != NULL);
+    ASSERT(g_pBoard != nullptr);
 
     CProcessor::Done();
 
-    g_pBoard->SetSoundGenCallback(NULL);
+    g_pBoard->SetSoundGenCallback(nullptr);
     SoundGen_Finalize();
 
-    g_pBoard->SetSerialCallbacks(NULL, NULL);
+    g_pBoard->SetSerialCallbacks(nullptr, nullptr);
     if (m_hEmulatorComPort != INVALID_HANDLE_VALUE)
     {
         ::CloseHandle(m_hEmulatorComPort);
@@ -162,7 +162,7 @@ void Emulator_Done()
     }
 
     delete g_pBoard;
-    g_pBoard = NULL;
+    g_pBoard = nullptr;
 
     // Free memory used for old RAM values
     ::free(g_pEmulatorRam);
@@ -173,7 +173,7 @@ bool Emulator_InitConfiguration(uint16_t configuration)
 {
     g_pBoard->SetConfiguration(configuration);
 
-    LPCTSTR szRomFileName = NULL;
+    LPCTSTR szRomFileName = nullptr;
     uint16_t nRomResourceId;
     switch (configuration)
     {
@@ -204,7 +204,7 @@ bool Emulator_InitConfiguration(uint16_t configuration)
         HRSRC hRes = NULL;
         uint32_t dwDataSize = 0;
         HGLOBAL hResLoaded = NULL;
-        void * pResData = NULL;
+        void * pResData = nullptr;
         if ((hRes = ::FindResource(NULL, MAKEINTRESOURCE(nRomResourceId), _T("BIN"))) == NULL ||
             (dwDataSize = ::SizeofResource(NULL, hRes)) < 4096 ||
             (hResLoaded = ::LoadResource(NULL, hRes)) == NULL ||
@@ -243,7 +243,7 @@ void Emulator_Stop()
     g_okEmulatorRunning = false;
     m_wEmulatorCPUBreakpoint = 0177777;
 
-    if (m_fpEmulatorParallelOut != NULL)
+    if (m_fpEmulatorParallelOut != nullptr)
         ::fflush(m_fpEmulatorParallelOut);
 
     // Reset title bar message
@@ -257,7 +257,7 @@ void Emulator_Stop()
 
 void Emulator_Reset()
 {
-    ASSERT(g_pBoard != NULL);
+    ASSERT(g_pBoard != nullptr);
 
     g_pBoard->Reset();
 
@@ -310,7 +310,7 @@ void Emulator_SetSound(bool soundOnOff)
         }
         else
         {
-            g_pBoard->SetSoundGenCallback(NULL);
+            g_pBoard->SetSoundGenCallback(nullptr);
             SoundGen_Finalize();
         }
     }
@@ -389,7 +389,7 @@ bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
         }
         else
         {
-            g_pBoard->SetSerialCallbacks(NULL, NULL);  // Reset callbacks
+            g_pBoard->SetSerialCallbacks(nullptr, nullptr);  // Reset callbacks
 
             // Close port
             if (m_hEmulatorComPort != INVALID_HANDLE_VALUE)
@@ -407,7 +407,7 @@ bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
 
 bool CALLBACK Emulator_ParallelOut_Callback(uint8_t byte)
 {
-    if (m_fpEmulatorParallelOut != NULL)
+    if (m_fpEmulatorParallelOut != nullptr)
     {
         ::fwrite(&byte, 1, 1, m_fpEmulatorParallelOut);
     }
@@ -427,8 +427,8 @@ void Emulator_SetParallel(bool parallelOnOff)
 
     if (!parallelOnOff)
     {
-        g_pBoard->SetParallelOutCallback(NULL);
-        if (m_fpEmulatorParallelOut != NULL)
+        g_pBoard->SetParallelOutCallback(nullptr);
+        if (m_fpEmulatorParallelOut != nullptr)
             ::fclose(m_fpEmulatorParallelOut);
     }
     else
@@ -546,10 +546,10 @@ void Emulator_GetScreenSize(int scrmode, int* pwid, int* phei)
 
 void Emulator_PrepareScreenRGB32(void* pImageBits, int screenMode)
 {
-    if (pImageBits == NULL) return;
+    if (pImageBits == nullptr) return;
 
     const uint8_t* pVideoBuffer = g_pBoard->GetVideoBuffer();
-    ASSERT(pVideoBuffer != NULL);
+    ASSERT(pVideoBuffer != nullptr);
 
     // Render to bitmap
     PREPARE_SCREEN_CALLBACK callback = ScreenModeReference[screenMode].callback;
@@ -710,12 +710,12 @@ bool Emulator_SaveImage(LPCTSTR sFilePath)
 {
     // Create file
     FILE* fpFile = ::_tfsopen(sFilePath, _T("w+b"), _SH_DENYWR);
-    if (fpFile == NULL)
+    if (fpFile == nullptr)
         return false;
 
     // Allocate memory
     uint8_t* pImage = (uint8_t*) ::calloc(NEMIGAIMAGE_SIZE, 1);
-    if (pImage == NULL)
+    if (pImage == nullptr)
     {
         ::fclose(fpFile);
         return false;
@@ -748,7 +748,7 @@ bool Emulator_LoadImage(LPCTSTR sFilePath)
 
     // Open file
     FILE* fpFile = ::_tfsopen(sFilePath, _T("rb"), _SH_DENYWR);
-    if (fpFile == NULL)
+    if (fpFile == nullptr)
         return false;
 
     // Read header
@@ -764,7 +764,7 @@ bool Emulator_LoadImage(LPCTSTR sFilePath)
 
     // Allocate memory
     uint8_t* pImage = (uint8_t*) ::calloc(NEMIGAIMAGE_SIZE, 1);
-    if (pImage == NULL)
+    if (pImage == nullptr)
     {
         ::fclose(fpFile);
         return false;
@@ -789,6 +789,10 @@ bool Emulator_LoadImage(LPCTSTR sFilePath)
     // Free memory, close file
     ::free(pImage);
     ::fclose(fpFile);
+
+    g_okEmulatorRunning = false;
+
+    MainWindow_UpdateAllViews();
 
     return true;
 }

@@ -317,7 +317,7 @@ void PrintMemoryDump(CProcessor* pProc, WORD address, int lines)
     {
         WORD dump[8];
         for (int i = 0; i < 8; i++)
-            dump[i] = g_pBoard->GetWord(WORD(address + i * 2), okHaltMode);
+            dump[i] = g_pBoard->GetWord((uint16_t)(address + i * 2), okHaltMode);
 
         TCHAR buffer[2 + 6 + 2 + 7 * 8 + 1 + 16 + 1 + 2];
         TCHAR* pBuf = buffer;
@@ -363,7 +363,7 @@ int PrintDisassemble(CProcessor* pProc, WORD address, BOOL okOneInstr, BOOL okSh
     WORD memory[nWindowSize + 2];
     int addrtype;
     for (int i = 0; i < nWindowSize + 2; i++)
-        memory[i] = g_pBoard->GetWordView(WORD(address + i * 2), okHaltMode, TRUE, &addrtype);
+        memory[i] = g_pBoard->GetWordView((uint16_t)(address + i * 2), okHaltMode, TRUE, &addrtype);
 
     TCHAR bufaddr[7];
     TCHAR bufvalue[7];

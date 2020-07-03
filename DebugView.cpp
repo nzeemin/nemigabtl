@@ -360,7 +360,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     for (int idx = 0; idx < 16; idx++)
     {
         memory[idx] = g_pBoard->GetWordView(
-                WORD(current + idx * 2 - 14), pProc->IsHaltMode(), okExec, addrtype + idx);
+                (uint16_t)(current + idx * 2 - 14), pProc->IsHaltMode(), okExec, addrtype + idx);
     }
 
     WORD address = current - 14;
