@@ -73,6 +73,7 @@ enum ToolbarButtonImages
     ToolbarImageColorScreen = 10,
     ToolbarImageBWScreen = 11,
     ToolbarImageScreenshot = 12,
+    ToolbarImageDebugger = 14,
     ToolbarImageStepInto = 15,
     ToolbarImageStepOver = 16,
     ToolbarImageWordByte = 18,
