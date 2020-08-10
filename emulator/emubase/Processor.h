@@ -45,6 +45,7 @@ protected:  // Processor state
     bool        m_haltmode;         // true = HALT mode, false = USER mode
     bool        m_stepmode;         // Read true if it's step mode
     bool        m_waitmode;         // WAIT
+    uint16_t    m_eisregs[3];       // EIS chip registers
 
 protected:  // Current instruction processing
     uint16_t    m_instruction;      // Curent instruction
@@ -69,6 +70,7 @@ protected:  // Interrupt processing
     bool        m_TRAPrq;           // TRAP command interrupt pending
     int         m_virqrq;           // VIRQ pending
     uint16_t    m_virq[16];         // VIRQ vector
+
 protected:
     CMotherboard* m_pBoard;
 
@@ -88,6 +90,7 @@ public:  // Register control
     uint16_t    GetPC() const { return m_R[7]; }
     void        SetPC(uint16_t word) { m_R[7] = word; }
     uint16_t    GetInstructionPC() const { return m_instructionpc; }  // Address of the current instruction
+    uint16_t    GetEisReg(int reg) const;  // EIS chip registers, 0..2
 
 public:  // PSW bits control
     void        SetC(bool bFlag);
@@ -119,8 +122,8 @@ protected:  // Implementation
     void        FetchInstruction();      // Read next instruction
     void        TranslateInstruction();  // Execute the instruction
 protected:  // Implementation - instruction processing
-    uint16_t    CalculateOperAddr (int meth, int reg);
-    uint16_t    CalculateOperAddrSrc (int meth, int reg);
+    uint16_t    CalculateOperAddr(int meth, int reg);
+    uint16_t    CalculateOperAddrSrc(int meth, int reg);
     uint8_t     GetByteSrc();
     uint8_t     GetByteDest();
     void        SetByteDest(uint8_t);

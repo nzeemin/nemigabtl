@@ -185,7 +185,7 @@ void CProcessor::Done()
 //////////////////////////////////////////////////////////////////////
 
 
-CProcessor::CProcessor (CMotherboard* pBoard)
+CProcessor::CProcessor(CMotherboard* pBoard)
 {
     ASSERT(pBoard != NULL);
     m_pBoard = pBoard;
@@ -204,9 +204,11 @@ CProcessor::CProcessor (CMotherboard* pBoard)
     m_regdest = m_methdest = 0;
     m_addrsrc = m_addrdest = 0;
     memset(m_virq, 0, sizeof(m_virq));
+
+    memset(m_eisregs, 0, sizeof(m_eisregs));
 }
 
-void CProcessor::Start ()
+void CProcessor::Start()
 {
     m_okStopped = false;  m_haltmode = true;
 
@@ -223,7 +225,7 @@ void CProcessor::Start ()
     SetPSW(ps);
     m_internalTick = 1000000;  // Количество тактов на включение процессора (значение с потолка)
 }
-void CProcessor::Stop ()
+void CProcessor::Stop()
 {
     m_okStopped = true;
 
@@ -678,6 +680,12 @@ uint16_t CProcessor::GetDstWordArgAsBranch ()
     }
 
     return 0;
+}
+
+uint16_t CProcessor::GetEisReg(int reg) const
+{
+    ASSERT(reg >= 0 && reg < 3);
+    return m_eisregs[reg];
 }
 
 
@@ -1627,8 +1635,10 @@ void CProcessor::ExecuteMUL ()  // MUL
 
     res = (signed short)dst * (signed short)src;
 
-    SetReg(m_regsrc, HIWORD(res));
-    SetReg(m_regsrc | 1, LOWORD(res));
+    uint16_t hiword = HIWORD(res);
+    uint16_t loword = LOWORD(res);
+    SetReg(m_regsrc, hiword);
+    SetReg(m_regsrc | 1, loword);
 
     if (res < 0) new_psw |= PSW_N;
     if (res == 0) new_psw |= PSW_Z;
@@ -1636,6 +1646,10 @@ void CProcessor::ExecuteMUL ()  // MUL
     if (res == 32767) new_psw |= PSW_C;  // Nemiga bug in MUL
     SetLPSW(new_psw);
     m_internalTick = MUL_TIMING[m_methdest];
+
+    m_eisregs[0] = loword;
+    m_eisregs[1] = hiword;
+    m_eisregs[2] = ((new_psw & 15) << 12) | 0007760 | (new_psw & 15);
 }
 void CProcessor::ExecuteDIV ()  // DIV
 {
@@ -1653,6 +1667,9 @@ void CProcessor::ExecuteDIV ()  // DIV
     longsrc = (int)MAKELONG(GetReg(m_regsrc | 1), GetReg(m_regsrc));
 
     m_internalTick = DIV_TIMING[m_methdest];
+
+    m_eisregs[0] = m_eisregs[1] = 0;
+    m_eisregs[2] = 0047764;
 
     if (src2 == 0)
     {
@@ -1726,6 +1743,9 @@ void CProcessor::ExecuteASH ()  // ASH
     if (dst < 0) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
+
+    m_eisregs[0] = m_eisregs[1] = 0;
+    m_eisregs[2] = 0047764;
 }
 void CProcessor::ExecuteASHC ()  // ASHC
 {
@@ -1770,6 +1790,9 @@ void CProcessor::ExecuteASHC ()  // ASHC
     if (dst < 0) new_psw |= PSW_N;
     if (dst == 0) new_psw |= PSW_Z;
     SetLPSW(new_psw);
+
+    m_eisregs[0] = m_eisregs[1] = 0;
+    m_eisregs[2] = 0047764;
 }
 
 void CProcessor::ExecuteSOB ()  // SOB - subtract one: R = R - 1 ; if R != 0 : PC = PC - 2*nn
