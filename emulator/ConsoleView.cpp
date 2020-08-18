@@ -33,16 +33,16 @@ WNDPROC m_wndprocConsoleEdit = NULL;  // Old window proc address of the console 
 HBRUSH m_hbrConsoleFocused = NULL;
 
 CProcessor* ConsoleView_GetCurrentProcessor();
-void ClearConsole();
-void PrintConsolePrompt();
-void PrintRegister(LPCTSTR strName, WORD value);
-void PrintMemoryDump(CProcessor* pProc, WORD address, int lines);
-BOOL SaveMemoryDump(CProcessor* pProc);
-void DoConsoleCommand();
 void ConsoleView_AdjustWindowLayout();
 LRESULT CALLBACK ConsoleEditWndProc(HWND, UINT, WPARAM, LPARAM);
-void ConsoleView_ShowHelp();
+void ConsoleView_DoConsoleCommand();
 
+void ConsoleView_ShowHelp();
+void ConsoleView_ClearConsole();
+void ConsoleView_PrintConsolePrompt();
+void ConsoleView_PrintRegister(LPCTSTR strName, WORD value);
+void ConsoleView_PrintMemoryDump(CProcessor* pProc, WORD address, int lines);
+BOOL ConsoleView_SaveMemoryDump(CProcessor* pProc);
 
 const LPCTSTR MESSAGE_UNKNOWN_COMMAND = _T("  Unknown command.\r\n");
 const LPCTSTR MESSAGE_WRONG_VALUE = _T("  Wrong value.\r\n");
@@ -124,7 +124,7 @@ void ConsoleView_Create(HWND hwndParent, int x, int y, int width, int height)
     UpdateWindow(g_hwndConsole);
 
     ConsoleView_Print(_T("Use 'h' command to show help.\r\n\r\n"));
-    PrintConsolePrompt();
+    ConsoleView_PrintConsolePrompt();
     SetFocus(m_hwndConsoleEdit);
 }
 
@@ -183,7 +183,7 @@ LRESULT CALLBACK ConsoleEditWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
     case WM_CHAR:
         if (wParam == 13)
         {
-            DoConsoleCommand();
+            ConsoleView_DoConsoleCommand();
             return 0;
         }
         if (wParam == VK_ESCAPE)
@@ -225,7 +225,6 @@ void ConsoleView_PrintFormat(LPCTSTR pszFormat, ...)
 
     ConsoleView_Print(buffer);
 }
-
 void ConsoleView_Print(LPCTSTR message)
 {
     if (m_hwndConsoleLog == INVALID_HANDLE_VALUE) return;
@@ -237,14 +236,15 @@ void ConsoleView_Print(LPCTSTR message)
     // Scroll to caret
     SendMessage(m_hwndConsoleLog, EM_SCROLLCARET, 0, 0);
 }
-void ClearConsole()
+
+void ConsoleView_ClearConsole()
 {
     if (m_hwndConsoleLog == INVALID_HANDLE_VALUE) return;
 
     SendMessage(m_hwndConsoleLog, WM_SETTEXT, 0, (LPARAM) _T(""));
 }
 
-void PrintConsolePrompt()
+void ConsoleView_PrintConsolePrompt()
 {
     CProcessor* pProc = ConsoleView_GetCurrentProcessor();
     TCHAR bufferAddr[7];
@@ -255,7 +255,7 @@ void PrintConsolePrompt()
 }
 
 // Print register name, octal value and binary value
-void PrintRegister(LPCTSTR strName, WORD value)
+void ConsoleView_PrintRegister(LPCTSTR strName, WORD value)
 {
     TCHAR buffer[31];
     TCHAR* p = buffer;
@@ -272,7 +272,7 @@ void PrintRegister(LPCTSTR strName, WORD value)
     ConsoleView_Print(buffer);
 }
 
-BOOL SaveMemoryDump(CProcessor * /*pProc*/)
+BOOL ConsoleView_SaveMemoryDump(CProcessor * /*pProc*/)
 {
     const TCHAR fname[] = _T("memdump.bin");
     HANDLE file = ::CreateFile(fname,
@@ -307,7 +307,7 @@ BOOL SaveMemoryDump(CProcessor * /*pProc*/)
 }
 
 // Print memory dump
-void PrintMemoryDump(CProcessor* pProc, WORD address, int lines)
+void ConsoleView_PrintMemoryDump(CProcessor* pProc, WORD address, int lines = 8)
 {
     address &= ~1;  // Line up to even address
 
@@ -316,8 +316,9 @@ void PrintMemoryDump(CProcessor* pProc, WORD address, int lines)
     for (int line = 0; line < lines; line++)
     {
         WORD dump[8];
+        int addrtype;
         for (int i = 0; i < 8; i++)
-            dump[i] = g_pBoard->GetWord((uint16_t)(address + i * 2), okHaltMode);
+            dump[i] = g_pBoard->GetWordView((uint16_t)(address + i * 2), okHaltMode, false, &addrtype);
 
         TCHAR buffer[2 + 6 + 2 + 7 * 8 + 1 + 16 + 1 + 2];
         TCHAR* pBuf = buffer;
@@ -355,7 +356,7 @@ void PrintMemoryDump(CProcessor* pProc, WORD address, int lines)
 }
 // Print disassembled instructions
 // Return value: number of words in the last instruction
-int PrintDisassemble(CProcessor* pProc, WORD address, BOOL okOneInstr, BOOL okShort)
+int ConsoleView_PrintDisassemble(CProcessor* pProc, WORD address, BOOL okOneInstr, BOOL okShort)
 {
     BOOL okHaltMode = pProc->IsHaltMode();
 
@@ -413,23 +414,24 @@ void ConsoleView_StepInto()
     // Put command to console prompt
     SendMessage(m_hwndConsoleEdit, WM_SETTEXT, 0, (LPARAM) _T("s"));
     // Execute command
-    DoConsoleCommand();
+    ConsoleView_DoConsoleCommand();
 }
 void ConsoleView_StepOver()
 {
     // Put command to console prompt
     SendMessage(m_hwndConsoleEdit, WM_SETTEXT, 0, (LPARAM) _T("so"));
     // Execute command
-    DoConsoleCommand();
+    ConsoleView_DoConsoleCommand();
 }
 
 void ConsoleView_ShowHelp()
 {
     ConsoleView_Print(_T("Console command list:\r\n")
             _T("  c          Clear console log\r\n")
+            _T("  d          Disassemble from PC; use D for short format\r\n")
             _T("  dXXXXXX    Disassemble from address XXXXXX\r\n")
             _T("  g          Go; free run\r\n")
-            _T("  gXXXXXX    Go; run processor until breakpoint at address XXXXXX\r\n")
+            _T("  gXXXXXX    Go; run and stop at address XXXXXX\r\n")
             _T("  m          Memory dump at current address\r\n")
             _T("  mXXXXXX    Memory dump at address XXXXXX\r\n")
             _T("  mrN        Memory dump at address from register N; N=0..7\r\n")
@@ -438,6 +440,10 @@ void ConsoleView_ShowHelp()
             _T("  rN XXXXXX  Set register N to value XXXXXX; N=0..7,ps\r\n")
             _T("  s          Step Into; executes one instruction\r\n")
             _T("  so         Step Over; executes and stops after the current instruction\r\n")
+            _T("  b          List all breakpoints\r\n")
+            _T("  bXXXXXX    Set breakpoint at address XXXXXX\r\n")
+            _T("  bcXXXXXX   Remove breakpoint at address XXXXXX\r\n")
+            _T("  bc         Remove all breakpoints\r\n")
             _T("  u          Save memory dump to file memdump.bin\r\n")
 #if !defined(PRODUCT)
             _T("  t          Tracing on/off to trace.log file\r\n")
@@ -447,7 +453,108 @@ void ConsoleView_ShowHelp()
                      );
 }
 
-void DoConsoleCommand()
+void ConsoleView_PrintAllRegisters()
+{
+    CProcessor* pProc = ConsoleView_GetCurrentProcessor();
+    for (int r = 0; r < 8; r++)
+    {
+        LPCTSTR name = REGISTER_NAME[r];
+        WORD value = pProc->GetReg(r);
+        ConsoleView_PrintRegister(name, value);
+    }
+    ConsoleView_PrintRegister(_T("PS"), pProc->GetPSW());
+}
+
+void ConsoleView_DoStepInto()
+{
+    CProcessor* pProc = ConsoleView_GetCurrentProcessor();
+
+    ConsoleView_PrintDisassemble(pProc, pProc->GetPC(), TRUE, FALSE);
+
+    g_pBoard->DebugTicks();
+
+    MainWindow_UpdateAllViews();
+}
+void ConsoleView_DoStepOver()
+{
+    CProcessor* pProc = ConsoleView_GetCurrentProcessor();
+
+    int instrLength = ConsoleView_PrintDisassemble(pProc, pProc->GetPC(), TRUE, FALSE);
+    WORD bpaddress = (WORD)(pProc->GetPC() + instrLength * 2);
+
+    Emulator_SetTempCPUBreakpoint(bpaddress);
+    Emulator_Start();
+}
+void ConsoleView_DoRun()
+{
+    Emulator_Start();
+}
+void ConsoleView_RunToAddress(WORD address)
+{
+    Emulator_SetTempCPUBreakpoint(address);
+    Emulator_Start();
+}
+void ConsoleView_ShowBreakpoints()
+{
+    const uint16_t* pbps = Emulator_GetCPUBreakpointList();
+    if (pbps == nullptr || *pbps == 0177777)
+    {
+        ConsoleView_Print(_T("  No breakpoints.\r\n"));
+    }
+    else
+    {
+        while (*pbps != 0177777)
+        {
+            ConsoleView_PrintFormat(_T("  %06ho\r\n"), *pbps);
+            pbps++;
+        }
+    }
+}
+void ConsoleView_RemoveAllBreakpoints()
+{
+    Emulator_RemoveAllBreakpoints();
+    DisasmView_Redraw();
+}
+void ConsoleView_AddBreakpoint(WORD address)
+{
+    bool result = Emulator_AddCPUBreakpoint(address);
+    if (!result)
+        ConsoleView_Print(_T("  Failed to add breakpoint.\r\n"));
+    DisasmView_Redraw();
+}
+void ConsoleView_RemoveBreakpoint(WORD address)
+{
+    bool result = Emulator_RemoveCPUBreakpoint(address);
+    if (!result)
+        ConsoleView_Print(_T("  Failed to remove breakpoint.\r\n"));
+    DisasmView_Redraw();
+}
+
+#if !defined(PRODUCT)
+void ConsoleView_ClearTraceLog()
+{
+    DebugLogClear();
+    ConsoleView_Print(_T("  Trace log cleared.\r\n"));
+}
+void ConsoleView_TraceLog(DWORD value)
+{
+    g_pBoard->SetTrace(value);
+    if (value != TRACE_NONE)
+        ConsoleView_PrintFormat(_T("  Trace ON, trace flags %06o\r\n"), (uint16_t)g_pBoard->GetTrace());
+    else
+    {
+        ConsoleView_Print(_T("  Trace OFF.\r\n"));
+        DebugLogCloseFile();
+    }
+}
+void ConsoleView_TraceLogOnOff()
+{
+    DWORD dwTrace = (g_pBoard->GetTrace() == TRACE_NONE ? TRACE_ALL : TRACE_NONE);
+    ConsoleView_TraceLog(dwTrace);
+}
+#endif
+
+void ConsoleView_DoConsoleCommand()
 {
     // Get command text
     TCHAR command[32];
@@ -473,18 +580,12 @@ void DoConsoleCommand()
         ConsoleView_ShowHelp();
         break;
     case _T('c'):  // Clear log
-        ClearConsole();
+        ConsoleView_ClearConsole();
         break;
     case _T('r'):  // Register operations
         if (command[1] == 0)  // Print all registers
         {
-            for (int r = 0; r < 8; r++)
-            {
-                LPCTSTR name = REGISTER_NAME[r];
-                WORD value = pProc->GetReg(r);
-                PrintRegister(name, value);
-            }
-            PrintRegister(_T("PS"), pProc->GetPSW());
+            ConsoleView_PrintAllRegisters();
         }
         else if (command[1] >= _T('0') && command[1] <= _T('7'))  // "r0".."r7"
         {
@@ -493,7 +594,7 @@ void DoConsoleCommand()
             if (command[2] == 0)  // "rN" - show register N
             {
                 WORD value = pProc->GetReg(r);
-                PrintRegister(name, value);
+                ConsoleView_PrintRegister(name, value);
             }
             else if (command[2] == _T('=') || command[2] == _T(' '))  // "rN=XXXXXX" - set register N to value XXXXXX
             {
@@ -503,7 +604,7 @@ void DoConsoleCommand()
                 else
                 {
                     pProc->SetReg(r, value);
-                    PrintRegister(name, value);
+                    ConsoleView_PrintRegister(name, value);
                     okUpdateAllViews = TRUE;
                 }
             }
@@ -515,7 +616,7 @@ void DoConsoleCommand()
             if (command[3] == 0)  // "rps" - show PSW
             {
                 WORD value = pProc->GetPSW();
-                PrintRegister(_T("PS"), value);
+                ConsoleView_PrintRegister(_T("PS"), value);
             }
             else if (command[3] == _T('=') || command[3] == _T(' '))  // "rps=XXXXXX" - set PSW to value XXXXXX
             {
@@ -525,7 +626,7 @@ void DoConsoleCommand()
                 else
                 {
                     pProc->SetPSW(value);
-                    PrintRegister(_T("PS"), value);
+                    ConsoleView_PrintRegister(_T("PS"), value);
                     okUpdateAllViews = TRUE;
                 }
             }
@@ -538,49 +639,52 @@ void DoConsoleCommand()
     case _T('s'):  // Step
         if (command[1] == 0)  // "s" - Step Into, execute one instruction
         {
-            PrintDisassemble(pProc, pProc->GetPC(), TRUE, FALSE);
-
-            //pProc->Execute();
-            g_pBoard->DebugTicks();
-
-            okUpdateAllViews = TRUE;
+            ConsoleView_DoStepInto();
         }
         else if (command[1] == _T('o'))  // "so" - Step Over
         {
-            int instrLength = PrintDisassemble(pProc, pProc->GetPC(), TRUE, FALSE);
-            WORD bpaddress = (WORD)(pProc->GetPC() + instrLength * 2);
-
-            Emulator_SetCPUBreakpoint(bpaddress);
-            Emulator_Start();
+            ConsoleView_DoStepOver();
         }
         break;
     case _T('d'):  // Disassemble
     case _T('D'):  // Disassemble, short format
         {
             BOOL okShort = (command[0] == _T('D'));
+            WORD address = 0;
             if (command[1] == 0)  // "d" - disassemble at current address
-                PrintDisassemble(pProc, pProc->GetPC(), FALSE, okShort);
+                address = pProc->GetPC();
             else if (command[1] >= _T('0') && command[1] <= _T('7'))  // "dXXXXXX" - disassemble at address XXXXXX
             {
-                WORD value;
-                if (! ParseOctalValue(command + 1, &value))
-                    ConsoleView_Print(MESSAGE_WRONG_VALUE);
-                else
+                if (!ParseOctalValue(command + 1, &address))
                 {
-                    PrintDisassemble(pProc, value, FALSE, okShort);
+                    ConsoleView_Print(MESSAGE_WRONG_VALUE);
+                    break;
                 }
             }
             else
+            {
                 ConsoleView_Print(MESSAGE_UNKNOWN_COMMAND);
+                break;
+            }
+
+            int length = ConsoleView_PrintDisassemble(pProc, address, FALSE, okShort);
+            TCHAR buffer[32];  buffer[0] = command[0];
+            PrintOctalValue(buffer + 1, (WORD)(address + length * 2));
+            SendMessage(m_hwndConsoleEdit, WM_SETTEXT, 0, (LPARAM)buffer);
         }
         break;
     case _T('u'):
-        SaveMemoryDump(pProc);
+        if (command[1] == 0)
+        {
+            ConsoleView_SaveMemoryDump(pProc);
+        }
+        else
+            ConsoleView_Print(MESSAGE_UNKNOWN_COMMAND);
         break;
     case _T('m'):
         if (command[1] == 0)  // "m" - dump memory at current address
         {
-            PrintMemoryDump(pProc, pProc->GetPC(), 8);
+            ConsoleView_PrintMemoryDump(pProc, pProc->GetPC());
         }
         else if (command[1] >= _T('0') && command[1] <= _T('7'))  // "mXXXXXX" - dump memory at address XXXXXX
         {
@@ -588,16 +692,14 @@ void DoConsoleCommand()
             if (! ParseOctalValue(command + 1, &value))
                 ConsoleView_Print(MESSAGE_WRONG_VALUE);
             else
-            {
-                PrintMemoryDump(pProc, value, 8);
-            }
+                ConsoleView_PrintMemoryDump(pProc, value);
         }
         else if (command[1] == _T('r') &&
                 command[2] >= _T('0') && command[2] <= _T('7'))  // "mrN" - dump memory at address from register N
         {
             int r = command[2] - _T('0');
             WORD address = pProc->GetReg(r);
-            PrintMemoryDump(pProc, address, 8);
+            ConsoleView_PrintMemoryDump(pProc, address);
         }
         else
             ConsoleView_Print(MESSAGE_UNKNOWN_COMMAND);
@@ -607,50 +709,72 @@ void DoConsoleCommand()
     case _T('g'):
         if (command[1] == 0)
         {
-            Emulator_Start();
+            ConsoleView_DoRun();
         }
-        else
+        else if (command[1] >= _T('0') && command[1] <= _T('7'))
         {
             WORD value;
-            if (! ParseOctalValue(command + 1, &value))
-                ConsoleView_Print(MESSAGE_WRONG_VALUE);
+            if (ParseOctalValue(command + 1, &value))
+                ConsoleView_RunToAddress(value);
             else
+                ConsoleView_Print(MESSAGE_WRONG_VALUE);
+        }
+        else
+            ConsoleView_Print(MESSAGE_UNKNOWN_COMMAND);
+        break;
+    case _T('b'):
+        if (command[1] == 0)  // b - list breakpoints
+        {
+            ConsoleView_ShowBreakpoints();
+        }
+        else if (command[1] == _T('c'))
+        {
+            if (command[2] == 0)  // bc - remove all breakpoints
             {
-                Emulator_SetCPUBreakpoint(value);
-                Emulator_Start();
+                ConsoleView_RemoveAllBreakpoints();
+            }
+            else  // bcXXXXXX - remove breakpoint XXXXXX
+            {
+                WORD value;
+                if (ParseOctalValue(command + 2, &value))
+                    ConsoleView_RemoveBreakpoint(value);
+                else
+                    ConsoleView_Print(MESSAGE_WRONG_VALUE);
             }
         }
+        else if (command[1] >= _T('0') && command[1] <= _T('7'))  // "bXXXXXX" - add breakpoint XXXXXX
+        {
+            WORD value;
+            if (ParseOctalValue(command + 1, &value))
+                ConsoleView_AddBreakpoint(value);
+            else
+                ConsoleView_Print(MESSAGE_WRONG_VALUE);
+        }
+        else
+            ConsoleView_Print(MESSAGE_UNKNOWN_COMMAND);
         break;
 #if !defined(PRODUCT)
     case _T('t'):
         if (command[1] == _T('c'))  // "tc" -- clear trace log
         {
-            DebugLogClear();
-            ConsoleView_Print(_T("  Trace log cleared.\r\n"));
+            ConsoleView_ClearTraceLog();
+        }
+        else if (command[1] == 0)  // "t" -- trace log on/off
+        {
+            ConsoleView_TraceLogOnOff();
+        }
+        else if (command[1] >= _T('0') && command[1] <= _T('7'))  // "tXXXXXX" - set trace log flags
+        {
+            WORD value;
+            if (!ParseOctalValue(command + 1, &value))
+            {
+                ConsoleView_Print(MESSAGE_WRONG_VALUE);
+                break;
+            }
+            ConsoleView_TraceLog(value);
         }
         else
-        {
-            DWORD dwTrace = (g_pBoard->GetTrace() == TRACE_NONE ? TRACE_ALL : TRACE_NONE);
-            if (command[1] != 0)  // "tXXXXXX" -- trace with flags specified
-            {
-                WORD value;
-                if (!ParseOctalValue(command + 1, &value))
-                {
-                    ConsoleView_Print(MESSAGE_WRONG_VALUE);
-                    break;
-                }
-                dwTrace = value;
-            }
-
-            g_pBoard->SetTrace(dwTrace);
-            if (dwTrace != TRACE_NONE)
-                ConsoleView_PrintFormat(_T("  Trace ON, trace flags %06o\r\n"), (uint16_t)g_pBoard->GetTrace());
-            else
-            {
-                ConsoleView_Print(_T("  Trace OFF.\r\n"));
-                DebugLogCloseFile();
-            }
-        }
+            ConsoleView_Print(MESSAGE_UNKNOWN_COMMAND);
         break;
 #endif
     default:
@@ -658,7 +782,7 @@ void DoConsoleCommand()
         break;
     }
 
-    PrintConsolePrompt();
+    ConsoleView_PrintConsolePrompt();
 
     if (okUpdateAllViews)
     {

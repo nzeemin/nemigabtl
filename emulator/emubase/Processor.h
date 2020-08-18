@@ -28,7 +28,7 @@ public:  // Constructor / initialization
     void        SetHaltMode(bool halt) { m_haltmode = halt; }
     void        MemoryError();
     int	        GetInternalTick() const { return m_internalTick; }
-    void        SetInternalTick (uint16_t tick) { m_internalTick = tick; }
+    void        ClearInternalTick() { m_internalTick = 0; }
 
 public:
     static void Init();  // Initialize static tables

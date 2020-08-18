@@ -345,6 +345,39 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
         TextOut(hdc, x + 6 * cxChar, y + 11 * cyLine, _T("STOP"), 4);
 }
 
+void DebugView_DrawAddressAndValue(HDC hdc, const CProcessor* pProc, CMotherboard* pBoard, uint16_t address, int x, int y, int cxChar)
+{
+    COLORREF colorText = Settings_GetColor(ColorDebugText);
+    SetTextColor(hdc, colorText);
+    DrawOctalValue(hdc, x + 0 * cxChar, y, address);
+    x += 7 * cxChar;
+
+    int addrtype = ADDRTYPE_DENY;
+    uint16_t value = pBoard->GetWordView(address, pProc->IsHaltMode(), FALSE, &addrtype);
+    if (addrtype == ADDRTYPE_RAM || addrtype == ADDRTYPE_HIRAM)
+    {
+        DrawOctalValue(hdc, x, y, value);
+    }
+    else if (addrtype == ADDRTYPE_ROM)
+    {
+        SetTextColor(hdc, Settings_GetColor(ColorDebugMemoryRom));
+        DrawOctalValue(hdc, x, y, value);
+    }
+    else if (addrtype == ADDRTYPE_IO || addrtype == ADDRTYPE_TERM)
+    {
+        value = pBoard->GetPortView(address);
+        SetTextColor(hdc, Settings_GetColor(ColorDebugMemoryIO));
+        DrawOctalValue(hdc, x, y, value);
+    }
+    else //if (addrtype == ADDRTYPE_DENY)
+    {
+        SetTextColor(hdc, Settings_GetColor(ColorDebugMemoryNA));
+        TextOut(hdc, x, y, _T("  NA  "), 6);
+    }
+
+    SetTextColor(hdc, colorText);
+}
+
 void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, int x, int y, WORD oldValue)
 {
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
@@ -353,7 +386,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     COLORREF colorPrev = Settings_GetColor(ColorDebugPrevious);
     COLORREF colorOld = SetTextColor(hdc, colorText);
 
-    WORD current = pProc->GetReg(reg);
+    WORD current = pProc->GetReg(reg) & ~1;
     WORD previous = oldValue;
     BOOL okExec = (reg == 7);
 
@@ -369,21 +402,12 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     WORD address = current - 14;
     for (int index = 0; index < 14; index++)    // Draw strings
     {
-        // Address
-        SetTextColor(hdc, colorText);
-        DrawOctalValue(hdc, x + 4 * cxChar, y, address);
+        DebugView_DrawAddressAndValue(hdc, pProc, g_pBoard, address, x + 4 * cxChar, y, cxChar);
 
-        // Value at the address
-        WORD value = memory[index];
-        WORD wChanged = Emulator_GetChangeRamStatus(address);
-        SetTextColor(hdc, (wChanged != 0) ? colorChanged : colorText);
-        DrawOctalValue(hdc, x + 12 * cxChar, y, value);
-
-        // Current position
-        if (address == current)
+        if (address == current)  // Current position
         {
             SetTextColor(hdc, colorText);
-            TextOut(hdc, x + 2 * cxChar, y, _T(">>"), 2);
+            TextOut(hdc, x + 2 * cxChar, y, _T(">"), 1);
             if (current != previous) SetTextColor(hdc, colorChanged);
             TextOut(hdc, x, y, REGISTER_NAME[reg], 2);
         }

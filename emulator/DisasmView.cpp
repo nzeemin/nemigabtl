@@ -12,6 +12,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "stdafx.h"
 #include <commdlg.h>
+#include <windowsx.h>
 #include "Main.h"
 #include "Views.h"
 #include "ToolWindow.h"
@@ -83,6 +84,13 @@ void DisasmView_RegisterClass()
     RegisterClassEx(&wcex);
 }
 
+void DisasmView_Init()
+{
+}
+void DisasmView_Done()
+{
+}
+
 void DisasmView_Create(HWND hwndParent, int x, int y, int width, int height)
 {
     ASSERT(hwndParent != NULL);
@@ -106,6 +114,11 @@ void DisasmView_Create(HWND hwndParent, int x, int y, int width, int height)
             WS_CHILD | WS_VISIBLE,
             0, 0, rcClient.right, rcClient.bottom,
             g_hwndDisasm, NULL, g_hInst, NULL);
+}
+
+void DisasmView_Redraw()
+{
+    RedrawWindow(g_hwndDisasm, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
 }
 
 // Adjust position of client windows

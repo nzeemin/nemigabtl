@@ -323,7 +323,7 @@ void CMotherboard::TimerTick() // Timer Tick, 8 MHz
 
 void CMotherboard::DebugTicks()
 {
-    m_pCPU->SetInternalTick(0);
+    m_pCPU->ClearInternalTick();
     m_pCPU->Execute();
     if (m_pFloppyCtl != NULL)
         m_pFloppyCtl->Periodic();
@@ -360,8 +360,11 @@ bool CMotherboard::SystemFrame()
                 TraceInstruction(m_pCPU, this, m_pCPU->GetPC(), m_dwTrace);
 #endif
             m_pCPU->Execute();
-            if (m_pCPU->GetPC() == m_CPUbp)
-                return false;  // Breakpoint
+            if (m_CPUbps != nullptr)  // Check for breakpoints
+            {
+                const uint16_t* pbps = m_CPUbps;
+                while (*pbps != 0177777) { if (m_pCPU->GetPC() == *pbps++) return false; }
+            }
 
             // Timer 1 ticks
             TimerTick();
