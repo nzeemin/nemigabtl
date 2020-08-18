@@ -86,17 +86,16 @@ int APIENTRY _tWinMain(
         ::QueryPerformanceCounter(&nFrameStartTime);
 
         if (!g_okEmulatorRunning)
-            ::Sleep(20);
+            ::Sleep(1);
         else
         {
-            if (Emulator_IsBreakpoint())
-                Emulator_Stop();
-            else
+            if (!Emulator_SystemFrame())
             {
-                Emulator_SystemFrame();
-
-                ScreenView_RedrawScreen();
+                // Breakpoint hit
+                Emulator_Stop();
             }
+
+            ScreenView_RedrawScreen();
         }
 
         // Process all queue
@@ -137,6 +136,10 @@ int APIENTRY _tWinMain(
                 }
             }
         }
+
+        //// Time bomb for perfomance analysis
+        //if (Emulator_GetUptime() >= 300)  // 5 minutes
+        //    ::PostQuitMessage(0);
     }
 endprog:
 
@@ -193,6 +196,7 @@ BOOL InitInstance(HINSTANCE /*hInstance*/, int /*nCmdShow*/)
 void DoneInstance()
 {
     ScreenView_Done();
+    DisasmView_Done();
 
     Emulator_Done();
 
@@ -205,9 +209,6 @@ void ParseCommandLine()
 
     int argnum = 0;
     LPTSTR* args = CommandLineToArgvW(commandline, &argnum);
-
-    if (argnum <= 1)
-        return;
 
     for (int curargn = 1; curargn < argnum; curargn++)
     {
