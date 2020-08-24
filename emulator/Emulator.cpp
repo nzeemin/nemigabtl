@@ -240,7 +240,7 @@ void Emulator_Start()
     g_okEmulatorRunning = true;
 
     // Set title bar text
-    SetWindowText(g_hwnd, _T("NEMIGA Back to Life [run]"));
+    MainWindow_UpdateWindowTitle();
     MainWindow_UpdateMenu();
 
     m_nFrameCount = 0;
@@ -262,7 +262,7 @@ void Emulator_Stop()
         ::fflush(m_fpEmulatorParallelOut);
 
     // Reset title bar message
-    SetWindowText(g_hwnd, _T("NEMIGA Back to Life [stop]"));
+    MainWindow_UpdateWindowTitle();
     MainWindow_UpdateMenu();
 
     // Reset FPS indicator

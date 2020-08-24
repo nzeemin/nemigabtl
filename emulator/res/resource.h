@@ -14,12 +14,13 @@
 #define IDR_MAINFRAME                   128
 #define IDD_INPUTBOX                    129
 #define IDI_DISKETTE                    138
-#define IDI_DISKETTEWP                  141
-#define IDB_KEYBOARD                    142
-#define IDB_TOOLBAR                     143
-#define IDD_CREATEDISK                  144
-#define IDD_LOADBIN                     145
-#define IDD_SETTINGS                    146
+#define IDI_DISKETTEWP                  139
+#define IDB_KEYBOARD                    140
+#define IDB_TOOLBAR                     142
+#define IDD_CREATEDISK                  143
+#define IDD_LOADBIN                     144
+#define IDD_SETTINGS                    145
+#define IDD_SETTINGS_COLORS             146
 #define IDR_NEMIGA_KEYB                 147
 #define IDD_DCB_EDITOR                  148
 #define IDR_NEMIGA_ROM_303              149
@@ -50,6 +51,7 @@
 #define IDC_DSRSENSITIVITY              1024
 #define IDC_BUTTON1                     1025
 #define IDC_BUTTON2                     1026
+#define IDC_LIST1                       1029
 #define IDC_DEBUGFONT                   1030
 #define ID_FILE                         32771
 #define ID_FILE_SAVESTATE               32772
@@ -59,16 +61,17 @@
 #define ID_FILE_LOADBIN                 32777
 #define ID_FILE_CREATEDISK              32778
 #define ID_FILE_SETTINGS                32779
-#define ID_VIEW                         32781
-#define ID_VIEW_MEMORY                  32782
-#define ID_VIEW_KEYBOARD                32783
-#define ID_VIEW_TOOLBAR                 32785
-#define ID_VIEW_RGBSCREEN               32787
+#define ID_FILE_SETTINGS_COLORS         32780
+#define ID_VIEW                         32784
+#define ID_VIEW_MEMORY                  32785
+#define ID_VIEW_KEYBOARD                32786
+#define ID_VIEW_TOOLBAR                 32788
+#define ID_VIEW_RGBSCREEN               32789
 #define ID_VIEW_FULLSCREEN              32790
-#define ID_EMULATOR                     32791
-#define ID_EMULATOR_RUN                 32792
-#define ID_EMULATOR_RESET               32793
-#define ID_EMULATOR_AUTOSTART           32794
+#define ID_EMULATOR                     32794
+#define ID_EMULATOR_RUN                 32795
+#define ID_EMULATOR_RESET               32796
+#define ID_EMULATOR_AUTOSTART           32797
 #define ID_EMULATOR_SPEED25             32798
 #define ID_EMULATOR_SPEED50             32799
 #define ID_EMULATOR_SPEEDMAX            32800
@@ -109,7 +112,7 @@
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         32896
-#define _APS_NEXT_CONTROL_VALUE         1031
+#define _APS_NEXT_CONTROL_VALUE         1034
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

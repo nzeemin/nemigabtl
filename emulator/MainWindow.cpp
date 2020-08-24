@@ -76,6 +76,7 @@ void MainWindow_DoFileScreenshot();
 void MainWindow_DoFileScreenshotSaveAs();
 void MainWindow_DoFileCreateDisk();
 void MainWindow_DoFileSettings();
+void MainWindow_DoFileSettingsColors();
 void MainWindow_OnToolbarGetInfoTip(LPNMTBGETINFOTIP);
 
 
@@ -111,6 +112,7 @@ void MainWindow_RegisterClass()
     MemoryView_RegisterClass();
     DebugView_RegisterClass();
     MemoryMapView_RegisterClass();
+    //SpriteView_RegisterClass();
     DisasmView_RegisterClass();
     ConsoleView_RegisterClass();
 }
@@ -339,6 +341,14 @@ void MainWindow_RestorePositionAndShow()
     //    MainWindow_DoViewFullscreen();
 }
 
+void MainWindow_UpdateWindowTitle()
+{
+    LPCTSTR emustate = g_okEmulatorRunning ? _T("run") : _T("stop");
+    TCHAR buffer[100];
+    wsprintf(buffer, _T("%s [%s]"), g_szTitle, emustate);
+    SetWindowText(g_hwnd, buffer);
+}
+
 // Processes messages for the main window
 LRESULT CALLBACK MainWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -349,7 +359,7 @@ LRESULT CALLBACK MainWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
         break;
     case WM_COMMAND:
         {
-            int wmId    = LOWORD(wParam);
+            int wmId = LOWORD(wParam);
             //int wmEvent = HIWORD(wParam);
             bool okProcessed = MainWindow_DoCommand(wmId);
             if (!okProcessed)
@@ -930,6 +940,9 @@ bool MainWindow_DoCommand(int commandId)
     case ID_FILE_SETTINGS:
         MainWindow_DoFileSettings();
         break;
+    case ID_FILE_SETTINGS_COLORS:
+        MainWindow_DoFileSettingsColors();
+        break;
     default:
         return false;
     }
@@ -1042,6 +1055,7 @@ void MainWindow_DoEmulatorSpeed(WORD speed)
 
     MainWindow_UpdateMenu();
 }
+
 void MainWindow_DoEmulatorSound()
 {
     Settings_SetSound(!Settings_GetSound());
@@ -1158,6 +1172,14 @@ void MainWindow_DoFileCreateDisk()
 void MainWindow_DoFileSettings()
 {
     ShowSettingsDialog();
+}
+
+void MainWindow_DoFileSettingsColors()
+{
+    if (ShowSettingsColorsDialog())
+    {
+        RedrawWindow(g_hwnd, NULL, NULL, RDW_ERASE | RDW_INVALIDATE | RDW_ALLCHILDREN);
+    }
 }
 
 void MainWindow_DoEmulatorConf(WORD configuration)
