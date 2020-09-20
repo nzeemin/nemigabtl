@@ -113,6 +113,7 @@ LRESULT CALLBACK MemoryMapViewViewerWndProc(HWND hWnd, UINT message, WPARAM wPar
 void MemoryMapView_RedrawMap();
 
 
+//////////////////////////////////////////////////////////////////////
 // ConsoleView
 
 extern HWND g_hwndConsole;  // Console View window handle
