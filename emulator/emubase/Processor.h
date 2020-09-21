@@ -27,7 +27,7 @@ public:  // Constructor / initialization
     void        FireHALT() { m_HALTrq = true; }  // Fire HALT interrupt request, same as HALT command
     void        SetHaltMode(bool halt) { m_haltmode = halt; }
     void        MemoryError();
-    int	        GetInternalTick() const { return m_internalTick; }
+    int         GetInternalTick() const { return m_internalTick; }
     void        ClearInternalTick() { m_internalTick = 0; }
 
 public:
@@ -252,10 +252,10 @@ protected:  // Implementation - instruction execution
     void        ExecuteSCC ();      //  0002
     void        ExecuteNOP ();      //  0002
     // Команды расширенной арифметики
-    void		ExecuteMUL ();      //  0003
-    void		ExecuteDIV ();      //  0003
-    void		ExecuteASH ();      //  0003
-    void		ExecuteASHC ();     //  0003
+    void        ExecuteMUL ();      //  0003
+    void        ExecuteDIV ();      //  0003
+    void        ExecuteASH ();      //  0003
+    void        ExecuteASHC ();     //  0003
 };
 
 // PSW bits control - implementation

@@ -36,7 +36,7 @@ inline uint16_t GetDigit(uint16_t word, int pos)
 #define PSW_N           8      // Negative result
 #define PSW_T           16     // Trap/Debug
 #define PSW_P           0200   // Priority
-#define PSW_HALT		0400   // Halt
+#define PSW_HALT        0400   // Halt
 
 // Commands -- no operands
 #define PI_HALT         0000000
@@ -46,7 +46,7 @@ inline uint16_t GetDigit(uint16_t word, int pos)
 #define PI_IOT          0000004
 #define PI_RESET        0000005
 #define PI_RTT          0000006
-#define PI_MFPT			0000007
+#define PI_MFPT         0000007
 #define PI_HALT10       0000010
 #define PI_HALT11       0000011
 #define PI_HALT12       0000012
@@ -87,7 +87,7 @@ inline uint16_t GetDigit(uint16_t word, int pos)
 #define PI_SENZC        0000275
 #define PI_SENZV        0000276
 #define PI_SCC          0000277
-#define PI_MED			0076600
+#define PI_MED          0076600
 
 // Commands -- single operand
 #define PI_RTS          0000200
@@ -134,10 +134,10 @@ inline uint16_t GetDigit(uint16_t word, int pos)
 
 // Commands -- three operands
 #define PI_JSR          0004000
-#define PI_MUL			0070000
-#define PI_DIV			0071000
-#define PI_ASH			0072000
-#define PI_ASHC			0073000
+#define PI_MUL          0070000
+#define PI_DIV          0071000
+#define PI_ASH          0072000
+#define PI_ASHC         0073000
 #define PI_XOR          0074000
 #define PI_SOB          0077000
 

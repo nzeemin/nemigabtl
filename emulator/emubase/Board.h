@@ -117,7 +117,7 @@ public:  // System control
     void        SetTimer50OnOff(bool okOnOff) { m_okTimer50OnOff = okOnOff; }
     bool        IsTimer50OnOff() const { return m_okTimer50OnOff; }
     void        Tick50();           // Tick 50 Hz - goes to CPU EVNT line
-    void		TimerTick();		// Timer Tick, 31250 Hz, 32uS -- dividers are within timer routine
+    void        TimerTick();        // Timer Tick, 31250 Hz, 32uS -- dividers are within timer routine
     void        ResetDevices();     // INIT signal
     void        ResetHALT();//DEBUG
 public:
@@ -133,7 +133,7 @@ public:  // Floppy
     bool        IsFloppyReadOnly(int slot) const;
     bool        IsFloppyEngineOn() const;
 public:  // Callbacks
-    void		SetSoundGenCallback(SOUNDGENCALLBACK callback);
+    void        SetSoundGenCallback(SOUNDGENCALLBACK callback);
     void        SetSerialCallbacks(SERIALINCALLBACK incallback, SERIALOUTCALLBACK outcallback);
     void        SetParallelOutCallback(PARALLELOUTCALLBACK outcallback);
 public:  // Memory

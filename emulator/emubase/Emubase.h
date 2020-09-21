@@ -37,12 +37,12 @@ int DisassembleInstruction(uint16_t* pMemory, uint16_t addr, TCHAR* sInstr, TCHA
 //////////////////////////////////////////////////////////////////////
 // CFloppy
 
-#define FLOPPY_STATUS_RELOAD			01
-#define FLOPPY_STATUS_INDEX 			04
-#define FLOPPY_STATUS_TR00_WRPRT		010
-#define FLOPPY_STATUS_OPFAILED			040
-#define FLOPPY_STATUS_LOSTDATA	    	0100
-#define FLOPPY_STATUS_TR    			0200
+#define FLOPPY_STATUS_RELOAD            01
+#define FLOPPY_STATUS_INDEX             04
+#define FLOPPY_STATUS_TR00_WRPRT        010
+#define FLOPPY_STATUS_OPFAILED          040
+#define FLOPPY_STATUS_LOSTDATA          0100
+#define FLOPPY_STATUS_TR                0200
 
 #define FLOPPY_OPER_NOOPERATION         0177777
 #define FLOPPY_OPER_READ_TRACK          0

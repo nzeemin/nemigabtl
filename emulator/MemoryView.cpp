@@ -325,7 +325,7 @@ LPCTSTR MemoryView_GetMemoryModeName()
     //      case MEMMODE_ROM:   return _T("ROM");
     //      case MEMMODE_CPU:   return _T("CPU");
     //default:
-    //	return _T("UKWN");  // Unknown mode
+    //    return _T("UKWN");  // Unknown mode
     //  }
     return _T("");  //STUB
 }
