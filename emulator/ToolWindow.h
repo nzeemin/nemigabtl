@@ -12,13 +12,14 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #pragma once
 
-
 //////////////////////////////////////////////////////////////////////
 
 
-const LPCTSTR CLASSNAME_TOOLWINDOW = _T("NEMIGABTLTOOLWINDOW");
-const LPCTSTR CLASSNAME_OVERLAPPEDWINDOW = _T("NEMIGABTLOVERLAPPEDWINDOW");
-const LPCTSTR CLASSNAME_SPLITTERWINDOW = _T("NEMIGABTLSPLITTERWINDOW");
+#define CLASSNAMEPREFIX _T("NEMIGABTL")
+
+const LPCTSTR CLASSNAME_TOOLWINDOW = CLASSNAMEPREFIX _T("TOOLWINDOW");
+const LPCTSTR CLASSNAME_OVERLAPPEDWINDOW = CLASSNAMEPREFIX _T("OVERLAPPEDWINDOW");
+const LPCTSTR CLASSNAME_SPLITTERWINDOW = CLASSNAMEPREFIX _T("SPLITTERWINDOW");
 
 const int TOOLWINDOW_CAPTION_HEIGHT = 16;
 
@@ -33,4 +34,3 @@ HWND SplitterWindow_Create(HWND hwndParent, HWND hwndTop, HWND hwndBottom);
 
 
 //////////////////////////////////////////////////////////////////////
-

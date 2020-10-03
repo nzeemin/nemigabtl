@@ -9,7 +9,6 @@ See the GNU Lesser General Public License for more details.
 NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 // NEMIGABTL.cpp : Defines the entry point for the application.
-//
 
 #include "stdafx.h"
 #include <commdlg.h>
@@ -24,7 +23,6 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Dialogs.h"
 #include "Views.h"
 //#include "Joystick.h"
-
 
 //////////////////////////////////////////////////////////////////////
 // Global Variables

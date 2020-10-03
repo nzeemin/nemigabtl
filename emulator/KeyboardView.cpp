@@ -15,8 +15,8 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "Views.h"
 #include "Emulator.h"
 
-
 //////////////////////////////////////////////////////////////////////
+
 
 #define COLOR_KEYBOARD_BACKGROUND   RGB(160,160,160)
 #define COLOR_KEYBOARD_LITE         RGB(228,228,228)
