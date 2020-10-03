@@ -3,14 +3,13 @@
 // Used by NEMIGA.rc
 //
 #define IDC_MYICON                      2
-#define IDD_NEMIGABTL_DIALOG            102
 #define IDS_APP_TITLE                   103
 #define IDD_ABOUTBOX                    103
 #define IDM_ABOUT                       104
 #define IDM_EXIT                        105
-#define IDI_NEMIGABTL                   107
+#define IDI_APPICON                     107
 #define IDI_SMALL                       108
-#define IDC_NEMIGABTL                   109
+#define IDC_APPLICATION                 109
 #define IDR_MAINFRAME                   128
 #define IDD_INPUTBOX                    129
 #define IDI_DISKETTE                    138

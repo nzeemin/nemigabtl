@@ -282,7 +282,7 @@ void Dialogs_DoCreateDisk(LONG fileSize)
     ::CloseHandle(hFile);
 
     ::MessageBox(g_hwnd, _T("New disk file created successfully.\nPlease initialize the disk using INIT command."),
-            _T("NEMIGABTL"), MB_OK | MB_ICONINFORMATION);
+            g_szTitle, MB_OK | MB_ICONINFORMATION);
 }
 
 
