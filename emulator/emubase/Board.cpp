@@ -274,9 +274,8 @@ void CMotherboard::Tick50()  // 50 Hz timer
         if (m_Port170024 != 0 && (m_Port170020 & 060) != 060)
         {
             m_Timer2 = m_Port170024;
-#if !defined(PRODUCT)
+
             if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Tick50 Timer2 START %06o\r\n"), m_Timer2);
-#endif
         }
     }
     else //if (m_Timer2 > 0)
@@ -287,9 +286,8 @@ void CMotherboard::Tick50()  // 50 Hz timer
             //m_okSoundOnOff = false;  // Судя по схеме, звук выключается по сигналу ЗПР2
             m_Port170024 = 0;
             //m_Timer2 = m_Port170024;
-#if !defined(PRODUCT)
+
             if (m_dwTrace & TRACE_TIMER) DebugLog(_T("Tick50 Timer2 END\r\n"));
-#endif
         }
     }
 }
@@ -449,7 +447,7 @@ void CMotherboard::KeyboardEvent(uint8_t scancode, bool okPressed)
         m_Port170006 |= scancode;
         //if (m_Port177560 | 0100)
         m_pCPU->FireHALT();
-#if !defined(PRODUCT)
+
         if (m_dwTrace & TRACE_KEYBOARD)
         {
             if (scancode >= ' ' && scancode <= 127)
@@ -457,7 +455,7 @@ void CMotherboard::KeyboardEvent(uint8_t scancode, bool okPressed)
             else
                 DebugLogFormat(_T("Keyboard 0x%02x\r\n"), scancode);
         }
-#endif
+
         return;
     }
 }
@@ -502,10 +500,8 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
     switch (addrtype & ADDRTYPE_MASK)
     {
     case ADDRTYPE_RAM:
-//#if !defined(PRODUCT)
 //        if (address == 0177562)
 //            DebugLogFormat(_T("GetWord %06o %03o\r\n"), address, GetRAMWord(offset & 0177776));
-//#endif
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_HIRAM:
         return GetHIRAMWord(offset & 0177776);
@@ -525,9 +521,7 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
             m_Port170006 |= 040000;
         if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
             m_pCPU->FireHALT();
-#if !defined(PRODUCT)
         DebugLogFormat(_T("GetWord %06o\r\n"), address);
-#endif
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -546,10 +540,8 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
     switch (addrtype & ADDRTYPE_MASK)
     {
     case ADDRTYPE_RAM:
-//#if !defined(PRODUCT)
 //        if (address == 0177562)
 //            DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, (uint16_t)GetRAMByte(offset));
-//#endif
         return GetRAMByte(offset);
     case ADDRTYPE_HIRAM:
         return GetHIRAMByte(offset);
@@ -569,9 +561,7 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
             m_Port170006 |= 040000;
         if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
             m_pCPU->FireHALT();
-#if !defined(PRODUCT)
         DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, (uint16_t)GetRAMByte(offset));
-#endif
         return GetRAMByte(offset);
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -610,33 +600,25 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
         }
         if (address == 0177562)
         {
-//#if !defined(PRODUCT)
 //            DebugLogFormat(_T("SetWord 177562 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-//#endif
             m_Port170006 |= 020000;
             if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
                 m_pCPU->FireHALT();
         }
         else if (address == 0177564)
         {
-//#if !defined(PRODUCT)
 //            DebugLogFormat(_T("WRITE 177564 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-//#endif
             SetRAMWord(offset & 0177776, word);
             return;
         }
         else if (address == 0177566)
         {
-//#if !defined(PRODUCT)
 //            DebugLogFormat(_T("177566 TERMOUT %04x\r\n"), word);
-//#endif
             m_Port170006 |= 040000;
             if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
                 m_pCPU->FireHALT();
         }
-//#if !defined(PRODUCT)
 //        DebugLogFormat(_T("SetWord 06o\r\n"), address);
-//#endif
         SetRAMWord(offset & 0177776, word);
         return;
     case ADDRTYPE_DENY:
@@ -669,34 +651,26 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
     case ADDRTYPE_TERM:
         if (address == 0177562)
         {
-//#if !defined(PRODUCT)
 //            DebugLogFormat(_T("SetByte 177562 value %03o, PC=%06o\r\n"), (uint16_t)byte, m_pCPU->GetInstructionPC());
-//#endif
             m_Port170006 |= 020000;
             if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
                 m_pCPU->FireHALT();
         }
         else if (address == 0177564)
         {
-//#if !defined(PRODUCT)
 //            DebugLogFormat(_T("WRITE 177564 value %03o, PC=%06o\r\n"), byte, m_pCPU->GetInstructionPC());
-//#endif
             SetRAMByte(offset, byte);
             return;
         }
         else if (address == 0177566)
         {
-//#if !defined(PRODUCT)
 //            DebugLogFormat(_T("177566 TERMOUT %02x\r\n"), byte);
-//#endif
             m_Port170006 |= 040000;
             if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
                 m_pCPU->FireHALT();
         }
         SetRAMByte(offset, byte);
-//#if !defined(PRODUCT)
 //        DebugLogFormat(_T("SetByte 06o\r\n"), address);
-//#endif
         return;
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -806,17 +780,13 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
     case 0170024:  // RgLength -- Sound Length 50 Hz
         return m_Port170024;
     case 0170026:  // RgOn -- Sound On
-#if !defined(PRODUCT)
         if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
-#endif
         m_okSoundOnOff = true;
         return 0;  //STUB
     case 0170030:  // RgOct
         return m_Port170030;
     case 0170032:  // RgOff -- Sound Off
-#if !defined(PRODUCT)
         if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
-#endif
         m_okSoundOnOff = !m_okSoundOnOff;
         return 0;  //STUB
 
@@ -860,19 +830,15 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         //case 0177566:
 
     case 0177572:  // Регистр адреса косвенной адресации
-#if !defined(PRODUCT)
         if (m_pCPU->GetInstructionPC() < 0160000)
             DebugLogFormat(_T("READ 177572 value %06o PC=%06o\r\n"), m_Port177572, m_pCPU->GetInstructionPC());
-#endif
         return m_Port177572;
     case 0177570:  // Регистр данных косвенного доступа
         return *(uint16_t*)(m_pRAM + m_Port177572 + m_Port177572);
 
     case 0177574:
-//#if !defined(PRODUCT)
 //        if (m_pCPU->GetInstructionPC() < 0160000)
 //            DebugLogFormat(_T("READ 177574 value %06o PC=%06o\r\n"), m_Port177574, m_pCPU->GetInstructionPC());
-//#endif
         return m_Port177574;
 
     default:
@@ -997,39 +963,27 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
         break;  //STUB
 
     case 0170020:  // Timer status
-#if !defined(PRODUCT)
         if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Timer Status SET %06o\r\n"), word);
-#endif
         m_Port170020 = word & 01777;
         break;
     case 0170022:
-#if !defined(PRODUCT)
         if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Timer Freq  SET %06o\r\n"), word);
-#endif
         m_Port170022 = word;
         break;
     case 0170024:
-#if !defined(PRODUCT)
         if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Timer Len   SET %06o\r\n"), word);
-#endif
         m_Port170024 = word;
         break;
     case 0170026:  // Sound On
-#if !defined(PRODUCT)
         if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("%06o Sound ON\r\n"), m_pCPU->GetPC());
-#endif
         m_okSoundOnOff = true;
         break;
     case 0170030:
-#if !defined(PRODUCT)
         if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("Timer OctVol SET %06o\r\n"), word);
-#endif
         m_Port170030 = word & 037;
         break;
     case 0170032:  // Sound On/Off trigger
-#if !defined(PRODUCT)
         if (m_dwTrace & TRACE_TIMER) DebugLogFormat(_T("%06o Sound OFF\r\n"), m_pCPU->GetPC());
-#endif
         m_okSoundOnOff = !m_okSoundOnOff;
         break;
 
@@ -1071,15 +1025,11 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
         break;
 
     case 0177514:
-#if !defined(PRODUCT)
         //DebugLogFormat(_T("Parallel SET STATE %06o\r\n"), word);
-#endif
         m_Port177514 = (m_Port177514 & 0100277) | (word & 037600);
         break;
     case 0177516:
-#if !defined(PRODUCT)
         //DebugLogFormat(_T("Parallel SET DATA %04x\r\n"), word);
-#endif
         m_Port177516 = word;
         m_Port177514 &= ~0240;
         break;
@@ -1090,20 +1040,16 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
     case 0177566:
         break;  //STUB
     case 0177574:
-#if !defined(PRODUCT)
         if (m_pCPU->GetInstructionPC() < 0160000)
             DebugLogFormat(_T("WRITE 177574 value %06o PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-#endif
         m_Port177574 = word;
         break;
     case 0177576:
         break;  //STUB
 
     case 0177572:
-#if !defined(PRODUCT)
         if (m_pCPU->GetInstructionPC() < 0160000)
             DebugLogFormat(_T("WRITE 177572 value %06o PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-#endif
         m_Port177572 = word;
         break;
     case 0177570:

@@ -70,9 +70,7 @@ CFloppyController::~CFloppyController()
 
 void CFloppyController::Reset()
 {
-#if !defined(PRODUCT)
     if (m_okTrace) DebugLog(_T("Floppy RESET\r\n"));
-#endif
 
     FlushChanges();
 
@@ -177,13 +175,11 @@ uint16_t CFloppyController::GetState(void)
 
     uint16_t res = m_status;
 
-//#if !defined(PRODUCT)
 //    if (m_okTrace && Flopy_LastStatus != m_status)
 //    {
 //        DebugLogFormat(_T("Floppy GET STATE %06o\r\n"), res);
 //        Flopy_LastStatus = m_status;
 //    }
-//#endif
 
     return res;
 }
@@ -203,9 +199,7 @@ uint16_t CFloppyController::GetTimer()
 
 void CFloppyController::SetCommand(uint16_t cmd)
 {
-#if !defined(PRODUCT)
     if (m_okTrace) DebugLogFormat(_T("Floppy%d COMMAND %06o\r\n"), m_drive, cmd);
-#endif
 
     m_motorcount = 0;
 
@@ -221,9 +215,8 @@ void CFloppyController::SetCommand(uint16_t cmd)
         m_drive = newdrive;
         m_pDrive = m_drivedata + m_drive;
         okPrepareTrack = true;
-#if !defined(PRODUCT)
+
         if (m_okTrace) DebugLogFormat(_T("Floppy CURRENT DRIVE %d\r\n"), newdrive);
-#endif
     }
     cmd &= ~7;  // Убираем из команды информацию о текущем приводе
 
@@ -262,9 +255,8 @@ void CFloppyController::SetCommand(uint16_t cmd)
 
 void CFloppyController::SetState(uint16_t data)
 {
-#if !defined(PRODUCT)
     if (m_okTrace) DebugLogFormat(_T("Floppy%d SET STATE %d OPER %06o\r\n"), m_drive, (int)data, m_operation);
-#endif
+
     m_motorcount = 0;
 
     if (data & 1)  // Run the operation
@@ -302,11 +294,9 @@ uint16_t CFloppyController::GetData(void)
     if (m_pDrive == NULL || m_pDrive->fpFile == NULL)
         return 0;
 
-#if !defined(PRODUCT)
     uint16_t offset = m_pDrive->dataptr;
     if (m_okTrace && offset >= 10 && (offset - 10) % 130 == 0)
         DebugLogFormat(_T("Floppy%d READ %02x POS%04d SC%02d TR%02d\r\n"), m_drive, m_datareg, offset, (offset - 10) / 130 + 1, m_track);
-#endif
 
     m_status &= ~FLOPPY_STATUS_TR;  // TR сбрасывается при чтении регистра данных
 
@@ -315,11 +305,10 @@ uint16_t CFloppyController::GetData(void)
 
 void CFloppyController::WriteData(uint16_t data)
 {
-#if !defined(PRODUCT)
     uint16_t offset = m_pDrive->dataptr;
     if (m_okTrace && offset >= 10 && (offset - 10) % 130 == 0)
         DebugLogFormat(_T("Floppy%d WRITE %02x POS%04d SC%02d TR%02d\r\n"), m_drive, data, m_pDrive->dataptr, (offset - 10) / 130 + 1, m_track);
-#endif
+
     m_motorcount = 0;
 
     if (m_operation == FLOPPY_OPER_WRITE_TRACK &&
@@ -378,9 +367,8 @@ void CFloppyController::Periodic()
     if (m_motorcount > 125000)  // 8 S = 8000000 uS; 8000000 uS / 64 uS = 125000
     {
         m_motoron = false;  // Turn motor OFF by timeout
-#if !defined(PRODUCT)
+
         if (m_okTrace) DebugLog(_T("Floppy Motor OFF\n"));
-#endif
         return;
     }
 
@@ -391,10 +379,9 @@ void CFloppyController::Periodic()
         if (m_drivedata[drive].dataptr >= FLOPPY_RAWTRACKSIZE)
             m_drivedata[drive].dataptr = 0;
     }
-//#if !defined(PRODUCT)
+
 //    if (m_okTrace && m_pDrive != NULL && m_pDrive->dataptr == 0)
 //        DebugLogFormat(_T("Floppy Index\n"));
-//#endif
 
     // Далее обрабатываем операции на текущем драйве
     if (m_pDrive == NULL) return;
@@ -410,24 +397,21 @@ void CFloppyController::Periodic()
         {
             if (m_operation == FLOPPY_OPER_STEP_IN)  // Шаг к центру дискеты
             {
-#if !defined(PRODUCT)
                 if (m_okTrace) DebugLogFormat(_T("Floppy%d STEP IN\r\n"), m_drive);
-#endif
+
                 if (m_track < 82) { m_track++;  PrepareTrack(); }
             }
             else if (m_operation == FLOPPY_OPER_STEP_OUT)  // Шаг от центра дискеты
             {
-#if !defined(PRODUCT)
                 if (m_okTrace) DebugLogFormat(_T("Floppy%d STEP OUT\r\n"), m_drive);
-#endif
+
                 if (m_track >= 1) { m_track--;  PrepareTrack(); }
                 // Только для этой операции выставляется признак нулевой дорожки
                 if (m_track == 0)
                 {
                     m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // Нулевая дорожка, TR00 = 0
-#if !defined(PRODUCT)
+
                     if (m_okTrace) DebugLog(_T("Floppy TRACK 00\r\n"));
-#endif
                 }
                 else
                     m_status |= FLOPPY_STATUS_TR00_WRPRT;
@@ -477,9 +461,7 @@ void CFloppyController::PrepareTrack()
     if (m_pDrive == NULL) return;
     if (m_pDrive->fpFile == NULL) return;
 
-#if !defined(PRODUCT)
     if (m_okTrace) DebugLogFormat(_T("Floppy%d PREPARE TRACK %d\r\n"), m_drive, m_track);
-#endif
 
     uint32_t count;
 
@@ -546,9 +528,7 @@ void CFloppyController::FlushChanges()
     if (m_pDrive->fpFile == NULL) return;
     if (!m_trackchanged) return;
 
-#if !defined(PRODUCT)
     if (m_okTrace) DebugLogFormat(_T("Floppy%d FLUSH\r\n"), m_drive);  //DEBUG
-#endif
 
     //TCHAR filename[32];  wsprintf(filename, _T("rawtrack%02d.bin"), (int)m_pDrive->datatrack);
     //FILE* fpTrack = ::_tfopen(filename, _T("w+b"));
@@ -583,9 +563,7 @@ void CFloppyController::FlushChanges()
         }
         else
         {
-#if !defined(PRODUCT)
             if (m_okTrace) DebugLog(_T("Floppy FLUSH MD FAILED\r\n"));  //DEBUG
-#endif
         }
     }
     else if (m_pDrive->floppytype == FLOPPY_TYPE_MX)
@@ -603,9 +581,7 @@ void CFloppyController::FlushChanges()
         }
         else
         {
-#if !defined(PRODUCT)
             if (m_okTrace) DebugLog(_T("Floppy FLUSH MX FAILED\r\n"));  //DEBUG
-#endif
         }
     }
 

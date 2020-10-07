@@ -403,13 +403,12 @@ void CProcessor::Execute()
 
                 SetPC(GetWord(intrVector));
                 m_psw = GetWord(intrVector + 2) & 0377;
-//#if !defined(PRODUCT)
+
 //                if (m_pBoard->GetTrace() & TRACE_CPUINT)
 //                {
 //                    if (intrVector != 000020 && intrVector != 000030 && intrVector != 000034)  // skip IOT/EMT/TRAP
 //                        DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
 //                }
-//#endif
             }
         }  // end while
     }
@@ -701,7 +700,6 @@ void CProcessor::FetchInstruction()
     m_instruction = GetWordExec(pc);
     SetPC(GetPC() + 2);
 
-//#if !defined(PRODUCT)
 //    uint16_t address = GetPC() - 2;
 //    const uint16_t TraceStartAddress = 0000000;
 //    //if (!TraceStarted && address == TraceStartAddress) TraceStarted = true;
@@ -715,7 +713,6 @@ void CProcessor::FetchInstruction()
 //        DebugLogFormat(_T("%06o: %s\t%s\n"), address, strInstr, strArg);
 //        //DebugLogFormat(_T("%s %06o: %s\t%s\n"), IsHaltMode()?_T("HALT"):_T("USER"), address, strInstr, strArg);
 //    }
-//#endif
 }
 
 void CProcessor::TranslateInstruction ()
@@ -733,9 +730,7 @@ void CProcessor::TranslateInstruction ()
 
 void CProcessor::ExecuteUNKNOWN ()  // Нет такой инструкции - просто вызывается TRAP 10
 {
-#if !defined(PRODUCT)
     DebugLogFormat(_T(">>Invalid OPCODE = %06o at %06o\r\n"), m_instruction, m_instructionpc);
-#endif
 
     m_RSVDrq = true;
 }
