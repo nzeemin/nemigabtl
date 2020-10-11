@@ -66,7 +66,6 @@
 #define ID_VIEW_KEYBOARD                32786
 #define ID_VIEW_TOOLBAR                 32788
 #define ID_VIEW_RGBSCREEN               32789
-#define ID_VIEW_FULLSCREEN              32790
 #define ID_EMULATOR                     32794
 #define ID_EMULATOR_RUN                 32795
 #define ID_EMULATOR_RESET               32796
@@ -99,9 +98,12 @@
 #define ID_VIEW_DEBUG                   32882
 #define ID_DEBUG_STEPINTO               32883
 #define ID_DEBUG_STEPOVER               32884
+#define ID_DEBUG_SPRITES                32886
 #define ID_VIEW_MEMORYMAP               32887
 #define ID_DEBUG_MEMORY_WORDBYTE        32894
 #define ID_DEBUG_MEMORY_GOTO            32895
+#define ID_DEBUG_CLEARCONSOLE           32896
+#define ID_DEBUG_DELETEALLBREAKPTS      32897
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -110,7 +112,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        152
-#define _APS_NEXT_COMMAND_VALUE         32896
+#define _APS_NEXT_COMMAND_VALUE         32898
 #define _APS_NEXT_CONTROL_VALUE         1034
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

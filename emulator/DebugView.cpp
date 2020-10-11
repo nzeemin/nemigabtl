@@ -269,7 +269,7 @@ void DebugView_DoDraw(HDC hdc)
     DebugView_DrawProcessor(hdc, pDebugPU, 30 + cxChar * 2, 2 + 1 * cyLine, arrR, arrRChanged, oldPsw);
 
     // Draw stack for the current processor
-    DebugView_DrawMemoryForRegister(hdc, 6, pDebugPU, 30 + 35 * cxChar, 2 + 0 * cyLine, oldSP);
+    DebugView_DrawMemoryForRegister(hdc, 6, pDebugPU, 30 + 36 * cxChar, 2 + 0 * cyLine, oldSP);
 
     BOOL okWatches = DebugView_DrawWatchpoints(hdc, pDebugPU, 30 + 56 * cxChar, 2 + 0 * cyLine);
     if (!okWatches)
@@ -307,7 +307,7 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
     COLORREF colorChanged = Settings_GetColor(ColorDebugValueChanged);
     ::SetTextColor(hdc, colorText);
 
-    DebugView_DrawRectangle(hdc, x - cxChar, y - 8, x + cxChar + 31 * cxChar, y + 8 + cyLine * 12);
+    DebugView_DrawRectangle(hdc, x - cxChar, y - 8, x + cxChar + 31 * cxChar, y + 8 + cyLine * 14);
 
     // Registers
     for (int r = 0; r < 8; r++)
@@ -412,7 +412,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     WORD address = current - 16;
     for (int index = 0; index < 16; index++)
     {
-        DebugView_DrawAddressAndValue(hdc, pProc, g_pBoard, address, x + 4 * cxChar, y, cxChar);
+        DebugView_DrawAddressAndValue(hdc, pProc, g_pBoard, address, x + 3 * cxChar, y, cxChar);
 
         if (address == current)  // Current position
         {
