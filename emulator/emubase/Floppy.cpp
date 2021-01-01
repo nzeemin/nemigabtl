@@ -485,7 +485,7 @@ void CFloppyController::PrepareTrack()
         if (m_pDrive->fpFile != NULL)
         {
             ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-            count = ::fread(&data, 1, sectors * 128, m_pDrive->fpFile);
+            count = ::fread(data, 1, sectors * 128, m_pDrive->fpFile);
             //TODO: Контроль ошибок чтения
         }
 
@@ -498,7 +498,7 @@ void CFloppyController::PrepareTrack()
         int side = m_drive & 1;
         long foffset = (m_track * 2 + side) * 11 * 256;
         ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-        count = ::fread(&data, 1, 11 * 256, m_pDrive->fpFile);
+        count = ::fread(data, 1, 11 * 256, m_pDrive->fpFile);
 
         // Fill m_data array with data
         EncodeTrackDataMX(data, m_pDrive->data, m_track, 0);
@@ -558,7 +558,7 @@ void CFloppyController::FlushChanges()
             }
             // Save data into the file
             ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-            uint32_t dwBytesWritten = ::fwrite(&data, 1, 128 * sectors, m_pDrive->fpFile);
+            uint32_t dwBytesWritten = ::fwrite(data, 1, 128 * sectors, m_pDrive->fpFile);
             //TODO: Проверка на ошибки записи
         }
         else
@@ -576,7 +576,7 @@ void CFloppyController::FlushChanges()
             long foffset = (m_track * 2 + side) * 11 * 256;
             // Save data into the file
             ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
-            uint32_t dwBytesWritten = ::fwrite(&data, 1, 256 * 11, m_pDrive->fpFile);
+            uint32_t dwBytesWritten = ::fwrite(data, 1, 256 * 11, m_pDrive->fpFile);
             //TODO: Проверка на ошибки записи
         }
         else
@@ -684,15 +684,15 @@ static bool DecodeTrackData(const uint8_t* pRaw, uint8_t* pDest, uint16_t track)
     uint16_t destptr = 0;  // Offset in data array
 
     if (pRaw[dataptr++] != 0363) return false;  // Marker not found
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Track Number
-    if (dataptr < FLOPPY_RAWTRACKSIZE && pRaw[dataptr] <= 23) dataptr++;  // Skip Sectors on Track
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip ??
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip First Sector
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip First Sector
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip ??
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip ??
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Checksum
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Checksum
+    dataptr++;  // Skip Track Number
+    if (pRaw[dataptr] <= 23) dataptr++;  // Skip Sectors on Track
+    dataptr++;  // Skip ??
+    dataptr++;  // Skip First Sector
+    dataptr++;  // Skip First Sector
+    dataptr++;  // Skip ??
+    dataptr++;  // Skip ??
+    dataptr++;  // Skip Checksum
+    dataptr++;  // Skip Checksum
 
     for (int sect = 0; sect < 23/*TODO*/; sect++)  // Copy sectors
     {
