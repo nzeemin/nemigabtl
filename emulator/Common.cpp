@@ -20,7 +20,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 BOOL AssertFailedLine(LPCSTR lpszFileName, int nLine)
 {
     TCHAR buffer[360];
-    wsprintf(buffer,
+    _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR),
             _T("ASSERTION FAILED\n\nFile: %S\nLine: %d\n\n")
             _T("Press Abort to stop the program, Retry to break to the debugger, or Ignore to continue execution."),
             lpszFileName, nLine);

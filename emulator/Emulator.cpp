@@ -179,8 +179,8 @@ void Emulator_Done()
     g_pBoard = nullptr;
 
     // Free memory used for old RAM values
-    ::free(g_pEmulatorRam);
-    ::free(g_pEmulatorChangedRam);
+    ::free(g_pEmulatorRam);  g_pEmulatorRam = nullptr;
+    ::free(g_pEmulatorChangedRam);  g_pEmulatorChangedRam = nullptr;
 }
 
 bool Emulator_InitConfiguration(uint16_t configuration)
@@ -489,13 +489,13 @@ bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
         {
             // Prepare port name
             TCHAR port[15];
-            wsprintf(port, _T("\\\\.\\%s"), serialPort);
+            _sntprintf(port, sizeof(port) / sizeof(TCHAR), _T("\\\\.\\%s"), serialPort);
 
             // Open port
             m_hEmulatorComPort = ::CreateFile(port, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (m_hEmulatorComPort == INVALID_HANDLE_VALUE)
             {
-                uint32_t dwError = ::GetLastError();
+                DWORD dwError = ::GetLastError();
                 AlertWarningFormat(_T("Failed to open COM port (0x%08lx)."), dwError);
                 return false;
             }
@@ -505,7 +505,7 @@ bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
             Settings_GetSerialConfig(&dcb);
             if (!::SetCommState(m_hEmulatorComPort, &dcb))
             {
-                uint32_t dwError = ::GetLastError();
+                DWORD dwError = ::GetLastError();
                 ::CloseHandle(m_hEmulatorComPort);
                 m_hEmulatorComPort = INVALID_HANDLE_VALUE;
                 AlertWarningFormat(_T("Failed to configure the COM port (0x%08lx)."), dwError);
@@ -521,7 +521,7 @@ bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
             timeouts.WriteTotalTimeoutConstant = 100;
             if (!::SetCommTimeouts(m_hEmulatorComPort, &timeouts))
             {
-                uint32_t dwError = ::GetLastError();
+                DWORD dwError = ::GetLastError();
                 ::CloseHandle(m_hEmulatorComPort);
                 m_hEmulatorComPort = INVALID_HANDLE_VALUE;
                 AlertWarningFormat(_T("Failed to set the COM port timeouts (0x%08lx)."), dwError);
@@ -606,7 +606,7 @@ int Emulator_SystemFrame()
         double dFramesPerSecond = m_nFrameCount * 1000.0 / nTicksElapsed;
         double dSpeed = dFramesPerSecond / 25.0 * 100;
         TCHAR buffer[16];
-        swprintf_s(buffer, 16, _T("%03.f%%"), dSpeed);
+        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%03.f%%"), dSpeed);
         MainWindow_SetStatusbarText(StatusbarPartFPS, buffer);
 
         bool floppyEngine = g_pBoard->IsFloppyEngineOn();
@@ -628,7 +628,7 @@ int Emulator_SystemFrame()
         int hours   = (int) (m_dwEmulatorUptime / 3600 % 60);
 
         TCHAR buffer[20];
-        swprintf_s(buffer, 20, _T("Uptime: %02d:%02d:%02d"), hours, minutes, seconds);
+        swprintf_s(buffer, sizeof(buffer), _T("Uptime: %02d:%02d:%02d"), hours, minutes, seconds);
         MainWindow_SetStatusbarText(StatusbarPartUptime, buffer);
     }
 

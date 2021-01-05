@@ -34,12 +34,15 @@ BOOL InputBoxValidate(HWND hDlg);
 LPCTSTR m_strInputBoxTitle = NULL;
 WORD* m_pInputBoxValueOctal = NULL;
 
-DCB m_DialogSettings_SerialConfig;
-DCB m_DialogSettings_NetComConfig;
-DCB* m_pDcbEditorData = NULL;
+// Show the standard Choose Color dialog box
+BOOL ShowColorDialog(COLORREF& color);
 
 COLORREF m_DialogSettings_acrCustClr[16];  // array of custom colors to use in ChooseColor()
 COLORREF m_DialogSettings_OsdLineColor = RGB(120, 0, 0);
+
+DCB m_DialogSettings_SerialConfig;
+DCB m_DialogSettings_NetComConfig;
+DCB* m_pDcbEditorData = NULL;
 
 
 //////////////////////////////////////////////////////////////////////
@@ -58,7 +61,7 @@ INT_PTR CALLBACK AboutBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     case WM_INITDIALOG:
         {
             TCHAR buf[64];
-            wsprintf(buf, _T("%S %S"), __DATE__, __TIME__);
+            _sntprintf(buf, sizeof(buf) / sizeof(TCHAR), _T("%S %S"), __DATE__, __TIME__);
             ::SetWindowText(::GetDlgItem(hDlg, IDC_BUILDDATE), buf);
             return (INT_PTR)TRUE;
         }
@@ -100,7 +103,7 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             HWND hEdit = GetDlgItem(hDlg, IDC_EDIT1);
 
             TCHAR buffer[8];
-            _sntprintf_s(buffer, 8, _T("%06ho"), *m_pInputBoxValueOctal);
+            _sntprintf_s(buffer, sizeof(buffer), _T("%06ho"), *m_pInputBoxValueOctal);
             SetWindowText(hEdit, buffer);
             SendMessage(hEdit, EM_SETSEL, 0, -1);
 
@@ -120,7 +123,7 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
                     WORD otherValue;
                     if (_sntscanf_s(buffer, 8, _T("%hx"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
                     {
-                        _sntprintf_s(buffer, 8, _T("%04hx"), *m_pInputBoxValueOctal);
+                        _sntprintf_s(buffer, sizeof(buffer), _T("%04hx"), *m_pInputBoxValueOctal);
                         SetDlgItemText(hDlg, IDC_EDIT2, buffer);
                     }
                 }
@@ -136,7 +139,7 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
                     WORD otherValue;
                     if (_sntscanf_s(buffer, 8, _T("%ho"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
                     {
-                        _sntprintf_s(buffer, 8, _T("%06ho"), *m_pInputBoxValueOctal);
+                        _sntprintf_s(buffer, sizeof(buffer), _T("%06ho"), *m_pInputBoxValueOctal);
                         SetDlgItemText(hDlg, IDC_EDIT1, buffer);
                     }
                 }
@@ -283,6 +286,26 @@ void Dialogs_DoCreateDisk(LONG fileSize)
 
     ::MessageBox(g_hwnd, _T("New disk file created successfully.\nPlease initialize the disk using INIT command."),
             g_szTitle, MB_OK | MB_ICONINFORMATION);
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// Color Dialog
+
+BOOL ShowColorDialog(COLORREF& color, HWND hWndOwner)
+{
+    CHOOSECOLOR cc;  memset(&cc, 0, sizeof(cc));
+    cc.lStructSize = sizeof(cc);
+    cc.hwndOwner = hWndOwner;
+    cc.lpCustColors = (LPDWORD)m_DialogSettings_acrCustClr;
+    cc.rgbResult = color;
+    cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+
+    if (!::ChooseColor(&cc))
+        return FALSE;
+
+    color = cc.rgbResult;
+    return TRUE;
 }
 
 
@@ -471,17 +494,9 @@ void SettingsDialog_OnChooseColor(HWND hDlg)
     HWND hList = GetDlgItem(hDlg, IDC_LIST1);
     int itemIndex = ::SendMessage(hList, LB_GETCURSEL, 0, 0);
     COLORREF color = ::SendMessage(hList, LB_GETITEMDATA, itemIndex, 0);
-
-    CHOOSECOLOR cc;  memset(&cc, 0, sizeof(cc));
-    cc.lStructSize = sizeof(cc);
-    cc.hwndOwner = hDlg;
-    cc.lpCustColors = (LPDWORD)m_DialogSettings_acrCustClr;
-    cc.rgbResult = color;
-    cc.Flags = CC_FULLOPEN | CC_RGBINIT;
-
-    if (::ChooseColor(&cc))
+    if (ShowColorDialog(color, hDlg))
     {
-        ::SendMessage(hList, LB_SETITEMDATA, itemIndex, (LPARAM)cc.rgbResult);
+        ::SendMessage(hList, LB_SETITEMDATA, itemIndex, (LPARAM)color);
         ::InvalidateRect(hList, NULL, TRUE);
     }
 }
@@ -574,7 +589,7 @@ INT_PTR CALLBACK DcbEditorProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*
             int selindex = 5;  // 9600 by default
             for (int i = 0; i < sizeof(BaudrateValues) / sizeof(DWORD); i++)
             {
-                wsprintf(buffer, _T("%lu"), BaudrateValues[i]);
+                _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%lu"), BaudrateValues[i]);
                 SendMessage(hBaudrate, LB_ADDSTRING, 0, (LPARAM)buffer);
                 if (pDCB->BaudRate == BaudrateValues[i])
                     selindex = i;
