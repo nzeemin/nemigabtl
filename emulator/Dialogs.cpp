@@ -403,9 +403,9 @@ void SettingsDialog_FillDebugFontCombo(HWND hCombo)
     logfont.lfWeight = FW_NORMAL;
     logfont.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
 
-    HDC hdc = GetDC(NULL);
+    HDC hdc = ::GetDC(NULL);
     EnumFontFamiliesEx(hdc, &logfont, (FONTENUMPROC)SettingsDialog_EnumFontProc, (LPARAM)hCombo, 0);
-    ReleaseDC(NULL, hdc);
+    VERIFY(::ReleaseDC(NULL, hdc));
 
     Settings_GetDebugFontName(logfont.lfFaceName);
     ::SendMessage(hCombo, CB_SELECTSTRING, 0, (LPARAM)logfont.lfFaceName);

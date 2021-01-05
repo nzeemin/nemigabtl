@@ -280,7 +280,7 @@ void DebugView_DoDraw(HDC hdc)
     SetTextColor(hdc, colorOld);
     SetBkColor(hdc, colorBkOld);
     SelectObject(hdc, hOldFont);
-    DeleteObject(hFont);
+    VERIFY(::DeleteObject(hFont));
 
     if (::GetFocus() == m_hwndDebugViewer)
     {

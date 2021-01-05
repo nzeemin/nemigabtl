@@ -81,9 +81,9 @@ LRESULT CALLBACK ToolWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
             ::SetBkMode(hdc, TRANSPARENT);
             ::DrawText(hdc, buffer, (int) wcslen(buffer), &rc, DT_LEFT | DT_VCENTER | DT_SINGLELINE);
             ::SelectObject(hdc, hOldFont);
-            ::DeleteObject(hfont);
+            VERIFY(::DeleteObject(hfont));
 
-            ReleaseDC(hWnd, hdc);
+            VERIFY(::ReleaseDC(hWnd, hdc));
         }
         break;
     case WM_SETTEXT:
@@ -218,7 +218,7 @@ void SplitterWindow_DrawRect(HWND hwndSplitter, int Y1, int Y2)
         ::DrawFocusRect(hdc, &rc);
     }
 
-    ::ReleaseDC(NULL, hdc);
+    VERIFY(::ReleaseDC(NULL, hdc));
 }
 
 LRESULT CALLBACK SplitterWindow_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)

@@ -340,7 +340,7 @@ LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
             // Draw focus frame for the key pressed
             HDC hdc = ::GetDC(g_hwndKeyboard);
             Keyboard_DrawKey(hdc, keyscan);
-            ::ReleaseDC(g_hwndKeyboard, hdc);
+            VERIFY(::ReleaseDC(g_hwndKeyboard, hdc));
 
             // Remember key pressed
             m_nKeyboardKeyPressed = keyscan;
@@ -357,7 +357,7 @@ LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
             // Draw focus frame for the released key
             HDC hdc = ::GetDC(g_hwndKeyboard);
             Keyboard_DrawKey(hdc, m_nKeyboardKeyPressed);
-            ::ReleaseDC(g_hwndKeyboard, hdc);
+            VERIFY(::ReleaseDC(g_hwndKeyboard, hdc));
 
             m_nKeyboardKeyPressed = KEYSCAN_NONE;
         }
@@ -470,13 +470,13 @@ void KeyboardView_OnDraw(HDC hdc)
     }
 
     ::SelectObject(hdc, hOldFont);
-    ::DeleteObject(hfont);
+    VERIFY(::DeleteObject(hfont));
 
-    ::DeleteObject(hbrLite);
-    ::DeleteObject(hbrGray);
-    ::DeleteObject(hbrDark);
-    ::DeleteObject(hbrRed);
-    ::DeleteObject(hBkBrush);
+    VERIFY(::DeleteObject(hbrLite));
+    VERIFY(::DeleteObject(hbrGray));
+    VERIFY(::DeleteObject(hbrDark));
+    VERIFY(::DeleteObject(hbrRed));
+    VERIFY(::DeleteObject(hBkBrush));
 }
 
 // Returns: index of key under the cursor position, or -1 if not found

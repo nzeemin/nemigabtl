@@ -694,9 +694,7 @@ void MainWindow_UpdateMenu()
     // View menu
     CheckMenuItem(hMenu, ID_VIEW_TOOLBAR, (Settings_GetToolbar() ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(hMenu, ID_VIEW_KEYBOARD, (Settings_GetKeyboard() ? MF_CHECKED : MF_UNCHECKED));
-    //// View|Color Screen
-    //MainWindow_SetToolbarImage(ID_VIEW_RGBSCREEN,
-    //    (ScreenView_GetScreenMode() & 1) ? ToolbarImageColorScreen : ToolbarImageBWScreen);
+
     // View|Screen Mode
     UINT scrmodecmd = 0;
     switch (ScreenView_GetScreenMode())
@@ -780,6 +778,7 @@ void MainWindow_UpdateMenu()
     BOOL okDebug = Settings_GetDebug();
     CheckMenuItem(hMenu, ID_VIEW_DEBUG, (okDebug ? MF_CHECKED : MF_UNCHECKED));
     EnableMenuItem(hMenu, ID_VIEW_MEMORYMAP, (okDebug ? MF_ENABLED : MF_DISABLED));
+    CheckMenuItem(hMenu, ID_VIEW_MEMORYMAP, (okDebug && Settings_GetMemoryMap() ? MF_CHECKED : MF_UNCHECKED));
     EnableMenuItem(hMenu, ID_DEBUG_SPRITES, (okDebug ? MF_ENABLED : MF_DISABLED));
     EnableMenuItem(hMenu, ID_DEBUG_STEPINTO, (okDebug ? MF_ENABLED : MF_DISABLED));
     EnableMenuItem(hMenu, ID_DEBUG_STEPOVER, (okDebug ? MF_ENABLED : MF_DISABLED));
