@@ -213,6 +213,9 @@ LRESULT CALLBACK DisasmViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
     case WM_LBUTTONDOWN:
         DisasmView_OnLButtonDown(wParam, lParam);
         break;
+    case WM_RBUTTONDOWN:
+        ::SetFocus(hWnd);
+        break;
     case WM_KEYDOWN:
         return (LRESULT) DisasmView_OnKeyDown(wParam, lParam);
     case WM_SETFOCUS:

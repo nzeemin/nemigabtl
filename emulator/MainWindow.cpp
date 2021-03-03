@@ -65,6 +65,7 @@ void MainWindow_DoEmulatorFloppyMD(int slot);
 void MainWindow_DoEmulatorFloppyMX(int slot);
 void MainWindow_DoEmulatorConf(WORD configuration);
 void MainWindow_DoFileScreenshot();
+void MainWindow_DoFileScreenshotToClipboard();
 void MainWindow_DoFileScreenshotSaveAs();
 void MainWindow_DoFileCreateDisk();
 void MainWindow_DoFileSettings();
@@ -907,6 +908,9 @@ bool MainWindow_DoCommand(int commandId)
     case ID_FILE_SCREENSHOT:
         MainWindow_DoFileScreenshot();
         break;
+    case ID_FILE_SCREENSHOTTOCLIPBOARD:
+        MainWindow_DoFileScreenshotToClipboard();
+        break;
     case ID_FILE_SAVESCREENSHOTAS:
         MainWindow_DoFileScreenshotSaveAs();
         break;
@@ -1088,6 +1092,18 @@ void MainWindow_DoFileScreenshot()
     if (!ScreenView_SaveScreenshot(bufFileName))
     {
         AlertWarning(_T("Failed to save screenshot bitmap."));
+    }
+}
+
+void MainWindow_DoFileScreenshotToClipboard()
+{
+    HGLOBAL hDIB = ScreenView_GetScreenshotAsDIB();
+    if (hDIB != NULL)
+    {
+        ::OpenClipboard(g_hwnd);
+        ::EmptyClipboard();
+        ::SetClipboardData(CF_DIB, hDIB);
+        ::CloseClipboard();
     }
 }
 

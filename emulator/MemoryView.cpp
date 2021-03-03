@@ -185,7 +185,8 @@ LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
         }
         break;
     case WM_LBUTTONDOWN:
-        SetFocus(hWnd);
+    case WM_RBUTTONDOWN:
+        ::SetFocus(hWnd);
         break;
     case WM_KEYDOWN:
         return (LRESULT) MemoryView_OnKeyDown(wParam, lParam);

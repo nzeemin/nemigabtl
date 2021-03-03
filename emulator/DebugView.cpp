@@ -187,7 +187,8 @@ LRESULT CALLBACK DebugViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, 
         }
         break;
     case WM_LBUTTONDOWN:
-        SetFocus(hWnd);
+    case WM_RBUTTONDOWN:
+        ::SetFocus(hWnd);
         break;
     case WM_KEYDOWN:
         return (LRESULT) DebugView_OnKeyDown(wParam, lParam);
