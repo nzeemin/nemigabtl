@@ -328,6 +328,7 @@ void Settings_SetDebugFontName(LPCTSTR sFontName)
 }
 
 SETTINGS_GETSET_DWORD(DebugMemoryAddress, _T("DebugMemoryAddress"), WORD, 0);
+SETTINGS_GETSET_DWORD(DebugMemoryBase, _T("DebugMemoryBase"), WORD, 0);
 SETTINGS_GETSET_DWORD(DebugMemoryByte, _T("DebugMemoryByte"), BOOL, FALSE);
 
 SETTINGS_GETSET_DWORD(Autostart, _T("Autostart"), BOOL, FALSE);
