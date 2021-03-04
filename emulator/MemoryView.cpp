@@ -218,14 +218,15 @@ LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
     return (LRESULT)FALSE;
 }
 
-WORD MemoryView_GetAddressByPoint(int mousex, int mousey)
+// Returns even address 0-65534, or -1 if out of area
+int MemoryView_GetAddressByPoint(int mousex, int mousey)
 {
     int line = mousey / m_cyLineMemory - 1;
-    if (line < 0) line = 0;
-    else if (line >= m_nPageSize) line = m_nPageSize - 1;
+    if (line < 0) return -1;
+    else if (line >= m_nPageSize) return -1;
     int pos = (mousex - 12 * m_cxChar - m_cxChar / 2) / (m_cxChar * 7);
-    if (pos < 0) pos = 0;
-    else if (pos > 7) pos = 7;
+    if (pos < 0) return -1;
+    else if (pos > 7) return -1;
 
     return (WORD)(m_wBaseAddress + line * 16 + pos * 2);
 }
@@ -275,16 +276,18 @@ void MemoryView_OnLButtonDown(int mousex, int mousey)
 {
     ::SetFocus(m_hwndMemoryViewer);
 
-    WORD addr = MemoryView_GetAddressByPoint(mousex, mousey);
-    MemoryView_GotoAddress(addr);
+    int addr = MemoryView_GetAddressByPoint(mousex, mousey);
+    if (addr >= 0)
+        MemoryView_GotoAddress((WORD)addr);
 }
 
 void MemoryView_OnRButtonDown(int mousex, int mousey)
 {
     ::SetFocus(m_hwndMemoryViewer);
 
-    WORD addr = MemoryView_GetAddressByPoint(mousex, mousey);
-    MemoryView_GotoAddress(addr);
+    int addr = MemoryView_GetAddressByPoint(mousex, mousey);
+    if (addr >= 0)
+        MemoryView_GotoAddress((WORD)addr);
 
     RECT rcValue;
     MemoryView_GetCurrentValueRect(&rcValue, m_cxChar, m_cyLineMemory);

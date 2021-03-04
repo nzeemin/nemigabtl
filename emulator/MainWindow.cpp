@@ -793,17 +793,32 @@ bool MainWindow_DoCommand(int commandId)
 {
     switch (commandId)
     {
-    case IDM_ABOUT:
-        ShowAboutBox();
+    case ID_FILE_LOADSTATE:
+        MainWindow_DoFileLoadState();
+        break;
+    case ID_FILE_SAVESTATE:
+        MainWindow_DoFileSaveState();
+        break;
+    case ID_FILE_SCREENSHOT:
+        MainWindow_DoFileScreenshot();
+        break;
+    case ID_FILE_SCREENSHOTTOCLIPBOARD:
+        MainWindow_DoFileScreenshotToClipboard();
+        break;
+    case ID_FILE_SAVESCREENSHOTAS:
+        MainWindow_DoFileScreenshotSaveAs();
+        break;
+    case ID_FILE_CREATEDISK:
+        MainWindow_DoFileCreateDisk();
+        break;
+    case ID_FILE_SETTINGS:
+        MainWindow_DoFileSettings();
+        break;
+    case ID_FILE_SETTINGS_COLORS:
+        MainWindow_DoFileSettingsColors();
         break;
     case IDM_EXIT:
         DestroyWindow(g_hwnd);
-        break;
-    case ID_VIEW_DEBUG:
-        MainWindow_DoViewDebug();
-        break;
-    case ID_VIEW_MEMORYMAP:
-        MainWindow_DoDebugMemoryMap();
         break;
     case ID_VIEW_TOOLBAR:
         MainWindow_DoViewToolbar();
@@ -832,30 +847,11 @@ bool MainWindow_DoCommand(int commandId)
     case ID_EMULATOR_AUTOSTART:
         MainWindow_DoEmulatorAutostart();
         break;
-    case ID_DEBUG_STEPINTO:
-        if (!g_okEmulatorRunning && Settings_GetDebug())
-            ConsoleView_StepInto();
-        break;
-    case ID_DEBUG_STEPOVER:
-        if (!g_okEmulatorRunning && Settings_GetDebug())
-            ConsoleView_StepOver();
-        break;
-    case ID_DEBUG_CLEARCONSOLE:
-        if (Settings_GetDebug())
-            ConsoleView_ClearConsole();
-        break;
-    case ID_DEBUG_DELETEALLBREAKPTS:
-        if (Settings_GetDebug())
-            ConsoleView_DeleteAllBreakpoints();
-        break;
-    case ID_DEBUG_MEMORY_WORDBYTE:
-        MemoryView_SwitchWordByte();
-        break;
-    case ID_DEBUG_MEMORY_GOTO:
-        MemoryView_SelectAddress();
-        break;
     case ID_EMULATOR_RESET:
         MainWindow_DoEmulatorReset();
+        break;
+    case ID_EMULATOR_SOUND:
+        MainWindow_DoEmulatorSound();
         break;
     case ID_EMULATOR_SPEED25:
         MainWindow_DoEmulatorSpeed(0x7ffe);
@@ -871,9 +867,6 @@ bool MainWindow_DoCommand(int commandId)
         break;
     case ID_EMULATOR_SPEED200:
         MainWindow_DoEmulatorSpeed(2);
-        break;
-    case ID_EMULATOR_SOUND:
-        MainWindow_DoEmulatorSound();
         break;
     case ID_EMULATOR_SERIAL:
         MainWindow_DoEmulatorSerial();
@@ -899,24 +892,6 @@ bool MainWindow_DoCommand(int commandId)
     case ID_EMULATOR_FLOPPYMX1:
         MainWindow_DoEmulatorFloppyMX(1);
         break;
-    case ID_FILE_LOADSTATE:
-        MainWindow_DoFileLoadState();
-        break;
-    case ID_FILE_SAVESTATE:
-        MainWindow_DoFileSaveState();
-        break;
-    case ID_FILE_SCREENSHOT:
-        MainWindow_DoFileScreenshot();
-        break;
-    case ID_FILE_SCREENSHOTTOCLIPBOARD:
-        MainWindow_DoFileScreenshotToClipboard();
-        break;
-    case ID_FILE_SAVESCREENSHOTAS:
-        MainWindow_DoFileScreenshotSaveAs();
-        break;
-    case ID_FILE_CREATEDISK:
-        MainWindow_DoFileCreateDisk();
-        break;
     case ID_CONF_NEMIGA303:
         MainWindow_DoEmulatorConf(EMU_CONF_NEMIGA303);
         break;
@@ -926,11 +901,39 @@ bool MainWindow_DoCommand(int commandId)
     case ID_CONF_NEMIGA406:
         MainWindow_DoEmulatorConf(EMU_CONF_NEMIGA406);
         break;
-    case ID_FILE_SETTINGS:
-        MainWindow_DoFileSettings();
+    case ID_VIEW_DEBUG:
+        MainWindow_DoViewDebug();
         break;
-    case ID_FILE_SETTINGS_COLORS:
-        MainWindow_DoFileSettingsColors();
+    case ID_VIEW_MEMORYMAP:
+        MainWindow_DoDebugMemoryMap();
+        break;
+    case ID_DEBUG_STEPINTO:
+        if (!g_okEmulatorRunning && Settings_GetDebug())
+            ConsoleView_StepInto();
+        break;
+    case ID_DEBUG_STEPOVER:
+        if (!g_okEmulatorRunning && Settings_GetDebug())
+            ConsoleView_StepOver();
+        break;
+    case ID_DEBUG_CLEARCONSOLE:
+        if (Settings_GetDebug())
+            ConsoleView_ClearConsole();
+        break;
+    case ID_DEBUG_DELETEALLBREAKPTS:
+        if (Settings_GetDebug())
+            ConsoleView_DeleteAllBreakpoints();
+        break;
+    case ID_DEBUG_SUBTITLES:
+        DisasmView_LoadUnloadSubtitles();
+        break;
+    case ID_DEBUG_MEMORY_WORDBYTE:
+        MemoryView_SwitchWordByte();
+        break;
+    case ID_DEBUG_MEMORY_GOTO:
+        MemoryView_SelectAddress();
+        break;
+    case IDM_ABOUT:
+        ShowAboutBox();
         break;
     default:
         return false;
