@@ -49,10 +49,11 @@ BOOL    m_okMemoryByteMode = FALSE;
 
 void MemoryView_AdjustWindowLayout();
 BOOL MemoryView_OnKeyDown(WPARAM vkey, LPARAM lParam);
+void MemoryView_OnLButtonDown(int mousex, int mousey);
 void MemoryView_OnRButtonDown(int mousex, int mousey);
 BOOL MemoryView_OnMouseWheel(WPARAM wParam, LPARAM lParam);
 BOOL MemoryView_OnVScroll(WORD scrollcmd, WORD scrollpos);
-void MemoryView_CopyValueToClipboard();
+void MemoryView_CopyValueToClipboard(WPARAM command);
 void MemoryView_GotoAddress(WORD wAddress);
 void MemoryView_ScrollTo(WORD wBaseAddress);
 void MemoryView_UpdateWindowText();
@@ -178,8 +179,8 @@ LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
     switch (message)
     {
     case WM_COMMAND:
-        if (wParam == ID_DEBUG_COPY_VALUE)  // "Copy Value" from context menu
-            MemoryView_CopyValueToClipboard();
+        if (wParam == ID_DEBUG_COPY_VALUE || wParam == ID_DEBUG_COPY_ADDRESS)  // Copy command from context menu
+            MemoryView_CopyValueToClipboard(wParam);
         else if (wParam == ID_DEBUG_GOTO_ADDRESS)  // "Go to Address" from context menu
             MemoryView_SelectAddress();
         else
@@ -196,7 +197,7 @@ LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
         }
         break;
     case WM_LBUTTONDOWN:
-        ::SetFocus(hWnd);
+        MemoryView_OnLButtonDown(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
         break;
     case WM_RBUTTONDOWN:
         MemoryView_OnRButtonDown(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
@@ -215,6 +216,18 @@ LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam,
         return DefWindowProc(hWnd, message, wParam, lParam);
     }
     return (LRESULT)FALSE;
+}
+
+WORD MemoryView_GetAddressByPoint(int mousex, int mousey)
+{
+    int line = mousey / m_cyLineMemory - 1;
+    if (line < 0) line = 0;
+    else if (line >= m_nPageSize) line = m_nPageSize - 1;
+    int pos = (mousex - 12 * m_cxChar - m_cxChar / 2) / (m_cxChar * 7);
+    if (pos < 0) pos = 0;
+    else if (pos > 7) pos = 7;
+
+    return (WORD)(m_wBaseAddress + line * 16 + pos * 2);
 }
 
 BOOL MemoryView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
@@ -258,15 +271,27 @@ BOOL MemoryView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
     return FALSE;
 }
 
-void MemoryView_OnRButtonDown(int /*mousex*/, int /*mousey*/)
+void MemoryView_OnLButtonDown(int mousex, int mousey)
 {
     ::SetFocus(m_hwndMemoryViewer);
+
+    WORD addr = MemoryView_GetAddressByPoint(mousex, mousey);
+    MemoryView_GotoAddress(addr);
+}
+
+void MemoryView_OnRButtonDown(int mousex, int mousey)
+{
+    ::SetFocus(m_hwndMemoryViewer);
+
+    WORD addr = MemoryView_GetAddressByPoint(mousex, mousey);
+    MemoryView_GotoAddress(addr);
 
     RECT rcValue;
     MemoryView_GetCurrentValueRect(&rcValue, m_cxChar, m_cyLineMemory);
 
     HMENU hMenu = ::CreatePopupMenu();
     ::AppendMenu(hMenu, 0, ID_DEBUG_COPY_VALUE, _T("Copy Value"));
+    ::AppendMenu(hMenu, 0, ID_DEBUG_COPY_ADDRESS, _T("Copy Address"));
     ::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
     ::AppendMenu(hMenu, 0, ID_DEBUG_GOTO_ADDRESS, _T("Go to Address..."));
 
@@ -321,20 +346,28 @@ void MemoryView_UpdateWindowText()
     ::SetWindowText(g_hwndMemory, buffer);
 }
 
-void MemoryView_CopyValueToClipboard()
+void MemoryView_CopyValueToClipboard(WPARAM command)
 {
     WORD address = m_wCurrentAddress;
+    WORD value;
 
-    // Get word from memory
-    int addrtype;
-    BOOL okHalt = g_pBoard->GetCPU()->IsHaltMode();
-    WORD value = g_pBoard->GetWordView(address, okHalt, FALSE, &addrtype);
-    BOOL okValid = (addrtype != ADDRTYPE_IO) && (addrtype != ADDRTYPE_TERM) && (addrtype != ADDRTYPE_DENY);
-
-    if (!okValid)
+    if (command == ID_DEBUG_COPY_ADDRESS)
     {
-        AlertWarning(_T("Failed to get value: invalid memory type."));
-        return;
+        value = address;
+    }
+    else
+    {
+        // Get word from memory
+        int addrtype;
+        BOOL okHalt = g_pBoard->GetCPU()->IsHaltMode();
+        value = g_pBoard->GetWordView(address, okHalt, FALSE, &addrtype);
+        BOOL okValid = (addrtype != ADDRTYPE_IO) && (addrtype != ADDRTYPE_TERM) && (addrtype != ADDRTYPE_DENY);
+
+        if (!okValid)
+        {
+            AlertWarning(_T("Failed to get value: invalid memory type."));
+            return;
+        }
     }
 
     TCHAR buffer[7];
