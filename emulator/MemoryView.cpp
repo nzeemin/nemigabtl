@@ -58,8 +58,8 @@ void MemoryView_AdjustWindowLayout();
 //};
 
 //int     m_Mode = MEMMODE_ROM;  // See MemoryViewMode enum
-WORD    m_wBaseAddress = 0;
-WORD    m_wCurrentAddress = 0;
+WORD    m_wBaseAddress = 0xFFFF;
+WORD    m_wCurrentAddress = 0xFFFF;
 BOOL    m_okMemoryByteMode = FALSE;
 
 
@@ -351,11 +351,13 @@ void MemoryView_GetCurrentValueRect(LPRECT pRect, int cxChar, int cyLine)
 {
     ASSERT(pRect != NULL);
 
-    int addroffset = m_wCurrentAddress & 15;
+    int addroffset = m_wCurrentAddress - m_wBaseAddress;
+    int line = addroffset / 16;
+    int pos = addroffset & 15;
 
-    pRect->left = cxChar * (13 + 7 * (addroffset / 2)) - cxChar / 2;
+    pRect->left = cxChar * (13 + 7 * (pos / 2)) - cxChar / 2;
     pRect->right = pRect->left + cxChar * 7;
-    pRect->top = cyLine - 1;
+    pRect->top = (line + 1) * cyLine - 1;
     pRect->bottom = pRect->top + cyLine + 1;
 }
 
@@ -511,31 +513,35 @@ void MemoryView_GotoAddress(WORD wAddress)
 {
     m_wCurrentAddress = wAddress & ((WORD)~1);  // Address should be even
     Settings_SetDebugMemoryAddress(m_wCurrentAddress);
-    MemoryView_ScrollTo(m_wCurrentAddress & 0xFFF0);  // Base address should be 16-byte aligned
+
+    int addroffset = wAddress - m_wBaseAddress;
+    if (addroffset < 0)
+    {
+        WORD baseaddr = (m_wCurrentAddress & 0xFFF0);  // Base address should be 16-byte aligned
+        MemoryView_ScrollTo(baseaddr);
+    }
+    else if (addroffset >= m_nPageSize * 16)
+    {
+        WORD baseaddr = (m_wCurrentAddress & 0xFFF0) - (m_nPageSize - 1) * 16;
+        MemoryView_ScrollTo(baseaddr);
+    }
+
     MemoryView_UpdateWindowText();
 }
 
 // Scroll window to the given base address
 void MemoryView_ScrollTo(WORD wBaseAddress)
 {
+    if (wBaseAddress == m_wBaseAddress)
+        return;
+
     m_wBaseAddress = wBaseAddress;
 
     InvalidateRect(m_hwndMemoryViewer, NULL, TRUE);
 
     MemoryView_UpdateScrollPos();
 }
-// Scroll window on given lines forward or backward
-void MemoryView_Scroll(int nDelta)
-{
-    if (nDelta == 0) return;
 
-    m_wBaseAddress = (WORD)(m_wBaseAddress + nDelta) & ((WORD)~1);
-    Settings_SetDebugMemoryAddress(m_wBaseAddress);
-
-    InvalidateRect(m_hwndMemoryViewer, NULL, TRUE);
-
-    MemoryView_UpdateScrollPos();
-}
 void MemoryView_UpdateScrollPos()
 {
     SCROLLINFO si;
