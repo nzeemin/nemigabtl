@@ -468,7 +468,7 @@ void Emulator_SetSound(bool soundOnOff)
 bool CALLBACK Emulator_SerialIn_Callback(uint8_t* pByte)
 {
     DWORD dwBytesRead;
-    bool result = ::ReadFile(m_hEmulatorComPort, pByte, 1, &dwBytesRead, NULL);
+    BOOL result = ::ReadFile(m_hEmulatorComPort, pByte, 1, &dwBytesRead, NULL);
 
     return result && (dwBytesRead == 1);
 }
@@ -587,7 +587,7 @@ void Emulator_SetParallel(bool parallelOnOff)
     m_okEmulatorParallel = parallelOnOff;
 }
 
-int Emulator_SystemFrame()
+bool Emulator_SystemFrame()
 {
     g_pBoard->SetCPUBreakpoints(m_wEmulatorCPUBpsCount > 0 ? m_EmulatorCPUBps : nullptr);
 
@@ -595,7 +595,7 @@ int Emulator_SystemFrame()
     ScreenView_ProcessKeyboard();
 
     if (!g_pBoard->SystemFrame())
-        return 0;
+        return false;
 
     // Calculate frames per second
     m_nFrameCount++;
@@ -628,7 +628,7 @@ int Emulator_SystemFrame()
         int hours   = (int) (m_dwEmulatorUptime / 3600 % 60);
 
         TCHAR buffer[20];
-        swprintf_s(buffer, sizeof(buffer), _T("Uptime: %02d:%02d:%02d"), hours, minutes, seconds);
+        swprintf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("Uptime: %02d:%02d:%02d"), hours, minutes, seconds);
         MainWindow_SetStatusbarText(StatusbarPartUptime, buffer);
     }
 
@@ -642,7 +642,7 @@ int Emulator_SystemFrame()
         }
     }
 
-    return 1;
+    return true;
 }
 
 void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R)

@@ -325,7 +325,7 @@ LRESULT CALLBACK KeyboardViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
                     {
                         BOOL okOnOff = !m_arrKeyboardIndicators[6].state;  // ÒÀÉÌÅÐ
                         m_arrKeyboardIndicators[6].state = okOnOff;
-                        g_pBoard->SetTimer50OnOff(okOnOff);
+                        g_pBoard->SetTimer50OnOff(okOnOff != 0);
                         repaintIndicators = TRUE;
                     }
                     break;

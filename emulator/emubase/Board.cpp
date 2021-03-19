@@ -79,7 +79,7 @@ void CMotherboard::SetConfiguration(uint16_t conf)
     if (m_pFloppyCtl == NULL /*&& (conf & BK_COPT_FDD) != 0*/)
     {
         m_pFloppyCtl = new CFloppyController();
-        m_pFloppyCtl->SetTrace(m_dwTrace & TRACE_FLOPPY);
+        m_pFloppyCtl->SetTrace((m_dwTrace & TRACE_FLOPPY) != 0);
     }
     //if (m_pFloppyCtl != NULL /*&& (conf & BK_COPT_FDD) == 0*/)
     //{
@@ -91,7 +91,7 @@ void CMotherboard::SetTrace(uint32_t dwTrace)
 {
     m_dwTrace = dwTrace;
     if (m_pFloppyCtl != NULL)
-        m_pFloppyCtl->SetTrace(dwTrace & TRACE_FLOPPY);
+        m_pFloppyCtl->SetTrace((dwTrace & TRACE_FLOPPY) != 0);
 }
 
 void CMotherboard::Reset ()

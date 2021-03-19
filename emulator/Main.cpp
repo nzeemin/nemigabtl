@@ -181,7 +181,7 @@ BOOL InitInstance(HINSTANCE /*hInstance*/, int /*nCmdShow*/)
     if (conf == 0) conf = EMU_CONF_NEMIGA303;
     if (!Emulator_InitConfiguration(conf))
         return FALSE;
-    Emulator_SetSound(Settings_GetSound());
+    Emulator_SetSound(Settings_GetSound() != 0);
     Emulator_SetSpeed(Settings_GetRealSpeed());
 
     if (!CreateMainWindow())

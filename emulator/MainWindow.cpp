@@ -1009,7 +1009,7 @@ void MainWindow_DoEmulatorSound()
 {
     Settings_SetSound(!Settings_GetSound());
 
-    Emulator_SetSound(Settings_GetSound());
+    Emulator_SetSound(Settings_GetSound() != 0);
 
     MainWindow_UpdateMenu();
 }
