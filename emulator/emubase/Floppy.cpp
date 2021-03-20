@@ -530,7 +530,7 @@ void CFloppyController::FlushChanges()
 
     if (m_okTrace) DebugLogFormat(_T("Floppy%d FLUSH\r\n"), m_drive);  //DEBUG
 
-    //TCHAR filename[32];  _sntprintf(filename, sizeof(filename) / sizeof(TCHAR), _T("rawtrack%02d.bin"), (int)m_pDrive->datatrack);
+    //TCHAR filename[32];  _sntprintf(filename, sizeof(filename) / sizeof(TCHAR) - 1, _T("rawtrack%02d.bin"), (int)m_pDrive->datatrack);
     //FILE* fpTrack = ::_tfopen(filename, _T("w+b"));
     //::fwrite(m_pDrive->data, 1, FLOPPY_RAWTRACKSIZE, fpTrack);
     //::fclose(fpTrack);
@@ -538,7 +538,7 @@ void CFloppyController::FlushChanges()
     // Decode track data from m_data
     uint8_t data[128 * 23];  memset(data, 0, 128 * 23);
 
-    //TCHAR filename[32];  _sntprintf(filename, sizeof(filename) / sizeof(TCHAR), _T("rawtrack%d-%02d.bin"), (int)m_drive, (int)m_pDrive->datatrack);
+    //TCHAR filename[32];  _sntprintf(filename, sizeof(filename) / sizeof(TCHAR) - 1, _T("rawtrack%d-%02d.bin"), (int)m_drive, (int)m_pDrive->datatrack);
     //FILE* fpTrack = ::_tfopen(filename, _T("w+b"));
     //::fwrite(m_pDrive->data, 1, FLOPPY_RAWTRACKSIZE, fpTrack);
     //::fclose(fpTrack);

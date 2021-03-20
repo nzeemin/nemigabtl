@@ -438,7 +438,7 @@ void KeyboardView_OnDraw(HDC hdc)
         ::SelectObject(hdc, hOldBrush);
 
         //TCHAR text[10];
-        //_sntprintf(text, sizeof(text) / sizeof(TCHAR), _T("%02x"), (int)m_arrKeyboardKeys[i].scan);
+        //_sntprintf(text, sizeof(text) / sizeof(TCHAR) - 1, _T("%02x"), (int)m_arrKeyboardKeys[i].scan);
         LPCTSTR text = m_arrKeyboardKeys[i].text;
         if (text != NULL)
         {

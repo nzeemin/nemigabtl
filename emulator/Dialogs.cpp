@@ -61,7 +61,7 @@ INT_PTR CALLBACK AboutBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     case WM_INITDIALOG:
         {
             TCHAR buf[64];
-            _sntprintf(buf, sizeof(buf) / sizeof(TCHAR), _T("%S %S"), __DATE__, __TIME__);
+            _sntprintf(buf, sizeof(buf) / sizeof(TCHAR) - 1, _T("%S %S"), __DATE__, __TIME__);
             ::SetWindowText(::GetDlgItem(hDlg, IDC_BUILDDATE), buf);
             return (INT_PTR)TRUE;
         }
@@ -91,7 +91,6 @@ BOOL InputBoxOctal(HWND hwndOwner, LPCTSTR strTitle, WORD* pValue)
     return TRUE;
 }
 
-
 INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
@@ -103,7 +102,7 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             HWND hEdit = GetDlgItem(hDlg, IDC_EDIT1);
 
             TCHAR buffer[8];
-            _sntprintf_s(buffer, sizeof(buffer), _T("%06ho"), *m_pInputBoxValueOctal);
+            _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%06ho"), *m_pInputBoxValueOctal);
             SetWindowText(hEdit, buffer);
             SendMessage(hEdit, EM_SETSEL, 0, -1);
 
@@ -117,13 +116,13 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             {
                 TCHAR buffer[8];
                 GetDlgItemText(hDlg, IDC_EDIT1, buffer, 8);
-                if (_sntscanf_s(buffer, 8, _T("%ho"), m_pInputBoxValueOctal) > 0)
+                if (_sntscanf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%ho"), m_pInputBoxValueOctal) > 0)
                 {
                     GetDlgItemText(hDlg, IDC_EDIT2, buffer, 8);
                     WORD otherValue;
-                    if (_sntscanf_s(buffer, 8, _T("%hx"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
+                    if (_sntscanf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%hx"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
                     {
-                        _sntprintf_s(buffer, sizeof(buffer), _T("%04hx"), *m_pInputBoxValueOctal);
+                        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%04hx"), *m_pInputBoxValueOctal);
                         SetDlgItemText(hDlg, IDC_EDIT2, buffer);
                     }
                 }
@@ -133,13 +132,13 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             {
                 TCHAR buffer[8];
                 GetDlgItemText(hDlg, IDC_EDIT2, buffer, 8);
-                if (_sntscanf_s(buffer, 8, _T("%hx"), m_pInputBoxValueOctal) > 0)
+                if (_sntscanf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%hx"), m_pInputBoxValueOctal) > 0)
                 {
                     GetDlgItemText(hDlg, IDC_EDIT1, buffer, 8);
                     WORD otherValue;
-                    if (_sntscanf_s(buffer, 8, _T("%ho"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
+                    if (_sntscanf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%ho"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
                     {
-                        _sntprintf_s(buffer, sizeof(buffer), _T("%06ho"), *m_pInputBoxValueOctal);
+                        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%06ho"), *m_pInputBoxValueOctal);
                         SetDlgItemText(hDlg, IDC_EDIT1, buffer);
                     }
                 }
@@ -589,7 +588,7 @@ INT_PTR CALLBACK DcbEditorProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM /*
             int selindex = 5;  // 9600 by default
             for (int i = 0; i < sizeof(BaudrateValues) / sizeof(DWORD); i++)
             {
-                _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%lu"), BaudrateValues[i]);
+                _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%lu"), BaudrateValues[i]);
                 SendMessage(hBaudrate, LB_ADDSTRING, 0, (LPARAM)buffer);
                 if (pDCB->BaudRate == BaudrateValues[i])
                     selindex = i;

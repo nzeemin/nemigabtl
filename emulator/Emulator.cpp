@@ -489,7 +489,7 @@ bool Emulator_SetSerial(bool serialOnOff, LPCTSTR serialPort)
         {
             // Prepare port name
             TCHAR port[15];
-            _sntprintf(port, sizeof(port) / sizeof(TCHAR), _T("\\\\.\\%s"), serialPort);
+            _sntprintf(port, sizeof(port) / sizeof(TCHAR) - 1, _T("\\\\.\\%s"), serialPort);
 
             // Open port
             m_hEmulatorComPort = ::CreateFile(port, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -561,7 +561,7 @@ bool CALLBACK Emulator_ParallelOut_Callback(uint8_t byte)
 
     ////DEBUG
     //TCHAR buffer[32];
-    //_snwprintf_s(buffer, 32, _T("Printer: <%02x>\r\n"), byte);
+    //_sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("Printer: <%02x>\r\n"), byte);
     //ConsoleView_Print(buffer);
 
     return true;
@@ -606,7 +606,7 @@ bool Emulator_SystemFrame()
         double dFramesPerSecond = m_nFrameCount * 1000.0 / nTicksElapsed;
         double dSpeed = dFramesPerSecond / 25.0 * 100;
         TCHAR buffer[16];
-        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%03.f%%"), dSpeed);
+        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%03.f%%"), dSpeed);
         MainWindow_SetStatusbarText(StatusbarPartFPS, buffer);
 
         bool floppyEngine = g_pBoard->IsFloppyEngineOn();
@@ -628,7 +628,7 @@ bool Emulator_SystemFrame()
         int hours   = (int) (m_dwEmulatorUptime / 3600 % 60);
 
         TCHAR buffer[20];
-        swprintf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("Uptime: %02d:%02d:%02d"), hours, minutes, seconds);
+        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("Uptime: %02d:%02d:%02d"), hours, minutes, seconds);
         MainWindow_SetStatusbarText(StatusbarPartUptime, buffer);
     }
 

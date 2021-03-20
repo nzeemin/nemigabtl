@@ -1231,8 +1231,8 @@ void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, uint16_t address,
     TCHAR args[32];
     DisassembleInstruction(memory, address, instr, args);
     TCHAR buffer[64];
-    _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%s: %s\t%s\r\n"), bufaddr, instr, args);
-    //_sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%s %s: %s\t%s\r\n"), pProc->IsHaltMode() ? _T("HALT") : _T("USER"), bufaddr, instr, args);
+    _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%s: %s\t%s\r\n"), bufaddr, instr, args);
+    //_sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%s %s: %s\t%s\r\n"), pProc->IsHaltMode() ? _T("HALT") : _T("USER"), bufaddr, instr, args);
 
     DebugLog(buffer);
 }
