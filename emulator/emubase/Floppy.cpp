@@ -1,4 +1,4 @@
-/*  This file is part of NEMIGABTL.
+п»ї/*  This file is part of NEMIGABTL.
     NEMIGABTL is free software: you can redistribute it and/or modify it under the terms
 of the GNU Lesser General Public License as published by the Free Software Foundation,
 either version 3 of the License, or (at your option) any later version.
@@ -164,14 +164,14 @@ uint16_t CFloppyController::GetState(void)
     m_motorcount = 0;
 
     if (m_pDrive == NULL)
-        return FLOPPY_STATUS_RELOAD;  // Нет сигнала READY
+        return FLOPPY_STATUS_RELOAD;  // РќРµС‚ СЃРёРіРЅР°Р»Р° READY
     if (m_pDrive->fpFile == NULL)
-        return FLOPPY_STATUS_RELOAD;  // Нет сигнала READY
+        return FLOPPY_STATUS_RELOAD;  // РќРµС‚ СЃРёРіРЅР°Р»Р° READY
 
     if (m_pDrive->dataptr >= FLOPPY_RAWTRACKSIZE - FLOPPY_INDEXLENGTH)
         m_status |= FLOPPY_STATUS_INDEX;
     else
-        m_status &= ~FLOPPY_STATUS_INDEX;  // Проходим индексное отверстие
+        m_status &= ~FLOPPY_STATUS_INDEX;  // РџСЂРѕС…РѕРґРёРј РёРЅРґРµРєСЃРЅРѕРµ РѕС‚РІРµСЂСЃС‚РёРµ
 
     uint16_t res = m_status;
 
@@ -188,7 +188,7 @@ void CFloppyController::SetTimer(uint16_t word)
 {
     m_timer = ((word & 1) != 0);
     m_timer = true;  m_timercount = 1;
-    // Сигнал RELOAD сбрасывается при записи в регистр таймера, если к тому времени восстановился сигнал READY
+    // РЎРёРіРЅР°Р» RELOAD СЃР±СЂР°СЃС‹РІР°РµС‚СЃСЏ РїСЂРё Р·Р°РїРёСЃРё РІ СЂРµРіРёСЃС‚СЂ С‚Р°Р№РјРµСЂР°, РµСЃР»Рё Рє С‚РѕРјСѓ РІСЂРµРјРµРЅРё РІРѕСЃСЃС‚Р°РЅРѕРІРёР»СЃСЏ СЃРёРіРЅР°Р» READY
     if (m_pDrive != NULL && m_pDrive->fpFile != NULL)
         m_status &= ~FLOPPY_STATUS_RELOAD;
 }
@@ -203,9 +203,9 @@ void CFloppyController::SetCommand(uint16_t cmd)
 
     m_motorcount = 0;
 
-    bool okPrepareTrack = false;  // Нужно ли считывать дорожку в буфер
+    bool okPrepareTrack = false;  // РќСѓР¶РЅРѕ Р»Рё СЃС‡РёС‚С‹РІР°С‚СЊ РґРѕСЂРѕР¶РєСѓ РІ Р±СѓС„РµСЂ
 
-    // Проверить, не сменился ли текущий привод
+    // РџСЂРѕРІРµСЂРёС‚СЊ, РЅРµ СЃРјРµРЅРёР»СЃСЏ Р»Рё С‚РµРєСѓС‰РёР№ РїСЂРёРІРѕРґ
     int newdrive = ((cmd & 03) << 1) | ((cmd & 04) >> 2);
     if (m_drive != newdrive)
     {
@@ -218,11 +218,11 @@ void CFloppyController::SetCommand(uint16_t cmd)
 
         if (m_okTrace) DebugLogFormat(_T("Floppy CURRENT DRIVE %d\r\n"), newdrive);
     }
-    cmd &= ~7;  // Убираем из команды информацию о текущем приводе
+    cmd &= ~7;  // РЈР±РёСЂР°РµРј РёР· РєРѕРјР°РЅРґС‹ РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ С‚РµРєСѓС‰РµРј РїСЂРёРІРѕРґРµ
 
     // Copy new flags to m_flags
     m_motoron = ((cmd & 8) != 0);
-    cmd &= 060;  // Оставляем только код операции
+    cmd &= 060;  // РћСЃС‚Р°РІР»СЏРµРј С‚РѕР»СЊРєРѕ РєРѕРґ РѕРїРµСЂР°С†РёРё
 
     if (okPrepareTrack)
         PrepareTrack();
@@ -233,9 +233,9 @@ void CFloppyController::SetCommand(uint16_t cmd)
     {
         m_status &= ~FLOPPY_STATUS_TR;
 
-        // Если операция ЗАПИСЬ, то бит TR00/WRPRT содержит признак защиты от записи
+        // Р•СЃР»Рё РѕРїРµСЂР°С†РёСЏ Р—РђРџРРЎР¬, С‚Рѕ Р±РёС‚ TR00/WRPRT СЃРѕРґРµСЂР¶РёС‚ РїСЂРёР·РЅР°Рє Р·Р°С‰РёС‚С‹ РѕС‚ Р·Р°РїРёСЃРё
         if (m_pDrive != NULL && m_pDrive->okReadOnly)
-            m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // Защита от записи -- WRPRT = 0
+            m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // Р—Р°С‰РёС‚Р° РѕС‚ Р·Р°РїРёСЃРё -- WRPRT = 0
         else
             m_status |= FLOPPY_STATUS_TR00_WRPRT;
     }
@@ -245,9 +245,9 @@ void CFloppyController::SetCommand(uint16_t cmd)
     }
     else if (m_operation == FLOPPY_OPER_STEP_OUT)
     {
-        // Только для этой операции выставляется признак нулевой дорожки
+        // РўРѕР»СЊРєРѕ РґР»СЏ СЌС‚РѕР№ РѕРїРµСЂР°С†РёРё РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РїСЂРёР·РЅР°Рє РЅСѓР»РµРІРѕР№ РґРѕСЂРѕР¶РєРё
         if (m_track == 0)
-            m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // Нулевая дорожка, TR00 = 0
+            m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // РќСѓР»РµРІР°СЏ РґРѕСЂРѕР¶РєР°, TR00 = 0
         else
             m_status |= FLOPPY_STATUS_TR00_WRPRT;
     }
@@ -267,7 +267,7 @@ void CFloppyController::SetState(uint16_t data)
             break;
         case FLOPPY_OPER_STEP_OUT:
         case FLOPPY_OPER_STEP_IN:
-            m_status |= FLOPPY_STATUS_TR;  // Устанавливается всегда при операциях ШАГ ВПЕРЕД и ШАГ НАЗАД
+            m_status |= FLOPPY_STATUS_TR;  // РЈСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІСЃРµРіРґР° РїСЂРё РѕРїРµСЂР°С†РёСЏС… РЁРђР“ Р’РџР•Р Р•Р” Рё РЁРђР“ РќРђР—РђР”
             m_opercount = 2500 / 64;  // Track-to-track time less than 3 ms
             break;
         case FLOPPY_OPER_READ_TRACK:
@@ -298,7 +298,7 @@ uint16_t CFloppyController::GetData(void)
     if (m_okTrace && offset >= 10 && (offset - 10) % 130 == 0)
         DebugLogFormat(_T("Floppy%d READ %02x POS%04d SC%02d TR%02d\r\n"), m_drive, m_datareg, offset, (offset - 10) / 130 + 1, m_track);
 
-    m_status &= ~FLOPPY_STATUS_TR;  // TR сбрасывается при чтении регистра данных
+    m_status &= ~FLOPPY_STATUS_TR;  // TR СЃР±СЂР°СЃС‹РІР°РµС‚СЃСЏ РїСЂРё С‡С‚РµРЅРёРё СЂРµРіРёСЃС‚СЂР° РґР°РЅРЅС‹С…
 
     return m_datareg;
 }
@@ -313,10 +313,10 @@ void CFloppyController::WriteData(uint16_t data)
 
     if (m_operation == FLOPPY_OPER_WRITE_TRACK &&
         m_opercount == -3 &&
-        data == 0363)  // Пришел маркер
+        data == 0363)  // РџСЂРёС€РµР» РјР°СЂРєРµСЂ
     {
-        m_opercount = -4;  // Переходим непосредственно к записи на дорожку
-        m_pDrive->dataptr = FLOPPY_RAWTRACKSIZE - 1;  //HACK: чтобы маркер был в самом начале дорожки
+        m_opercount = -4;  // РџРµСЂРµС…РѕРґРёРј РЅРµРїРѕСЃСЂРµРґСЃС‚РІРµРЅРЅРѕ Рє Р·Р°РїРёСЃРё РЅР° РґРѕСЂРѕР¶РєСѓ
+        m_pDrive->dataptr = FLOPPY_RAWTRACKSIZE - 1;  //HACK: С‡С‚РѕР±С‹ РјР°СЂРєРµСЂ Р±С‹Р» РІ СЃР°РјРѕРј РЅР°С‡Р°Р»Рµ РґРѕСЂРѕР¶РєРё
     }
     if (m_operation == FLOPPY_OPER_WRITE_TRACK &&
         m_opercount == -4)
@@ -361,7 +361,7 @@ void CFloppyController::Periodic()
         }
     }
 
-    if (!IsEngineOn()) return;  // Вращаем дискеты только если включен мотор
+    if (!IsEngineOn()) return;  // Р’СЂР°С‰Р°РµРј РґРёСЃРєРµС‚С‹ С‚РѕР»СЊРєРѕ РµСЃР»Рё РІРєР»СЋС‡РµРЅ РјРѕС‚РѕСЂ
 
     m_motorcount++;
     if (m_motorcount > 125000)  // 8 S = 8000000 uS; 8000000 uS / 64 uS = 125000
@@ -372,7 +372,7 @@ void CFloppyController::Periodic()
         return;
     }
 
-    // Вращаем дискеты во всех драйвах сразу
+    // Р’СЂР°С‰Р°РµРј РґРёСЃРєРµС‚С‹ РІРѕ РІСЃРµС… РґСЂР°Р№РІР°С… СЃСЂР°Р·Сѓ
     for (int drive = 0; drive < 8; drive++)
     {
         m_drivedata[drive].dataptr += 1;
@@ -383,33 +383,33 @@ void CFloppyController::Periodic()
 //    if (m_okTrace && m_pDrive != NULL && m_pDrive->dataptr == 0)
 //        DebugLogFormat(_T("Floppy Index\n"));
 
-    // Далее обрабатываем операции на текущем драйве
+    // Р”Р°Р»РµРµ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РѕРїРµСЂР°С†РёРё РЅР° С‚РµРєСѓС‰РµРј РґСЂР°Р№РІРµ
     if (m_pDrive == NULL) return;
     if (m_pDrive->fpFile == NULL) return;
 
-    if (m_opercount == 0) return;  // Нет текущей операции
-    if (m_opercount == -1) return;  // Операция задана, но пока не запущена
+    if (m_opercount == 0) return;  // РќРµС‚ С‚РµРєСѓС‰РµР№ РѕРїРµСЂР°С†РёРё
+    if (m_opercount == -1) return;  // РћРїРµСЂР°С†РёСЏ Р·Р°РґР°РЅР°, РЅРѕ РїРѕРєР° РЅРµ Р·Р°РїСѓС‰РµРЅР°
 
-    if (m_opercount > 0)  // Операция в процессе
+    if (m_opercount > 0)  // РћРїРµСЂР°С†РёСЏ РІ РїСЂРѕС†РµСЃСЃРµ
     {
         m_opercount--;
         if (m_opercount == 0)
         {
-            if (m_operation == FLOPPY_OPER_STEP_IN)  // Шаг к центру дискеты
+            if (m_operation == FLOPPY_OPER_STEP_IN)  // РЁР°Рі Рє С†РµРЅС‚СЂСѓ РґРёСЃРєРµС‚С‹
             {
                 if (m_okTrace) DebugLogFormat(_T("Floppy%d STEP IN\r\n"), m_drive);
 
                 if (m_track < 82) { m_track++;  PrepareTrack(); }
             }
-            else if (m_operation == FLOPPY_OPER_STEP_OUT)  // Шаг от центра дискеты
+            else if (m_operation == FLOPPY_OPER_STEP_OUT)  // РЁР°Рі РѕС‚ С†РµРЅС‚СЂР° РґРёСЃРєРµС‚С‹
             {
                 if (m_okTrace) DebugLogFormat(_T("Floppy%d STEP OUT\r\n"), m_drive);
 
                 if (m_track >= 1) { m_track--;  PrepareTrack(); }
-                // Только для этой операции выставляется признак нулевой дорожки
+                // РўРѕР»СЊРєРѕ РґР»СЏ СЌС‚РѕР№ РѕРїРµСЂР°С†РёРё РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РїСЂРёР·РЅР°Рє РЅСѓР»РµРІРѕР№ РґРѕСЂРѕР¶РєРё
                 if (m_track == 0)
                 {
-                    m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // Нулевая дорожка, TR00 = 0
+                    m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // РќСѓР»РµРІР°СЏ РґРѕСЂРѕР¶РєР°, TR00 = 0
 
                     if (m_okTrace) DebugLog(_T("Floppy TRACK 00\r\n"));
                 }
@@ -418,29 +418,29 @@ void CFloppyController::Periodic()
             }
         }
     }
-    else if (m_opercount == -2)  // Поиск начала дорожки
+    else if (m_opercount == -2)  // РџРѕРёСЃРє РЅР°С‡Р°Р»Р° РґРѕСЂРѕР¶РєРё
     {
         if (m_operation == FLOPPY_OPER_READ_TRACK && m_pDrive->dataptr == 0)
         {
             m_datareg = m_pDrive->data[m_pDrive->dataptr];
             m_status |= FLOPPY_STATUS_TR;
-            m_opercount = -3;  // Операция чтения в процессе
+            m_opercount = -3;  // РћРїРµСЂР°С†РёСЏ С‡С‚РµРЅРёСЏ РІ РїСЂРѕС†РµСЃСЃРµ
         }
-        // При ЗАПИСЬ после выдачи команды RUN бит TR сбрасывается до физического начала дорожки
+        // РџСЂРё Р—РђРџРРЎР¬ РїРѕСЃР»Рµ РІС‹РґР°С‡Рё РєРѕРјР°РЅРґС‹ RUN Р±РёС‚ TR СЃР±СЂР°СЃС‹РІР°РµС‚СЃСЏ РґРѕ С„РёР·РёС‡РµСЃРєРѕРіРѕ РЅР°С‡Р°Р»Р° РґРѕСЂРѕР¶РєРё
         else if (m_operation == FLOPPY_OPER_WRITE_TRACK && m_pDrive->dataptr == 0)
         {
             m_status |= FLOPPY_STATUS_TR;
-            m_opercount = -3;  // Теперь ждём поступления маркера 363 в регистр данных
+            m_opercount = -3;  // РўРµРїРµСЂСЊ Р¶РґС‘Рј РїРѕСЃС‚СѓРїР»РµРЅРёСЏ РјР°СЂРєРµСЂР° 363 РІ СЂРµРіРёСЃС‚СЂ РґР°РЅРЅС‹С…
         }
     }
-    else if (m_opercount == -3 || m_opercount == -4)  // Операция в процессе
+    else if (m_opercount == -3 || m_opercount == -4)  // РћРїРµСЂР°С†РёСЏ РІ РїСЂРѕС†РµСЃСЃРµ
     {
-        if (m_operation == FLOPPY_OPER_READ_TRACK)  // Читаем байты
+        if (m_operation == FLOPPY_OPER_READ_TRACK)  // Р§РёС‚Р°РµРј Р±Р°Р№С‚С‹
         {
             m_datareg = m_pDrive->data[m_pDrive->dataptr];
             m_status |= FLOPPY_STATUS_TR;
         }
-        else if (m_operation == FLOPPY_OPER_WRITE_TRACK)  // Пишем байты
+        else if (m_operation == FLOPPY_OPER_WRITE_TRACK)  // РџРёС€РµРј Р±Р°Р№С‚С‹
         {
             if (m_opercount == -4)
             {
@@ -486,7 +486,7 @@ void CFloppyController::PrepareTrack()
         {
             ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
             count = ::fread(data, 1, sectors * 128, m_pDrive->fpFile);
-            //TODO: Контроль ошибок чтения
+            //TODO: РљРѕРЅС‚СЂРѕР»СЊ РѕС€РёР±РѕРє С‡С‚РµРЅРёСЏ
         }
 
         // Fill m_data array with data
@@ -559,7 +559,7 @@ void CFloppyController::FlushChanges()
             // Save data into the file
             ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
             uint32_t dwBytesWritten = ::fwrite(data, 1, 128 * sectors, m_pDrive->fpFile);
-            //TODO: Проверка на ошибки записи
+            //TODO: РџСЂРѕРІРµСЂРєР° РЅР° РѕС€РёР±РєРё Р·Р°РїРёСЃРё
         }
         else
         {
@@ -577,7 +577,7 @@ void CFloppyController::FlushChanges()
             // Save data into the file
             ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
             uint32_t dwBytesWritten = ::fwrite(data, 1, 256 * 11, m_pDrive->fpFile);
-            //TODO: Проверка на ошибки записи
+            //TODO: РџСЂРѕРІРµСЂРєР° РЅР° РѕС€РёР±РєРё Р·Р°РїРёСЃРё
         }
         else
         {
@@ -594,7 +594,7 @@ void CFloppyController::FlushChanges()
 //            uint32_t bytesToWrite = ((uint32_t)(foffset + 5120) - currentFileSize) % 512;
 //            if (bytesToWrite == 0) bytesToWrite = 512;
 //            ::fwrite(datafill, 1, bytesToWrite, m_pDrive->fpFile);
-//            //TODO: Проверка на ошибки записи
+//            //TODO: РџСЂРѕРІРµСЂРєР° РЅР° РѕС€РёР±РєРё Р·Р°РїРёСЃРё
 //            currentFileSize += bytesToWrite;
 //        }
 
@@ -613,7 +613,7 @@ uint16_t CalculateChecksum(const uint8_t* buffer, int length)
     while (length > 0)
     {
         uint16_t src = *buffer;
-        if (src & 0200) src |= 0177400;  // Расширение знакового бита
+        if (src & 0200) src |= 0177400;  // Р Р°СЃС€РёСЂРµРЅРёРµ Р·РЅР°РєРѕРІРѕРіРѕ Р±РёС‚Р°
         signed short dst = sum + src;
         sum = dst;
 

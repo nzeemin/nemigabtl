@@ -1,4 +1,4 @@
-/*  This file is part of NEMIGABTL.
+п»ї/*  This file is part of NEMIGABTL.
     NEMIGABTL is free software: you can redistribute it and/or modify it under the terms
 of the GNU Lesser General Public License as published by the Free Software Foundation,
 either version 3 of the License, or (at your option) any later version.
@@ -74,7 +74,7 @@ public:
 class CFloppyController
 {
 protected:
-    CFloppyDrive m_drivedata[8];  // Четыре привода по две стороны
+    CFloppyDrive m_drivedata[8];  // Р§РµС‚С‹СЂРµ РїСЂРёРІРѕРґР° РїРѕ РґРІРµ СЃС‚РѕСЂРѕРЅС‹
     int m_drive;            // Drive number: from 0 to 7; -1 if not selected
     CFloppyDrive* m_pDrive; // Current drive; NULL if not selected
     uint16_t m_track;       // Track number: from 0 to 79

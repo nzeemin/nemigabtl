@@ -1,4 +1,4 @@
-/*  This file is part of NEMIGABTL.
+п»ї/*  This file is part of NEMIGABTL.
     NEMIGABTL is free software: you can redistribute it and/or modify it under the terms
 of the GNU Lesser General Public License as published by the Free Software Foundation,
 either version 3 of the License, or (at your option) any later version.
@@ -56,11 +56,11 @@ uint16_t g_wEmulatorPrevCpuPC = 0177777;  // Previous PC value
 void CALLBACK Emulator_SoundGenCallback(unsigned short L, unsigned short R);
 
 //////////////////////////////////////////////////////////////////////
-//Прототип функции преобразования экрана
+//РџСЂРѕС‚РѕС‚РёРї С„СѓРЅРєС†РёРё РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёСЏ СЌРєСЂР°РЅР°
 // Input:
-//   pVideoBuffer   Исходные данные, биты экрана БК
-//   pPalette       Палитра
-//   pImageBits     Результат, 32-битный цвет, размер для каждой функции свой
+//   pVideoBuffer   РСЃС…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ, Р±РёС‚С‹ СЌРєСЂР°РЅР° Р‘Рљ
+//   pPalette       РџР°Р»РёС‚СЂР°
+//   pImageBits     Р РµР·СѓР»СЊС‚Р°С‚, 32-Р±РёС‚РЅС‹Р№ С†РІРµС‚, СЂР°Р·РјРµСЂ РґР»СЏ РєР°Р¶РґРѕР№ С„СѓРЅРєС†РёРё СЃРІРѕР№
 typedef void (CALLBACK* PREPARE_SCREEN_CALLBACK)(const uint8_t* pVideoBuffer, const uint32_t* pPalette, void* pImageBits);
 
 void CALLBACK Emulator_PrepareScreenBW512x256(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits);

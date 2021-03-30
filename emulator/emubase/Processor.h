@@ -1,4 +1,4 @@
-/*  This file is part of NEMIGABTL.
+п»ї/*  This file is part of NEMIGABTL.
     NEMIGABTL is free software: you can redistribute it and/or modify it under the terms
 of the GNU Lesser General Public License as published by the Free Software Foundation,
 either version 3 of the License, or (at your option) any later version.
@@ -157,10 +157,10 @@ protected:
     uint16_t    GetByteAddr (uint8_t meth, uint8_t reg);
 
 protected:  // Implementation - instruction execution
-    void        ExecuteUNKNOWN ();  // Нет такой инструкции - просто вызывается TRAP 10
+    void        ExecuteUNKNOWN ();  // РќРµС‚ С‚Р°РєРѕР№ РёРЅСЃС‚СЂСѓРєС†РёРё - РїСЂРѕСЃС‚Рѕ РІС‹Р·С‹РІР°РµС‚СЃСЏ TRAP 10
 
-    // Команды перечислены по книге "Микропроцессорный комплект БИС серии КР588" Таблица 2, стр.11-13
-    // Одноадресные команды
+    // РљРѕРјР°РЅРґС‹ РїРµСЂРµС‡РёСЃР»РµРЅС‹ РїРѕ РєРЅРёРіРµ "РњРёРєСЂРѕРїСЂРѕС†РµСЃСЃРѕСЂРЅС‹Р№ РєРѕРјРїР»РµРєС‚ Р‘РРЎ СЃРµСЂРёРё РљР 588" РўР°Р±Р»РёС†Р° 2, СЃС‚СЂ.11-13
+    // РћРґРЅРѕР°РґСЂРµСЃРЅС‹Рµ РєРѕРјР°РЅРґС‹
     void        ExecuteCLR ();      // CLR(B),  0001
     void        ExecuteCOM ();      //  0001
     void        ExecuteINC ();      //  0001
@@ -177,7 +177,7 @@ protected:  // Implementation - instruction execution
     void        ExecuteSWAB ();     //  0002
     void        ExecuteMTPS ();     //  0002
     void        ExecuteMFPS ();     //  0002
-    // Двухадресные команды
+    // Р”РІСѓС…Р°РґСЂРµСЃРЅС‹Рµ РєРѕРјР°РЅРґС‹
     void        ExecuteMOV ();      //  0001
     void        ExecuteCMP ();      //  0001
     void        ExecuteADD ();      //  0001
@@ -186,7 +186,7 @@ protected:  // Implementation - instruction execution
     void        ExecuteBIC ();      //  0001
     void        ExecuteBIS ();      //  0001
     void        ExecuteXOR ();      //  0002
-    // Команды управления программой
+    // РљРѕРјР°РЅРґС‹ СѓРїСЂР°РІР»РµРЅРёСЏ РїСЂРѕРіСЂР°РјРјРѕР№
     void        ExecuteBR ();       //  0002
     void        ExecuteBNE ();      //  0002
     void        ExecuteBEQ ();      //  0002
@@ -209,7 +209,7 @@ protected:  // Implementation - instruction execution
     void        ExecuteRTS ();      //  0004
     void        ExecuteMARK ();     //  0002
     void        ExecuteSOB ();      //  0002
-    // Команды прерывания программы
+    // РљРѕРјР°РЅРґС‹ РїСЂРµСЂС‹РІР°РЅРёСЏ РїСЂРѕРіСЂР°РјРјС‹
     void        ExecuteEMT ();      //  0004
     void        ExecuteTRAP ();     //  0004
     void        ExecuteIOT ();      //  0004
@@ -219,7 +219,7 @@ protected:  // Implementation - instruction execution
     void        ExecuteHALT ();     //  0004
     void        ExecuteWAIT ();     //  0004
     void        ExecuteRESET ();    //  0004
-    // Команды изменения признаков
+    // РљРѕРјР°РЅРґС‹ РёР·РјРµРЅРµРЅРёСЏ РїСЂРёР·РЅР°РєРѕРІ
     void        ExecuteCLC ();      //  0002
     void        ExecuteCLV ();      //  0002
     void        ExecuteCLVC ();
@@ -251,7 +251,7 @@ protected:  // Implementation - instruction execution
     void        ExecuteSENZV ();
     void        ExecuteSCC ();      //  0002
     void        ExecuteNOP ();      //  0002
-    // Команды расширенной арифметики
+    // РљРѕРјР°РЅРґС‹ СЂР°СЃС€РёСЂРµРЅРЅРѕР№ Р°СЂРёС„РјРµС‚РёРєРё
     void        ExecuteMUL ();      //  0003
     void        ExecuteDIV ();      //  0003
     void        ExecuteASH ();      //  0003
