@@ -60,9 +60,12 @@ INT_PTR CALLBACK AboutBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
     {
     case WM_INITDIALOG:
         {
-            TCHAR buf[64];
-            _sntprintf(buf, sizeof(buf) / sizeof(TCHAR) - 1, _T("%S %S"), __DATE__, __TIME__);
-            ::SetWindowText(::GetDlgItem(hDlg, IDC_BUILDDATE), buf);
+            const size_t buffersize = 64;
+            TCHAR buffer[buffersize];
+            _sntprintf(buffer, buffersize - 1, _T("NEMIGABTL version %s revision %d"), _T(APP_VERSION_STRING), APP_REVISION);
+            ::SetDlgItemText(hDlg, IDC_VERSION, buffer);
+            _sntprintf(buffer, buffersize - 1, _T("%S %S"), __DATE__, __TIME__);
+            ::SetWindowText(::GetDlgItem(hDlg, IDC_BUILDDATE), buffer);
             return (INT_PTR)TRUE;
         }
     case WM_COMMAND:
@@ -114,15 +117,16 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
         {
         case IDC_EDIT1:
             {
-                TCHAR buffer[8];
-                GetDlgItemText(hDlg, IDC_EDIT1, buffer, 8);
-                if (_sntscanf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%ho"), m_pInputBoxValueOctal) > 0)
+                const size_t buffersize = 8;
+                TCHAR buffer[buffersize];
+                GetDlgItemText(hDlg, IDC_EDIT1, buffer, buffersize);
+                if (_sntscanf_s(buffer, buffersize, _T("%ho"), m_pInputBoxValueOctal) > 0)
                 {
-                    GetDlgItemText(hDlg, IDC_EDIT2, buffer, 8);
+                    GetDlgItemText(hDlg, IDC_EDIT2, buffer, buffersize);
                     WORD otherValue;
-                    if (_sntscanf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%hx"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
+                    if (_sntscanf_s(buffer, buffersize, _T("%hx"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
                     {
-                        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%04hx"), *m_pInputBoxValueOctal);
+                        _sntprintf(buffer, buffersize - 1, _T("%04hx"), *m_pInputBoxValueOctal);
                         SetDlgItemText(hDlg, IDC_EDIT2, buffer);
                     }
                 }
@@ -130,15 +134,16 @@ INT_PTR CALLBACK InputBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             return (INT_PTR)TRUE;
         case IDC_EDIT2:
             {
-                TCHAR buffer[8];
-                GetDlgItemText(hDlg, IDC_EDIT2, buffer, 8);
-                if (_sntscanf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%hx"), m_pInputBoxValueOctal) > 0)
+                const size_t buffersize = 8;
+                TCHAR buffer[buffersize];
+                GetDlgItemText(hDlg, IDC_EDIT2, buffer, buffersize);
+                if (_sntscanf_s(buffer, buffersize, _T("%hx"), m_pInputBoxValueOctal) > 0)
                 {
-                    GetDlgItemText(hDlg, IDC_EDIT1, buffer, 8);
+                    GetDlgItemText(hDlg, IDC_EDIT1, buffer, buffersize);
                     WORD otherValue;
-                    if (_sntscanf_s(buffer, sizeof(buffer) / sizeof(TCHAR), _T("%ho"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
+                    if (_sntscanf_s(buffer, buffersize, _T("%ho"), &otherValue) <= 0 || *m_pInputBoxValueOctal != otherValue)
                     {
-                        _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%06ho"), *m_pInputBoxValueOctal);
+                        _sntprintf(buffer, buffersize - 1, _T("%06ho"), *m_pInputBoxValueOctal);
                         SetDlgItemText(hDlg, IDC_EDIT1, buffer);
                     }
                 }
