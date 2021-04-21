@@ -47,7 +47,7 @@ class CProcessor;
 #define NEMIGAIMAGE_SIZE 147456
 #define NEMIGAIMAGE_HEADER1 0x494D454E  // "NEMI"
 #define NEMIGAIMAGE_HEADER2 0x21214147  // "GA!!"
-#define NEMIGAIMAGE_VERSION 0x00010000  // 1.0
+#define NEMIGAIMAGE_VERSION 0x00010001  // 1.1
 
 //////////////////////////////////////////////////////////////////////
 
@@ -125,6 +125,7 @@ public:
     bool        SystemFrame();  // Do one frame -- use for normal run
     void        KeyboardEvent(uint8_t scancode, bool okPressed);  // Key pressed or released
     //uint16_t        GetPrinterOutPort() const { return m_Port177714out; }
+    void        PreProcessHALT();  // Called by the CPU right before the HALT interrupt processing
 public:  // Floppy
     bool        AttachFloppyImage(int slot, LPCTSTR sFileName);  // Attach MD image
     bool        AttachFloppyMXImage(int slot, LPCTSTR sFileName);  // Attach MX image
@@ -170,7 +171,10 @@ public:  // Saving/loading emulator status
     void        SaveToImage(uint8_t* pImage);
     void        LoadFromImage(const uint8_t* pImage);
 private:  // Ports: implementation
-    uint16_t    m_Port170006;       // Регистр данных клавиатуры (байт 170006) и регистр фиксации HALT-запросов (байт 170007)
+    void        RegisterHaltRq(uint8_t flags);
+    uint8_t     m_Port170006;       // Регистр данных клавиатуры (байт 170006)
+    uint8_t     m_Port170007acc;    // Регистр приема HALT-запросов
+    uint8_t     m_Port170007;       // Регистр фиксации HALT-запросов (байт 170007)
     uint16_t    m_Port170006wr;     // Регистр 170006 на запись
     uint16_t    m_Port170020;       // Регистр состояния таймера
     uint16_t    m_Port170022;       // Регистр частоты

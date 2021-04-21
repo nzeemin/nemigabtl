@@ -282,6 +282,7 @@ void CProcessor::Execute()
             {
                 intrVector = 0002;  intrMode = true;
                 m_HALTrq = false;
+                m_pBoard->PreProcessHALT();
             }
             else if (m_BPT_rq)  // BPT command
             {
@@ -2148,47 +2149,77 @@ void CProcessor::ExecuteMARK ()  // MARK
 
 //////////////////////////////////////////////////////////////////////
 //
-// CPU image format (32 bytes):
-//   2 bytes        PSW
+// CPU image format (64 bytes):
+//   2   bytes      PSW
 //   2*8 bytes      Registers R0..R7
-//   2*2 bytes      Saved PC and PSW
-//   2 bytes        Stopped flag: !0 - stopped, 0 - not stopped
+//   2   bytes      Stopped flag: !0 - stopped, 0 - not stopped
+//   2   bytes      Internal tick count
+//   3   bytes      Flags
+//   1   byte       RESERVED
+//   2*3 bytes      EIS chip registers
+//  32   bytes      VIRQ vectors
 
 void CProcessor::SaveToImage(uint8_t* pImage)
 {
-    uint16_t* pwImage = (uint16_t*) pImage;
-    // PSW
-    *pwImage++ = m_psw;
-    // Registers R0..R7
-    ::memcpy(pwImage, m_R, 2 * 8);
-    pwImage += 2 * 8;
-    // Saved PC and PSW
-    *pwImage++ = 0;  //m_savepc;
-    *pwImage++ = 0;  //m_savepsw;
-    // Stopped flag
-    *pwImage++ = (m_okStopped ? 1 : 0);
-    *pwImage++ = (m_waitmode ? 1 : 0);
-    *pwImage++ = (m_stepmode ? 1 : 0);
-    *pwImage++ = (m_haltmode ? 1 : 0);
+    // Processor data                               // Offset Size
+    uint16_t* pwImage = (uint16_t*)pImage;          //    0    --
+    *pwImage++ = m_psw;                             //    0     2   PSW
+    ::memcpy(pwImage, m_R, 2 * 8);  pwImage += 8;   //    2    16   Registers R0-R7
+    *pwImage++ = (m_okStopped ? 1 : 0);             //   18     2   Stopped
+    *pwImage++ = m_internalTick;                    //   20     2   Internal tick count
+    uint8_t* pbImage = (uint8_t*)pwImage;
+    uint8_t flags0 = 0;
+    flags0 |= (m_stepmode ? 1 : 0);
+    flags0 |= (m_haltmode ? 4 : 0);
+    flags0 |= (m_waitmode ? 32 : 0);
+    *pbImage++ = flags0;                            //   22     1   Flags
+    uint8_t flags1 = 0;
+    flags1 |= (m_RPLYrq ? 2 : 0);
+    flags1 |= (m_RSVDrq ? 8 : 0);
+    flags1 |= (m_TBITrq ? 16 : 0);
+    flags1 |= (m_HALTrq ? 64 : 0);
+    flags1 |= (m_EVNTrq ? 128 : 0);
+    *pbImage++ = flags1;                            //   23     1   Flags
+    uint8_t flags2 = 0;
+    flags2 |= (m_BPT_rq ? 2 : 0);
+    flags2 |= (m_IOT_rq ? 4 : 0);
+    flags2 |= (m_EMT_rq ? 8 : 0);
+    flags2 |= (m_TRAPrq ? 16 : 0);
+    *pbImage++ = flags2;                            //   24     1   Flags
+    //                                              //   25     1   RESERVED
+    memcpy(pImage + 26, m_eisregs, 2 * 3);          //   26     6   EIS chip registers
+    memcpy(pImage + 32, m_virq, 2 * 16);            //   32    32   VIRQ vectors
 }
 
 void CProcessor::LoadFromImage(const uint8_t* pImage)
 {
     Stop();  // Reset internal state
 
-    uint16_t* pwImage = (uint16_t*) pImage;
-    // PSW
-    m_psw = *pwImage++;
-    // Registers R0..R7
-    ::memcpy(m_R, pwImage, 2 * 8);
-    // Saved PC and PSW - skip
-    pwImage++;
-    pwImage++;
-    // Stopped flag
-    m_okStopped = (*pwImage++ != 0);
-    m_waitmode = (*pwImage++ != 0);
-    m_stepmode = (*pwImage++ != 0);
-    m_haltmode = (*pwImage++ != 0);
+    // Processor data                               // Offset Size
+    uint16_t* pwImage = (uint16_t*)pImage;          //    0    --
+    m_psw = *pwImage++;                             //    0     2   PSW
+    ::memcpy(m_R, pwImage, 2 * 8);  pwImage += 8;   //    2    16   Registers R0-R7
+    m_okStopped = (*pwImage++ != 0);                //   18     2   Stopped
+    m_internalTick = *pwImage++;                    //   20     2   Internal tick count
+    const uint8_t* pbImage = (const uint8_t*)pwImage;
+    uint8_t flags0 = *pbImage++;                    //   22     1   Flags
+    m_stepmode  = ((flags0 &   1) != 0);
+    m_haltmode  = ((flags0 &   4) != 0);
+    m_waitmode  = ((flags0 &  32) != 0);
+    uint8_t flags1 = *pbImage++;                    //   23     1   Flags
+    m_RPLYrq    = ((flags1 &   2) != 0);
+    m_RSVDrq    = ((flags1 &   8) != 0);
+    m_TBITrq    = ((flags1 &  16) != 0);
+    m_HALTrq    = ((flags1 &  64) != 0);
+    m_EVNTrq    = ((flags1 & 128) != 0);
+    uint8_t flags2 = *pbImage++;                    //   24     1   Flags
+    m_BPT_rq    = ((flags2 &   2) != 0);
+    m_IOT_rq    = ((flags2 &   4) != 0);
+    m_EMT_rq    = ((flags2 &   8) != 0);
+    m_TRAPrq    = ((flags2 &  16) != 0);
+    //                                              //   25     1   RESERVED
+    memcpy(m_eisregs, pImage + 26, 2 * 3);          //   26     3   EIS chip registers
+    memcpy(m_virq, pImage + 32, 2 * 16);            //   32    32   VIRQ vectors
 }
 
 uint16_t CProcessor::GetWordAddr (uint8_t meth, uint8_t reg)

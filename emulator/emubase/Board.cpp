@@ -99,7 +99,9 @@ void CMotherboard::Reset ()
     m_pCPU->Stop();
 
     // Reset ports
-    m_Port170006 = m_Port170006wr = 0;
+    DebugLog(_T("Reset\r\n"));
+    m_Port170007acc = m_Port170007 = m_Port170006 = 0;
+    m_Port170006wr = 0;
     m_Port177572 = 0;
     m_Port177574 = 0;
     m_Port177514 = 0377;
@@ -237,11 +239,12 @@ void CMotherboard::ResetDevices()
     if (m_pFloppyCtl != NULL)
         m_pFloppyCtl->Reset();
 
-    //m_pCPU->DeassertHALT();//DEBUG
-    m_Port170006 |= 0100000;
+    //m_Port170006 = 0;
+    m_Port170007acc |= 0x80;
+    m_Port170007 = 0;
     m_Port170006wr = 0;
     m_Port177574 = 0;
-    m_pCPU->FireHALT();
+    //m_pCPU->FireHALT();
 
     // Reset ports
     //TODO
@@ -250,8 +253,27 @@ void CMotherboard::ResetDevices()
 void CMotherboard::ResetHALT()
 {
     m_Port170006 = 0;
+    m_Port170007 = 0;
+    m_Port170007acc = 0;
     m_Port170006wr = 0;
 }
+
+void CMotherboard::RegisterHaltRq(uint8_t flags)
+{
+    m_Port170007acc |= flags;
+    if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
+    {
+        m_pCPU->FireHALT();
+        //if (m_Port170007 != 0x10)
+        //    DebugLogFormat(_T("RegisterHaltRq 0x%02x\r\n"), (int)m_Port170007);
+    }
+}
+void CMotherboard::PreProcessHALT()
+{
+    m_Port170007 = m_Port170007acc;
+    m_Port170007acc = 0;
+}
+
 
 void CMotherboard::Tick50()  // 50 Hz timer
 {
@@ -261,11 +283,7 @@ void CMotherboard::Tick50()  // 50 Hz timer
     }
 
     //NOTE: Прерывание HALT с кодом Н3 должно генерироваться каждые 1/50 секунды
-    if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
-    {
-        m_Port170006 |= 010000;  // Сигнал Н3
-        //m_pCPU->FireHALT();
-    }
+    RegisterHaltRq(0x10);  // Сигнал Н3
 
     if (m_Timer2 == 0)
     {
@@ -441,14 +459,12 @@ bool CMotherboard::SystemFrame()
 // Key pressed or released
 void CMotherboard::KeyboardEvent(uint8_t scancode, bool okPressed)
 {
-    if (okPressed)  // Key released
+    if (okPressed)
     {
-        m_Port170006 |= 02000;
-        m_Port170006 |= scancode;
-        //if (m_Port177560 | 0100)
-        m_pCPU->FireHALT();
+        m_Port170006 = scancode;
+        RegisterHaltRq(0x04);
 
-        if (m_dwTrace & TRACE_KEYBOARD)
+        //if (m_dwTrace & TRACE_KEYBOARD)
         {
             if (scancode >= ' ' && scancode <= 127)
                 DebugLogFormat(_T("Keyboard '%c'\r\n"), scancode);
@@ -514,13 +530,11 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
         if (address == 0177560)
             return GetRAMWord(address);
         else if (address == 0177562)
-            m_Port170006 |= 020000;
+            RegisterHaltRq(0x20);
         else if (address == 0177564)
             return 0200; //GetRAMWord(offset & 0177776);
         else if (address == 0177566)
-            m_Port170006 |= 040000;
-        if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
-            m_pCPU->FireHALT();
+            RegisterHaltRq(0x40);
         DebugLogFormat(_T("GetWord %06o\r\n"), address);
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_DENY:
@@ -554,13 +568,11 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
         if (address == 0177560 || address == 0177561)
             return GetRAMByte(address);
         else if (address == 0177562)
-            m_Port170006 |= 020000;
+            RegisterHaltRq(0x20);
         else if (address == 0177564)
             return 0200; //GetRAMByte(offset);
         else if (address == 0177566)
-            m_Port170006 |= 040000;
-        if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
-            m_pCPU->FireHALT();
+            RegisterHaltRq(0x40);
         DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, (uint16_t)GetRAMByte(offset));
         return GetRAMByte(offset);
     case ADDRTYPE_DENY:
@@ -601,9 +613,7 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
         if (address == 0177562)
         {
 //            DebugLogFormat(_T("SetWord 177562 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-            m_Port170006 |= 020000;
-            if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
-                m_pCPU->FireHALT();
+            RegisterHaltRq(0x20);
         }
         else if (address == 0177564)
         {
@@ -614,9 +624,7 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
         else if (address == 0177566)
         {
 //            DebugLogFormat(_T("177566 TERMOUT %04x\r\n"), word);
-            m_Port170006 |= 040000;
-            if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
-                m_pCPU->FireHALT();
+            RegisterHaltRq(0x40);
         }
 //        DebugLogFormat(_T("SetWord 06o\r\n"), address);
         SetRAMWord(offset & 0177776, word);
@@ -652,9 +660,7 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
         if (address == 0177562)
         {
 //            DebugLogFormat(_T("SetByte 177562 value %03o, PC=%06o\r\n"), (uint16_t)byte, m_pCPU->GetInstructionPC());
-            m_Port170006 |= 020000;
-            if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
-                m_pCPU->FireHALT();
+            RegisterHaltRq(0x20);
         }
         else if (address == 0177564)
         {
@@ -665,9 +671,7 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
         else if (address == 0177566)
         {
 //            DebugLogFormat(_T("177566 TERMOUT %02x\r\n"), byte);
-            m_Port170006 |= 040000;
-            if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
-                m_pCPU->FireHALT();
+            RegisterHaltRq(0x40);
         }
         SetRAMByte(offset, byte);
 //        DebugLogFormat(_T("SetByte 06o\r\n"), address);
@@ -764,7 +768,7 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return m_pCPU->GetEisReg(2);
 
     case 0170006:
-        return m_Port170006 | 01400;
+        return ((m_Port170007 | 0x03) << 8) | m_Port170006;
 
     case 0170010:  // RgSt -- Network
     case 0170012:  // RgL -- Network
@@ -863,7 +867,7 @@ uint16_t CMotherboard::GetPortView(uint16_t address)
         return 0;  //STUB
 
     case 0170006:
-        return m_Port170006 | 01400;
+        return ((m_Port170007 | 0x03) << 8) | m_Port170006;
     case 0170010:  // Network
     case 0170012:
         return 0;  //STUB
@@ -949,10 +953,26 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
         break;  //STUB
 
     case 0170006:
-        m_Port170006 = 0;
-        m_Port170006wr = word;
-        //if ((word & 01400) == 0) m_pCPU->SetHaltMode(false);
-        m_pCPU->SetHaltMode((word & 3) != 0);
+        {
+            bool oldmode = (m_Port170006wr & 3) != 0;
+            bool newmode = (word & 3) != 0;
+            m_Port170006wr = word;
+            m_pCPU->SetHaltMode(newmode);
+            if (!oldmode && newmode)  // switched from USER mode to HALT
+            {
+                //if (m_Port170007 != 0)
+                //    DebugLogFormat(_T("USER->HALT 0x%02x key=0x%02x\r\n"), (int)m_Port170007, (int)m_Port170006);
+            }
+            else if (oldmode && !newmode)  // switched from HALT mode to USER
+            {
+                if (m_Port170007acc != 0)
+                {
+                    m_pCPU->FireHALT();
+                    //if (m_Port170007 != 0x10)
+                    //DebugLogFormat(_T("HALT->USER 0x%02x 0x%02x\r\n"), (int)m_Port170007acc, (int)m_Port170007);
+                }
+            }
+        }
         break;  //STUB
 
     case 0170010:  // Network
@@ -1064,12 +1084,13 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
 
 
 //////////////////////////////////////////////////////////////////////
-// Emulator image
-//  Offset Length
+//
+// Emulator image format:
+//  Offset   Size
 //       0     32 bytes  - Header
 //      32    128 bytes  - Board status
-//     160     32 bytes  - CPU status
-//     192   3904 bytes  - RESERVED
+//     160     64 bytes  - CPU status
+//     224   3872 bytes  - RESERVED
 //    4096   4096 bytes  - Main ROM image 4K
 //    8192   8192 bytes  - RESERVED for extra 8K ROM
 //   16384 131072 bytes  - RAM image 128K
@@ -1077,24 +1098,28 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
 
 void CMotherboard::SaveToImage(uint8_t* pImage)
 {
-    // Board data
-    uint16_t* pwImage = (uint16_t*) (pImage + 32);
-    *pwImage++ = m_Configuration;
-    pwImage += 6;  // RESERVED
-    *pwImage++ = m_Port170006;
-    *pwImage++ = m_Port170006wr;
-    *pwImage++ = m_Port177572;
-    *pwImage++ = m_Port177574;
-    *pwImage++ = m_Port177514;
-    *pwImage++ = m_Port177516;
-    *pwImage++ = m_Port170020;
-    *pwImage++ = m_Port170022;
-    *pwImage++ = m_Port170024;
-    *pwImage++ = m_Port170030;
-    *pwImage++ = m_Timer1;
-    *pwImage++ = m_Timer1div;
-    *pwImage++ = m_Timer2;
-    *pwImage++ = (uint16_t)m_okSoundOnOff;
+    // Board data                                       // Offset Size
+    uint16_t* pwImage = (uint16_t*)(pImage + 32);       //   32    --
+    *pwImage++ = m_Configuration;                       //   32     2
+    pwImage += 3;                                       //   34     6   RESERVED
+    *pwImage++ = m_okTimer50OnOff ? 1 : 0;              //   40     2
+    *pwImage++ = m_Port170006;                          //   42
+    *pwImage++ = m_Port170006wr;                        //   44
+    *pwImage++ = m_Port170007acc;                       //   46
+    *pwImage++ = m_Port170007;                          //   48
+    *pwImage++ = m_Port170020;                          //   50
+    *pwImage++ = m_Port170022;                          //   52
+    *pwImage++ = m_Port170024;                          //   54
+    *pwImage++ = m_Port170030;                          //   56
+    *pwImage++ = m_Port177572;                          //   58
+    *pwImage++ = m_Port177574;                          //   60
+    *pwImage++ = m_Port177514;                          //   62
+    *pwImage++ = m_Port177516;                          //   64
+    pwImage += 3;                                       //   66     6
+    *pwImage++ = m_Timer1;                              //   72
+    *pwImage++ = m_Timer1div;                           //   74
+    *pwImage++ = m_Timer2;                              //   76
+    *pwImage++ = m_okSoundOnOff ? 1 : 0;                //   78
 
     // CPU status
     uint8_t* pImageCPU = pImage + 160;
@@ -1108,23 +1133,28 @@ void CMotherboard::SaveToImage(uint8_t* pImage)
 }
 void CMotherboard::LoadFromImage(const uint8_t* pImage)
 {
-    // Board data
-    uint16_t* pwImage = (uint16_t*)(pImage + 32);
-    m_Configuration = *pwImage++;
-    pwImage += 6;  // RESERVED
-    m_Port170006 = *pwImage++;
-    m_Port170006wr = *pwImage++;
-    m_Port177572 = *pwImage++;
-    m_Port177574 = *pwImage++;
-    m_Port177516 = *pwImage++;
-    m_Port170020 = *pwImage++;
-    m_Port170022 = *pwImage++;
-    m_Port170024 = *pwImage++;
-    m_Port170030 = *pwImage++;
-    m_Timer1 = *pwImage++;
-    m_Timer1div = *pwImage++;
-    m_Timer2 = *pwImage++;
-    m_okSoundOnOff = ((*pwImage++) != 0);
+    // Board data                                       // Offset Size
+    uint16_t* pwImage = (uint16_t*)(pImage + 32);       //   32    --
+    m_Configuration = *pwImage++;                       //   32     2
+    pwImage += 3;                                       //   34     6   RESERVED
+    m_okTimer50OnOff = ((*pwImage++) != 0);             //   40     2
+    m_Port170006 = (uint8_t)(*pwImage++);               //   42
+    m_Port170006wr = *pwImage++;                        //   44
+    m_Port170007acc = (uint8_t)(*pwImage++);            //   46
+    m_Port170007 = (uint8_t)(*pwImage++);               //   48
+    m_Port170020 = *pwImage++;                          //   50
+    m_Port170022 = *pwImage++;                          //   52
+    m_Port170024 = *pwImage++;                          //   54
+    m_Port170030 = *pwImage++;                          //   56
+    m_Port177572 = *pwImage++;                          //   58
+    m_Port177574 = *pwImage++;                          //   60
+    m_Port177514 = *pwImage++;                          //   62
+    m_Port177516 = *pwImage++;                          //   64
+    pwImage += 3;                                       //   66     6
+    m_Timer1 = *pwImage++;                              //   72
+    m_Timer1div = *pwImage++;                           //   74
+    m_Timer2 = *pwImage++;                              //   76
+    m_okSoundOnOff = ((*pwImage++) != 0);               //   78
 
     // CPU status
     const uint8_t* pImageCPU = pImage + 160;
