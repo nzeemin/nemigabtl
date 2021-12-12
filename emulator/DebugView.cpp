@@ -44,11 +44,6 @@ void DebugView_UpdateWindowText();
 
 //////////////////////////////////////////////////////////////////////
 
-BOOL DebugView_IsRegisterChanged(int regno)
-{
-    ASSERT(regno >= 0 && regno <= 8);
-    return m_okDebugCpuRChanged[regno];
-}
 
 void DebugView_RegisterClass()
 {

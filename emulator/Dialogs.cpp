@@ -65,7 +65,7 @@ INT_PTR CALLBACK AboutBoxProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             _sntprintf(buffer, buffersize - 1, _T("NEMIGABTL version %s revision %d"), _T(APP_VERSION_STRING), APP_REVISION);
             ::SetDlgItemText(hDlg, IDC_VERSION, buffer);
             _sntprintf(buffer, buffersize - 1, _T("%S %S"), __DATE__, __TIME__);
-            ::SetWindowText(::GetDlgItem(hDlg, IDC_BUILDDATE), buffer);
+            ::SetDlgItemText(hDlg, IDC_BUILDDATE, buffer);
             return (INT_PTR)TRUE;
         }
     case WM_COMMAND:
@@ -288,8 +288,7 @@ void Dialogs_DoCreateDisk(LONG fileSize)
     ::SetEndOfFile(hFile);
     ::CloseHandle(hFile);
 
-    ::MessageBox(g_hwnd, _T("New disk file created successfully.\nPlease initialize the disk using INIT command."),
-            g_szTitle, MB_OK | MB_ICONINFORMATION);
+    AlertInfo(_T("New disk file created successfully.\nPlease initialize the disk using INIT command."));
 }
 
 
@@ -379,16 +378,12 @@ INT_PTR CALLBACK SettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
             EndDialog(hDlg, LOWORD(wParam));
             return (INT_PTR)TRUE;
         case IDC_BUTTON1:
-            {
-                ShowSerialPortSettings(&m_DialogSettings_SerialConfig);
-                SetFocus(GetDlgItem(hDlg, IDC_BUTTON1));
-            }
+            ShowSerialPortSettings(&m_DialogSettings_SerialConfig);
+            SetFocus(GetDlgItem(hDlg, IDC_BUTTON1));
             break;
         case IDC_BUTTON2:
-            {
-                ShowSerialPortSettings(&m_DialogSettings_NetComConfig);
-                SetFocus(GetDlgItem(hDlg, IDC_BUTTON2));
-            }
+            ShowSerialPortSettings(&m_DialogSettings_NetComConfig);
+            SetFocus(GetDlgItem(hDlg, IDC_BUTTON2));
             break;
         default:
             return (INT_PTR)FALSE;

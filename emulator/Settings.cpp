@@ -263,8 +263,6 @@ void Settings_SetWindowRect(const RECT * pRect)
 
 SETTINGS_GETSET_DWORD(WindowMaximized, _T("WindowMaximized"), BOOL, FALSE);
 
-SETTINGS_GETSET_DWORD(WindowFullscreen, _T("WindowFullscreen"), BOOL, FALSE);
-
 SETTINGS_GETSET_DWORD(Configuration, _T("Configuration"), int, 0);
 
 void Settings_GetFloppyFilePath(int slot, LPTSTR buffer)
@@ -292,19 +290,6 @@ void Settings_SetFloppyMXFilePath(int slot, LPCTSTR sFilePath)
 {
     TCHAR bufValueName[] = _T("FloppyMX0");
     bufValueName[8] = _T('0') + (TCHAR)slot;
-    Settings_SaveStringValue(bufValueName, sFilePath);
-}
-
-void Settings_GetCartridgeFilePath(int slot, LPTSTR buffer)
-{
-    TCHAR bufValueName[] = _T("Cartridge0");
-    bufValueName[9] = _T('0') + (TCHAR)slot;
-    Settings_LoadStringValue(bufValueName, buffer, MAX_PATH);
-}
-void Settings_SetCartridgeFilePath(int slot, LPCTSTR sFilePath)
-{
-    TCHAR bufValueName[] = _T("Cartridge0");
-    bufValueName[9] = _T('0') + (TCHAR)slot;
     Settings_SaveStringValue(bufValueName, sFilePath);
 }
 
