@@ -36,6 +36,7 @@ public:
 protected:  // Statics
     typedef void ( CProcessor::*ExecuteMethodRef )();
     static ExecuteMethodRef* m_pExecuteMethodMap;
+    static void RegisterMethodRef(uint16_t start, uint16_t end, CProcessor::ExecuteMethodRef methodref);
 
 protected:  // Processor state
     int         m_internalTick;     // How many ticks waiting to the end of current instruction
@@ -48,7 +49,7 @@ protected:  // Processor state
     uint16_t    m_eisregs[3];       // EIS chip registers
 
 protected:  // Current instruction processing
-    uint16_t    m_instruction;      // Curent instruction
+    uint16_t    m_instruction;      // Current instruction
     uint16_t    m_instructionpc;    // Address of the current instruction
     uint8_t     m_regsrc;           // Source register number
     uint8_t     m_methsrc;          // Source address mode
@@ -80,11 +81,11 @@ public:  // Register control
     void        SetPSW(uint16_t word) { m_psw = word; }
     void        SetLPSW(uint8_t byte)
     {
-        m_psw = (m_psw & 0xFF00) | (uint16_t)byte;
+        m_psw = (m_psw & 0xFF00) | static_cast<uint16_t>(byte);
     }
     uint16_t    GetReg(int regno) const { return m_R[regno]; }
     void        SetReg(int regno, uint16_t word) { m_R[regno] = word; }
-    uint8_t     GetLReg(int regno) const { return (uint8_t)(m_R[regno] & 0xff); }
+    uint8_t     GetLReg(int regno) const { return static_cast<uint8_t>(m_R[regno] & 0xff); }
     uint16_t    GetSP() const { return m_R[6]; }
     void        SetSP(uint16_t word) { m_R[6] = word; }
     uint16_t    GetPC() const { return m_R[7]; }
@@ -121,16 +122,6 @@ public:  // Saving/loading emulator status (pImage addresses up to 32 bytes)
 protected:  // Implementation
     void        FetchInstruction();      // Read next instruction
     void        TranslateInstruction();  // Execute the instruction
-protected:  // Implementation - instruction processing
-    uint16_t    CalculateOperAddr(int meth, int reg);
-    uint16_t    CalculateOperAddrSrc(int meth, int reg);
-    uint8_t     GetByteSrc();
-    uint8_t     GetByteDest();
-    void        SetByteDest(uint8_t);
-    uint16_t    GetWordSrc();
-    uint16_t    GetWordDest();
-    void        SetWordDest(uint16_t);
-    uint16_t    GetDstWordArgAsBranch();
 protected:  // Implementation - memory access
     uint16_t    GetWordExec(uint16_t address) { return m_pBoard->GetWordExec(address, IsHaltMode()); }
     uint16_t    GetWord(uint16_t address) { return m_pBoard->GetWord(address, IsHaltMode()); }
@@ -157,34 +148,51 @@ protected:
     uint16_t    GetByteAddr (uint8_t meth, uint8_t reg);
 
 protected:  // Implementation - instruction execution
-    void        ExecuteUNKNOWN ();  // Нет такой инструкции - просто вызывается TRAP 10
+    void        ExecuteUNKNOWN ();  // There is no such instruction -- just call TRAP 10
 
     // Команды перечислены по книге "Микропроцессорный комплект БИС серии КР588" Таблица 2, стр.11-13
     // Одноадресные команды
-    void        ExecuteCLR ();      // CLR(B),  0001
+    void        ExecuteCLR ();      //  0001
+    void        ExecuteCLRB();      //  0001
     void        ExecuteCOM ();      //  0001
+    void        ExecuteCOMB();      //  0001
     void        ExecuteINC ();      //  0001
+    void        ExecuteINCB();      //  0001
     void        ExecuteDEC ();      //  0001
+    void        ExecuteDECB();      //  0001
     void        ExecuteNEG ();      //  0001
+    void        ExecuteNEGB();      //  0001
     void        ExecuteTST ();      //  0001
+    void        ExecuteTSTB();      //  0001
     void        ExecuteASR ();      //  0001
+    void        ExecuteASRB();      //  0001
     void        ExecuteASL ();      //  0001
+    void        ExecuteASLB();      //  0001
     void        ExecuteROR ();      //  0001
+    void        ExecuteRORB();      //  0001
     void        ExecuteROL ();      //  0001
+    void        ExecuteROLB();      //  0001
     void        ExecuteADC ();      //  0001
+    void        ExecuteADCB();      //  0001
     void        ExecuteSBC ();      //  0001
+    void        ExecuteSBCB();      //  0001
     void        ExecuteSXT ();      //  0002
     void        ExecuteSWAB ();     //  0002
     void        ExecuteMTPS ();     //  0002
     void        ExecuteMFPS ();     //  0002
     // Двухадресные команды
     void        ExecuteMOV ();      //  0001
+    void        ExecuteMOVB();      //  0001
     void        ExecuteCMP ();      //  0001
+    void        ExecuteCMPB();      //  0001
     void        ExecuteADD ();      //  0001
     void        ExecuteSUB ();      //  0001
     void        ExecuteBIT ();      //  0001
+    void        ExecuteBITB();      //  0001
     void        ExecuteBIC ();      //  0001
+    void        ExecuteBICB();      //  0001
     void        ExecuteBIS ();      //  0001
+    void        ExecuteBISB();      //  0001
     void        ExecuteXOR ();      //  0002
     // Команды управления программой
     void        ExecuteBR ();       //  0002
@@ -220,35 +228,7 @@ protected:  // Implementation - instruction execution
     void        ExecuteWAIT ();     //  0004
     void        ExecuteRESET ();    //  0004
     // Команды изменения признаков
-    void        ExecuteCLC ();      //  0002
-    void        ExecuteCLV ();      //  0002
-    void        ExecuteCLVC ();
-    void        ExecuteCLZ ();      //  0002
-    void        ExecuteCLZC ();
-    void        ExecuteCLZV ();
-    void        ExecuteCLZVC ();
-    void        ExecuteCLN ();      //  0002
-    void        ExecuteCLNC ();
-    void        ExecuteCLNV ();
-    void        ExecuteCLNVC ();
-    void        ExecuteCLNZ ();
-    void        ExecuteCLNZC ();
-    void        ExecuteCLNZV ();
     void        ExecuteCCC ();      //  0002
-    void        ExecuteSEC ();      //  0002
-    void        ExecuteSEV ();      //  0002
-    void        ExecuteSEVC ();
-    void        ExecuteSEZ ();      //  0002
-    void        ExecuteSEZC ();
-    void        ExecuteSEZV ();
-    void        ExecuteSEZVC ();
-    void        ExecuteSEN ();      //  0002
-    void        ExecuteSENC ();
-    void        ExecuteSENV ();
-    void        ExecuteSENVC ();
-    void        ExecuteSENZ ();
-    void        ExecuteSENZC ();
-    void        ExecuteSENZV ();
     void        ExecuteSCC ();      //  0002
     void        ExecuteNOP ();      //  0002
     // Команды расширенной арифметики
@@ -279,7 +259,7 @@ inline void CProcessor::SetZ (bool bFlag)
 // PSW bits calculations - implementation
 inline bool CProcessor::CheckAddForOverflow (uint8_t a, uint8_t b)
 {
-#ifdef _M_IX86
+#if defined(_M_IX86) && defined(_MSC_VER) && !defined(_MANAGED)
     bool bOverflow = false;
     _asm
     {
@@ -303,7 +283,7 @@ inline bool CProcessor::CheckAddForOverflow (uint8_t a, uint8_t b)
 }
 inline bool CProcessor::CheckAddForOverflow (uint16_t a, uint16_t b)
 {
-#ifdef _M_IX86
+#if defined(_M_IX86) && defined(_MSC_VER) && !defined(_MANAGED)
     bool bOverflow = false;
     _asm
     {
@@ -325,11 +305,10 @@ inline bool CProcessor::CheckAddForOverflow (uint16_t a, uint16_t b)
     return ((~a ^ b) & (a ^ sum)) & 0100000;
 #endif
 }
-//void        CProcessor::SetReg(int regno, uint16_t word)
 
 inline bool CProcessor::CheckSubForOverflow (uint8_t a, uint8_t b)
 {
-#ifdef _M_IX86
+#if defined(_M_IX86) && defined(_MSC_VER) && !defined(_MANAGED)
     bool bOverflow = false;
     _asm
     {
@@ -353,7 +332,7 @@ inline bool CProcessor::CheckSubForOverflow (uint8_t a, uint8_t b)
 }
 inline bool CProcessor::CheckSubForOverflow (uint16_t a, uint16_t b)
 {
-#ifdef _M_IX86
+#if defined(_M_IX86) && defined(_MSC_VER) && !defined(_MANAGED)
     bool bOverflow = false;
     _asm
     {
@@ -377,23 +356,23 @@ inline bool CProcessor::CheckSubForOverflow (uint16_t a, uint16_t b)
 }
 inline bool CProcessor::CheckAddForCarry (uint8_t a, uint8_t b)
 {
-    uint16_t sum = (uint16_t)a + (uint16_t)b;
-    return HIBYTE (sum) != 0;
+    uint16_t sum = static_cast<uint16_t>(a) + static_cast<uint16_t>(b);
+    return (sum & 0xff00) != 0;
 }
 inline bool CProcessor::CheckAddForCarry (uint16_t a, uint16_t b)
 {
-    uint32_t sum = (uint32_t)a + (uint32_t)b;
-    return HIWORD (sum) != 0;
+    uint32_t sum = static_cast<uint32_t>(a) + static_cast<uint32_t>(b);
+    return static_cast<uint16_t>((sum >> 16) & 0xffff) != 0;
 }
 inline bool CProcessor::CheckSubForCarry (uint8_t a, uint8_t b)
 {
-    uint16_t sum = (uint16_t)a - (uint16_t)b;
-    return HIBYTE (sum) != 0;
+    uint16_t sum = static_cast<uint16_t>(a) - static_cast<uint16_t>(b);
+    return (sum & 0xff00) != 0;
 }
 inline bool CProcessor::CheckSubForCarry (uint16_t a, uint16_t b)
 {
-    uint32_t sum = (uint32_t)a - (uint32_t)b;
-    return HIWORD (sum) != 0;
+    uint32_t sum = static_cast<uint32_t>(a) - static_cast<uint32_t>(b);
+    return static_cast<uint16_t>((sum >> 16) & 0xffff) != 0;
 }
 
 
