@@ -76,7 +76,7 @@ class CFloppyController
 protected:
     CFloppyDrive m_drivedata[8];  // Четыре привода по две стороны
     int m_drive;            // Drive number: from 0 to 7; -1 if not selected
-    CFloppyDrive* m_pDrive; // Current drive; NULL if not selected
+    CFloppyDrive* m_pDrive; // Current drive; nullptr if not selected
     uint16_t m_track;       // Track number: from 0 to 79
     uint16_t m_status;      // See FLOPPY_STATUS_XXX defines
     uint16_t m_datareg;     // Read mode data register
@@ -84,13 +84,13 @@ protected:
     bool m_writeflag;       // Write mode data register has data
     uint16_t m_shiftreg;    // Write mode shift register
     bool m_shiftflag;       // Write mode shift register has data
-    bool m_trackchanged;  // TRUE = m_data was changed - need to save it into the file
-    bool m_timer;       // Floppy timer bit at port 177106
-    int  m_timercount;  // Floppy timer counter
-    bool m_motoron;     // Motor ON flag
-    int  m_motorcount;  // Motor ON counter
+    bool m_trackchanged;    // TRUE = m_data was changed - need to save it into the file
+    bool m_timer;           // Floppy timer bit at port 177106
+    int  m_timercount;      // Floppy timer counter
+    bool m_motoron;         // Motor ON flag
+    int  m_motorcount;      // Motor ON counter
     uint16_t m_operation;   // Operation code, see FLOPPY_OPER_XXX defines
-    int  m_opercount;   // Operation counter - countdown or current operation stage
+    int  m_opercount;       // Operation counter - countdown or current operation stage
     bool m_okTrace;         // Trace mode on/off
 
 public:
@@ -101,8 +101,8 @@ public:
 public:
     bool AttachImage(int drive, LPCTSTR sFileName, uint8_t floppyType);
     void DetachImage(int drive);
-    uint8_t GetFloppyType(int drive) { return m_drivedata[drive].floppytype; }
-    bool IsReadOnly(int drive) { return m_drivedata[drive].okReadOnly; } // return (m_status & FLOPPY_STATUS_WRITEPROTECT) != 0; }
+    uint8_t GetFloppyType(int drive) const { return m_drivedata[drive].floppytype; }
+    bool IsReadOnly(int drive) const { return m_drivedata[drive].okReadOnly; } // return (m_status & FLOPPY_STATUS_WRITEPROTECT) != 0; }
     bool IsEngineOn() const { return m_motoron; }
     uint16_t GetState();            // Reading port 177100 - status
     uint16_t GetData();             // Reading port 177102 - data
@@ -112,7 +112,7 @@ public:
     void SetState(uint16_t data);   // Writing port 177100 - status
     void WriteData(uint16_t data);  // Writing port 177102 - data
     void SetCommand(uint16_t cmd);  // Writing port 177104 - commands
-    void SetTimer(uint16_t value);  // Writing port 177106 - timer
+    void SetTimer(uint16_t word);   // Writing port 177106 - timer
     void Periodic();            // Rotate disk; call it each 64 us - 15625 times per second
     void SetTrace(bool okTrace) { m_okTrace = okTrace; }  // Set trace mode on/off
 

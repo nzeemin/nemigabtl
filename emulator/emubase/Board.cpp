@@ -14,41 +14,48 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "stdafx.h"
 #include "Emubase.h"
 
-void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, uint16_t address, DWORD dwTrace);
+void TraceInstruction(const CProcessor* pProc, const CMotherboard* pBoard, uint16_t address, uint32_t dwTrace);
 
 
 //////////////////////////////////////////////////////////////////////
 
-CMotherboard::CMotherboard ()
+CMotherboard::CMotherboard() :
+    m_pCPU(new CProcessor(this)), m_pFloppyCtl(nullptr)
 {
-    // Create devices
-    m_pCPU = new CProcessor(this);
-    m_pFloppyCtl = NULL;
-
     m_dwTrace = TRACE_NONE;
-    m_SoundGenCallback = NULL;
-    m_SerialInCallback = NULL;
-    m_SerialOutCallback = NULL;
-    m_ParallelOutCallback = NULL;
+    m_SoundGenCallback = nullptr;
+    m_SerialInCallback = nullptr;
+    m_SerialOutCallback = nullptr;
+    m_ParallelOutCallback = nullptr;
     m_okTimer50OnOff = false;
     m_okSoundOnOff = false;
     m_Timer1 = m_Timer1div = m_Timer2 = 0;
+    m_CPUbps = nullptr;
 
     // Allocate memory for RAM and ROM
-    m_pRAM = (uint8_t*) ::calloc(128 * 1024, 1);
-    m_pROM = (uint8_t*) ::calloc(4 * 1024, 1);
+    m_pRAM = static_cast<uint8_t*>(::calloc(128 * 1024, 1));
+    m_pROM = static_cast<uint8_t*>(::calloc(4 * 1024, 1));
+
+    m_Configuration = 0;
+    m_Port170007acc = m_Port170007 = m_Port170006 = 0;
+    m_Port170006wr = 0;
+    m_Port177572 = 0;
+    m_Port177574 = 0;
+    m_Port177514 = 0377;
+    m_Port177516 = 0;
+    m_Port170020 = m_Port170022 = m_Port170024 = m_Port170030 = 0;
+    m_Port176500 = m_Port176502 = m_Port176504 = m_Port176506 = 0;
 
     SetConfiguration(0);  // Default configuration
 
     Reset();
 }
 
-CMotherboard::~CMotherboard ()
+CMotherboard::~CMotherboard()
 {
     // Delete devices
     delete m_pCPU;
-    if (m_pFloppyCtl != NULL)
-        delete m_pFloppyCtl;
+    delete m_pFloppyCtl;
 
     // Free memory
     ::free(m_pRAM);
@@ -76,25 +83,25 @@ void CMotherboard::SetConfiguration(uint16_t conf)
     //        val = ~val;
     //}
 
-    if (m_pFloppyCtl == NULL /*&& (conf & BK_COPT_FDD) != 0*/)
+    if (m_pFloppyCtl == nullptr /*&& (conf & BK_COPT_FDD) != 0*/)
     {
         m_pFloppyCtl = new CFloppyController();
         m_pFloppyCtl->SetTrace((m_dwTrace & TRACE_FLOPPY) != 0);
     }
-    //if (m_pFloppyCtl != NULL /*&& (conf & BK_COPT_FDD) == 0*/)
+    //if (m_pFloppyCtl != nullptr /*&& (conf & BK_COPT_FDD) == 0*/)
     //{
-    //    delete m_pFloppyCtl;  m_pFloppyCtl = NULL;
+    //    delete m_pFloppyCtl;  m_pFloppyCtl = nullptr;
     //}
 }
 
 void CMotherboard::SetTrace(uint32_t dwTrace)
 {
     m_dwTrace = dwTrace;
-    if (m_pFloppyCtl != NULL)
+    if (m_pFloppyCtl != nullptr)
         m_pFloppyCtl->SetTrace((dwTrace & TRACE_FLOPPY) != 0);
 }
 
-void CMotherboard::Reset ()
+void CMotherboard::Reset()
 {
     m_pCPU->Stop();
 
@@ -120,12 +127,12 @@ void CMotherboard::Reset ()
 // Load 4 KB ROM image from the buffer
 void CMotherboard::LoadROM(const uint8_t* pBuffer)
 {
-    ::memcpy(m_pROM, pBuffer, 4096);
+    memcpy(m_pROM, pBuffer, 4096);
 }
 
 void CMotherboard::LoadRAM(int startbank, const uint8_t* pBuffer, int length)
 {
-    ASSERT(pBuffer != NULL);
+    ASSERT(pBuffer != nullptr);
     ASSERT(startbank >= 0 && startbank < 15);
     int address = 8192 * startbank;
     ASSERT(address + length <= 128 * 1024);
@@ -138,7 +145,7 @@ void CMotherboard::LoadRAM(int startbank, const uint8_t* pBuffer, int length)
 uint8_t CMotherboard::GetFloppyType(int slot) const
 {
     ASSERT(slot >= 0 && slot < 4);
-    if (m_pFloppyCtl == NULL || slot < 0 || slot >= 4)
+    if (m_pFloppyCtl == nullptr || slot < 0 || slot >= 4)
         return FLOPPY_TYPE_NONE;
     return m_pFloppyCtl->GetFloppyType(slot);
 }
@@ -146,15 +153,20 @@ uint8_t CMotherboard::GetFloppyType(int slot) const
 bool CMotherboard::IsFloppyReadOnly(int slot) const
 {
     ASSERT(slot >= 0 && slot < 4);
-    if (m_pFloppyCtl == NULL)
+    if (m_pFloppyCtl == nullptr)
         return false;
     return m_pFloppyCtl->IsReadOnly(slot);
+}
+
+bool CMotherboard::IsFloppyEngineOn() const
+{
+    return (m_pFloppyCtl != nullptr && m_pFloppyCtl->IsEngineOn());
 }
 
 bool CMotherboard::AttachFloppyImage(int slot, LPCTSTR sFileName)
 {
     ASSERT(slot >= 0 && slot < 4);
-    if (m_pFloppyCtl == NULL)
+    if (m_pFloppyCtl == nullptr)
         return false;
     return m_pFloppyCtl->AttachImage(slot, sFileName, FLOPPY_TYPE_MD);
 }
@@ -162,7 +174,7 @@ bool CMotherboard::AttachFloppyImage(int slot, LPCTSTR sFileName)
 bool CMotherboard::AttachFloppyMXImage(int slot, LPCTSTR sFileName)
 {
     ASSERT(slot == 0 || slot == 2);
-    if (m_pFloppyCtl == NULL)
+    if (m_pFloppyCtl == nullptr)
         return false;
     return m_pFloppyCtl->AttachImage(slot, sFileName, FLOPPY_TYPE_MX);
 }
@@ -170,61 +182,56 @@ bool CMotherboard::AttachFloppyMXImage(int slot, LPCTSTR sFileName)
 void CMotherboard::DetachFloppyImage(int slot)
 {
     ASSERT(slot >= 0 && slot < 4);
-    if (m_pFloppyCtl == NULL)
+    if (m_pFloppyCtl == nullptr)
         return;
     m_pFloppyCtl->DetachImage(slot);
 }
 
-bool CMotherboard::IsFloppyEngineOn() const
-{
-    return m_pFloppyCtl->IsEngineOn();
-}
 
+// Memory control ////////////////////////////////////////////////////
 
-// Работа с памятью //////////////////////////////////////////////////
-
-uint16_t CMotherboard::GetRAMWord(uint16_t offset)
+uint16_t CMotherboard::GetRAMWord(uint16_t offset) const
 {
-    return *((uint16_t*)(m_pRAM + offset));
+    return *reinterpret_cast<uint16_t*>(m_pRAM + offset);
 }
-uint16_t CMotherboard::GetHIRAMWord(uint16_t offset)
+uint16_t CMotherboard::GetHIRAMWord(uint16_t offset) const
 {
-    return *((uint16_t*)(m_pRAM + 0x10000 + offset));
+    return *reinterpret_cast<uint16_t*>(m_pRAM + 0x10000 + offset);
 }
-uint8_t CMotherboard::GetRAMByte(uint16_t offset)
+uint8_t CMotherboard::GetRAMByte(uint16_t offset) const
 {
     return m_pRAM[offset];
 }
-uint8_t CMotherboard::GetHIRAMByte(uint16_t offset)
+uint8_t CMotherboard::GetHIRAMByte(uint16_t offset) const
 {
-    uint32_t dwOffset = (uint32_t)0x10000 + (uint32_t)offset;
+    uint32_t dwOffset = static_cast<uint32_t>(0x10000) + static_cast<uint32_t>(offset);
     return m_pRAM[dwOffset];
 }
-void CMotherboard::SetRAMWord(uint16_t offset, uint16_t word)
+void CMotherboard::SetRAMWord(uint16_t offset, uint16_t word) const
 {
-    *((uint16_t*)(m_pRAM + offset)) = word;
+    *reinterpret_cast<uint16_t*>(m_pRAM + offset) = word;
 }
 void CMotherboard::SetHIRAMWord(uint16_t offset, uint16_t word)
 {
-    uint32_t dwOffset = (uint32_t)0x10000 + (uint32_t)offset;
-    *((uint16_t*)(m_pRAM + dwOffset)) = word;
+    uint32_t dwOffset = static_cast<uint32_t>(0x10000) + static_cast<uint32_t>(offset);
+    *reinterpret_cast<uint16_t*>(m_pRAM + dwOffset) = word;
 }
-void CMotherboard::SetRAMByte(uint16_t offset, uint8_t byte)
+void CMotherboard::SetRAMByte(uint16_t offset, uint8_t byte) const
 {
     m_pRAM[offset] = byte;
 }
 void CMotherboard::SetHIRAMByte(uint16_t offset, uint8_t byte)
 {
-    uint32_t dwOffset = (uint32_t)0x10000 + (uint32_t)offset;
+    uint32_t dwOffset = static_cast<uint32_t>(0x10000) + static_cast<uint32_t>(offset);
     m_pRAM[dwOffset] = byte;
 }
 
-uint16_t CMotherboard::GetROMWord(uint16_t offset)
+uint16_t CMotherboard::GetROMWord(uint16_t offset) const
 {
     ASSERT(offset < 1024 * 64);
-    return *((uint16_t*)(m_pROM + offset));
+    return *reinterpret_cast<const uint16_t*>(m_pROM + offset);
 }
-uint8_t CMotherboard::GetROMByte(uint16_t offset)
+uint8_t CMotherboard::GetROMByte(uint16_t offset) const
 {
     ASSERT(offset < 1024 * 64);
     return m_pROM[offset];
@@ -236,7 +243,7 @@ uint8_t CMotherboard::GetROMByte(uint16_t offset)
 
 void CMotherboard::ResetDevices()
 {
-    if (m_pFloppyCtl != NULL)
+    if (m_pFloppyCtl != nullptr)
         m_pFloppyCtl->Reset();
 
     //m_Port170006 = 0;
@@ -341,7 +348,7 @@ void CMotherboard::DebugTicks()
 {
     m_pCPU->ClearInternalTick();
     m_pCPU->Execute();
-    if (m_pFloppyCtl != NULL)
+    if (m_pFloppyCtl != nullptr)
         m_pFloppyCtl->Periodic();
 }
 
@@ -393,14 +400,14 @@ bool CMotherboard::SystemFrame()
 
         if (frameticks % floppyTicks == 0)  // FDD tick, every 64 uS
         {
-            if (m_pFloppyCtl != NULL)
+            if (m_pFloppyCtl != nullptr)
                 m_pFloppyCtl->Periodic();
         }
 
         if (frameticks % audioticks == 0)  // AUDIO tick
             DoSound();
 
-        if (m_SerialInCallback != NULL && frameticks % 52 == 0)
+        if (m_SerialInCallback != nullptr && frameticks % 52 == 0)
         {
             uint8_t b;
             if (m_SerialInCallback(&b))
@@ -409,21 +416,21 @@ bool CMotherboard::SystemFrame()
                     m_Port176500 |= 010000;  // Set Overflow flag
                 else
                 {
-                    m_Port176502 = (uint16_t)b;
+                    m_Port176502 = static_cast<uint16_t>(b);
                     m_Port176500 |= 0200;  // Set Ready flag
                     if (m_Port176500 & 0100)  // Interrupt?
                         m_pCPU->InterruptVIRQ(7, 0300);
                 }
             }
         }
-        if (m_SerialOutCallback != NULL && frameticks % 52 == 0)
+        if (m_SerialOutCallback != nullptr && frameticks % 52 == 0)
         {
             if (serialTxCount > 0)
             {
                 serialTxCount--;
                 if (serialTxCount == 0)  // Translation countdown finished - the byte translated
                 {
-                    (*m_SerialOutCallback)((uint8_t)(m_Port176506 & 0xff));
+                    (*m_SerialOutCallback)(static_cast<uint8_t>(m_Port176506 & 0xff));
                     m_Port176504 |= 0200;  // Set Ready flag
                     if (m_Port176504 & 0100)  // Interrupt?
                         m_pCPU->InterruptVIRQ(8, 0304);
@@ -435,7 +442,7 @@ bool CMotherboard::SystemFrame()
             }
         }
 
-        if (m_ParallelOutCallback != NULL)
+        if (m_ParallelOutCallback != nullptr)
         {
             //if ((m_Port177514 & 0240) == 040)
             //{
@@ -481,7 +488,7 @@ void CMotherboard::KeyboardEvent(uint8_t scancode, bool okPressed)
 // Motherboard: memory management
 
 // Read word from memory for debugger
-uint16_t CMotherboard::GetWordView(uint16_t address, bool okHaltMode, bool okExec, int* pAddrType)
+uint16_t CMotherboard::GetWordView(uint16_t address, bool okHaltMode, bool okExec, int* pAddrType) const
 {
     uint16_t offset;
     int addrtype = TranslateAddress(address, okHaltMode, okExec, &offset);
@@ -573,7 +580,7 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
             return 0200; //GetRAMByte(offset);
         else if (address == 0177566)
             RegisterHaltRq(0x40);
-        DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, (uint16_t)GetRAMByte(offset));
+        DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, static_cast<uint16_t>(GetRAMByte(offset)));
         return GetRAMByte(offset);
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -685,12 +692,12 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
 }
 
 // Calculates video buffer start address, for screen drawing procedure
-const uint8_t* CMotherboard::GetVideoBuffer()
+const uint8_t* CMotherboard::GetVideoBuffer() const
 {
     return (m_pRAM + 0140000 + 0140000);
 }
 
-int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool /*okExec*/, uint16_t* pOffset)
+int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool /*okExec*/, uint16_t* pOffset) const
 {
     if (address < 0160000)  // 000000-157777 -- RAM
     {
@@ -726,7 +733,7 @@ int CMotherboard::TranslateAddress(uint16_t address, bool okHaltMode, bool /*okE
 
         if ((address >= 0170000 && address <= 0170015) ||
             (address >= 0170020 && address <= 0170033) ||
-            (address >= 0176500 && address <= 0176507) && m_SerialInCallback != NULL && m_SerialOutCallback != NULL ||
+            (address >= 0176500 && address <= 0176507) && m_SerialInCallback != nullptr && m_SerialOutCallback != nullptr ||
             (address >= 0177100 && address <= 0177107) ||
             (address >= 0177514 && address <= 0177517) ||
             (address >= 0177570 && address <= 0177575))  // Ports
@@ -753,7 +760,7 @@ uint8_t CMotherboard::GetPortByte(uint16_t address)
     if (address & 1)
         return GetPortWord(address & 0xfffe) >> 8;
 
-    return (uint8_t) GetPortWord(address);
+    return static_cast<uint8_t>(GetPortWord(address));
 }
 
 uint16_t CMotherboard::GetPortWord(uint16_t address)
@@ -809,15 +816,15 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return m_Port176506;
 
     case 0177100:  // RgStat -- Floppy status
-        if (m_pFloppyCtl == NULL) return 0;
+        if (m_pFloppyCtl == nullptr) return 0;
         return m_pFloppyCtl->GetState();
     case 0177102:  // RgData -- Floppy data
-        if (m_pFloppyCtl == NULL) return 0;
+        if (m_pFloppyCtl == nullptr) return 0;
         return m_pFloppyCtl->GetData();
     case 0177104:  // RgCntrl -- Floppy command
         return 0;  //STUB
     case 0177106:  // RgTime -- Floppy timer
-        if (m_pFloppyCtl == NULL) return 0;
+        if (m_pFloppyCtl == nullptr) return 0;
         return m_pFloppyCtl->GetTimer();
 
     case 0177514:
@@ -857,7 +864,7 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
 }
 
 // Read word from port for debugger
-uint16_t CMotherboard::GetPortView(uint16_t address)
+uint16_t CMotherboard::GetPortView(uint16_t address) const
 {
     switch (address)
     {
@@ -889,15 +896,15 @@ uint16_t CMotherboard::GetPortView(uint16_t address)
         return 0;  //STUB
 
     case 0177100:  // Floppy status
-        if (m_pFloppyCtl == NULL) return 0;
+        if (m_pFloppyCtl == nullptr) return 0;
         return m_pFloppyCtl->GetStateView();
     case 0177102:  // Floppy data
-        if (m_pFloppyCtl == NULL) return 0;
+        if (m_pFloppyCtl == nullptr) return 0;
         return m_pFloppyCtl->GetDataView();
     case 0177104:  // Floppy command
         return 0;  //STUB
     case 0177106:  // Floppy timer
-        if (m_pFloppyCtl == NULL) return 0;
+        if (m_pFloppyCtl == nullptr) return 0;
         return m_pFloppyCtl->GetTimer();
 
     case 0177514:
@@ -1028,19 +1035,19 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
         break;
 
     case 0177100:  // Floppy status
-        if (m_pFloppyCtl != NULL)
+        if (m_pFloppyCtl != nullptr)
             m_pFloppyCtl->SetState(word);
         break;
     case 0177102:  // Floppy data
-        if (m_pFloppyCtl != NULL)
+        if (m_pFloppyCtl != nullptr)
             m_pFloppyCtl->WriteData(word);
         break;
     case 0177104:  // Floppy command
-        if (m_pFloppyCtl != NULL)
+        if (m_pFloppyCtl != nullptr)
             m_pFloppyCtl->SetCommand(word);
         break;
     case 0177106:
-        if (m_pFloppyCtl != NULL)
+        if (m_pFloppyCtl != nullptr)
             m_pFloppyCtl->SetTimer(word);
         break;
 
@@ -1096,10 +1103,10 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
 //   16384 131072 bytes  - RAM image 128K
 //  147456     --        - END
 
-void CMotherboard::SaveToImage(uint8_t* pImage)
+void CMotherboard::SaveToImage(uint8_t* pImage) const
 {
     // Board data                                       // Offset Size
-    uint16_t* pwImage = (uint16_t*)(pImage + 32);       //   32    --
+    uint16_t* pwImage = reinterpret_cast<uint16_t*>(pImage + 32);  //   32    --
     *pwImage++ = m_Configuration;                       //   32     2
     pwImage += 3;                                       //   34     6   RESERVED
     *pwImage++ = m_okTimer50OnOff ? 1 : 0;              //   40     2
@@ -1131,17 +1138,18 @@ void CMotherboard::SaveToImage(uint8_t* pImage)
     uint8_t* pImageRam = pImage + 16384;
     memcpy(pImageRam, m_pRAM, 128 * 1024);
 }
+
 void CMotherboard::LoadFromImage(const uint8_t* pImage)
 {
     // Board data                                       // Offset Size
-    uint16_t* pwImage = (uint16_t*)(pImage + 32);       //   32    --
+    const uint16_t* pwImage = reinterpret_cast<const uint16_t*>(pImage + 32);  //   32    --
     m_Configuration = *pwImage++;                       //   32     2
     pwImage += 3;                                       //   34     6   RESERVED
     m_okTimer50OnOff = ((*pwImage++) != 0);             //   40     2
-    m_Port170006 = (uint8_t)(*pwImage++);               //   42
+    m_Port170006 = static_cast<uint8_t>(*pwImage++);    //   42
     m_Port170006wr = *pwImage++;                        //   44
-    m_Port170007acc = (uint8_t)(*pwImage++);            //   46
-    m_Port170007 = (uint8_t)(*pwImage++);               //   48
+    m_Port170007acc = static_cast<uint8_t>(*pwImage++); //   46
+    m_Port170007 = static_cast<uint8_t>(*pwImage++);    //   48
     m_Port170020 = *pwImage++;                          //   50
     m_Port170022 = *pwImage++;                          //   52
     m_Port170024 = *pwImage++;                          //   54
@@ -1173,7 +1181,7 @@ void CMotherboard::LoadFromImage(const uint8_t* pImage)
 
 void CMotherboard::DoSound(void)
 {
-    if (m_SoundGenCallback == NULL)
+    if (m_SoundGenCallback == nullptr)
         return;
 
     uint16_t volume = (m_Port170030 >> 3) & 3;  // Громкость 0..3
@@ -1195,9 +1203,9 @@ void CMotherboard::DoSound(void)
 
 void CMotherboard::SetSoundGenCallback(SOUNDGENCALLBACK callback)
 {
-    if (callback == NULL)  // Reset callback
+    if (callback == nullptr)  // Reset callback
     {
-        m_SoundGenCallback = NULL;
+        m_SoundGenCallback = nullptr;
     }
     else
     {
@@ -1207,10 +1215,10 @@ void CMotherboard::SetSoundGenCallback(SOUNDGENCALLBACK callback)
 
 void CMotherboard::SetSerialCallbacks(SERIALINCALLBACK incallback, SERIALOUTCALLBACK outcallback)
 {
-    if (incallback == NULL || outcallback == NULL)  // Reset callbacks
+    if (incallback == nullptr || outcallback == nullptr)  // Reset callbacks
     {
-        m_SerialInCallback = NULL;
-        m_SerialOutCallback = NULL;
+        m_SerialInCallback = nullptr;
+        m_SerialOutCallback = nullptr;
         //TODO: Set port value to indicate we are not ready to translate
     }
     else
@@ -1223,10 +1231,10 @@ void CMotherboard::SetSerialCallbacks(SERIALINCALLBACK incallback, SERIALOUTCALL
 
 void CMotherboard::SetParallelOutCallback(PARALLELOUTCALLBACK outcallback)
 {
-    if (outcallback == NULL)  // Reset callback
+    if (outcallback == nullptr)  // Reset callback
     {
         m_Port177514 |= 0100000;  // Set Error flag
-        m_ParallelOutCallback = NULL;
+        m_ParallelOutCallback = nullptr;
     }
     else
     {
@@ -1240,7 +1248,7 @@ void CMotherboard::SetParallelOutCallback(PARALLELOUTCALLBACK outcallback)
 
 #if !defined(PRODUCT)
 
-void TraceInstruction(CProcessor* pProc, CMotherboard* pBoard, uint16_t address, DWORD dwTrace)
+void TraceInstruction(const CProcessor* pProc, const CMotherboard* pBoard, uint16_t address, uint32_t dwTrace)
 {
     bool okHaltMode = pProc->IsHaltMode();
 

@@ -145,8 +145,8 @@ bool Emulator_Init()
     g_pBoard = new CMotherboard();
 
     // Allocate memory for old RAM values
-    g_pEmulatorRam = (uint8_t*) ::calloc(65536, 1);
-    g_pEmulatorChangedRam = (uint8_t*) ::calloc(65536, 1);
+    g_pEmulatorRam = static_cast<uint8_t*>(::calloc(65536, 1));
+    g_pEmulatorChangedRam = static_cast<uint8_t*>(::calloc(65536, 1));
 
     g_pBoard->Reset();
 
@@ -610,7 +610,7 @@ bool Emulator_SystemFrame()
         MainWindow_SetStatusbarText(StatusbarPartFPS, buffer);
 
         bool floppyEngine = g_pBoard->IsFloppyEngineOn();
-        MainWindow_SetStatusbarText(StatusbarPartFloppyEngine, floppyEngine ? _T("Motor") : NULL);
+        MainWindow_SetStatusbarText(StatusbarPartFloppyEngine, floppyEngine ? _T("Motor") : nullptr);
 
         m_nFrameCount = 0;
         m_dwTickCount = dwCurrentTicks;
@@ -715,7 +715,7 @@ void CALLBACK Emulator_PrepareScreenBW512x256(const uint8_t* pVideoBuffer, const
     for (int y = 0; y < 256; y++)
     {
         const uint16_t* pVideo = (uint16_t*)(pVideoBuffer + y * 512 / 4);
-        uint32_t* pBits = (uint32_t*)pImageBits + (256 - 1 - y) * 512;
+        uint32_t* pBits = static_cast<uint32_t*>(pImageBits) + (256 - 1 - y) * 512;
         for (int x = 0; x < 512 / 8; x++)
         {
             uint16_t src = *pVideo;
@@ -736,7 +736,7 @@ void CALLBACK Emulator_PrepareScreenBW512x256(const uint8_t* pVideoBuffer, const
 
 void CALLBACK Emulator_PrepareScreenBW512x312(const uint8_t* pVideoBuffer, const uint32_t* palette, void* pImageBits)
 {
-    uint32_t * pImageStart = ((uint32_t *)pImageBits) + 512 * 28;
+    uint32_t * pImageStart = static_cast<uint32_t*>(pImageBits) + 512 * 28;
     Emulator_PrepareScreenBW512x256(pVideoBuffer, palette, pImageStart);
 }
 
@@ -746,7 +746,7 @@ void CALLBACK Emulator_PrepareScreenBW768x468(const uint8_t* pVideoBuffer, const
     {
         const uint16_t* psrc1 = (uint16_t*)(pVideoBuffer + y * 512 / 4);
         const uint16_t* psrc2 = (uint16_t*)(pVideoBuffer + (y + 1) * 512 / 4);
-        uint32_t* pdest1 = ((uint32_t*)pImageBits) + (426 - 1 - y / 2 * 3) * 768;
+        uint32_t* pdest1 = static_cast<uint32_t*>(pImageBits) + (426 - 1 - y / 2 * 3) * 768;
         uint32_t* pdest2 = pdest1 - 768;
         uint32_t* pdest3 = pdest2 - 768;
         for (int x = 0; x < 512 / 8; x++)
@@ -785,7 +785,7 @@ void CALLBACK Emulator_PrepareScreenBW896x624(const uint8_t* pVideoBuffer, const
     for (int y = 0; y < 256; y++)
     {
         const uint16_t* psrc1 = (uint16_t*)(pVideoBuffer + y * 512 / 4);
-        uint32_t* pdest1 = ((uint32_t*)pImageBits) + (568 - 1 - y * 2) * 896;
+        uint32_t* pdest1 = static_cast<uint32_t*>(pImageBits) + (568 - 1 - y * 2) * 896;
         uint32_t* pdest2 = pdest1 - 896;
         for (int x = 0; x < 512 / 8; x++)
         {
@@ -818,7 +818,7 @@ void CALLBACK Emulator_PrepareScreenBW1024x624(const uint8_t* pVideoBuffer, cons
     for (int y = 0; y < 256; y++)
     {
         const uint16_t* pVideo = (uint16_t*)(pVideoBuffer + y * 512 / 4);
-        uint32_t* pBits1 = (uint32_t*)pImageBits + (568 - 1 - y * 2) * 1024;
+        uint32_t* pBits1 = static_cast<uint32_t*>(pImageBits) + (568 - 1 - y * 2) * 1024;
         uint32_t* pBits2 = pBits1 - 1024;
         for (int x = 0; x < 512 / 8; x++)
         {
@@ -861,7 +861,7 @@ bool Emulator_SaveImage(LPCTSTR sFilePath)
         return false;
 
     // Allocate memory
-    uint8_t* pImage = (uint8_t*) ::calloc(NEMIGAIMAGE_SIZE, 1);
+    uint8_t* pImage = static_cast<uint8_t*>(::calloc(NEMIGAIMAGE_SIZE, 1));
     if (pImage == nullptr)
     {
         ::fclose(fpFile);
@@ -910,7 +910,7 @@ bool Emulator_LoadImage(LPCTSTR sFilePath)
     //TODO: Check version and size
 
     // Allocate memory
-    uint8_t* pImage = (uint8_t*) ::calloc(NEMIGAIMAGE_SIZE, 1);
+    uint8_t* pImage = static_cast<uint8_t*>(::calloc(NEMIGAIMAGE_SIZE, 1));
     if (pImage == nullptr)
     {
         ::fclose(fpFile);

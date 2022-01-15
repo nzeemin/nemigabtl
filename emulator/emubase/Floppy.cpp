@@ -30,7 +30,7 @@ static bool DecodeTrackDataMX(const uint8_t* pRaw, uint8_t* pDest, uint16_t trac
 
 CFloppyDrive::CFloppyDrive()
 {
-    fpFile = NULL;
+    fpFile = nullptr;
     okReadOnly = false;
     floppytype = FLOPPY_TYPE_NONE;
     datatrack = 0;
@@ -40,7 +40,6 @@ CFloppyDrive::CFloppyDrive()
 
 void CFloppyDrive::Reset()
 {
-    //datatrack = 0;
     dataptr = 0;
 }
 
@@ -50,7 +49,7 @@ void CFloppyDrive::Reset()
 
 CFloppyController::CFloppyController()
 {
-    m_drive = -1;  m_pDrive = NULL;
+    m_drive = -1;  m_pDrive = nullptr;
     m_track = 0;
     m_timer = true;  m_timercount = 0;
     m_motoron = false;  m_motorcount = 0;
@@ -74,7 +73,7 @@ void CFloppyController::Reset()
 
     FlushChanges();
 
-    m_drive = -1;  m_pDrive = NULL;
+    m_drive = -1;  m_pDrive = nullptr;
     m_track = 0;
     m_timer = true;  m_timercount = 0;
     m_operation = FLOPPY_OPER_NOOPERATION; m_opercount = 0;
@@ -87,13 +86,13 @@ void CFloppyController::Reset()
 bool CFloppyController::AttachImage(int drive, LPCTSTR sFileName, uint8_t floppyType)
 {
     ASSERT(drive >= 0 && drive < 4);
-    ASSERT(sFileName != NULL);
+    ASSERT(sFileName != nullptr);
     ASSERT(floppyType == FLOPPY_TYPE_MD || floppyType == FLOPPY_TYPE_MX);
     if (floppyType == FLOPPY_TYPE_MX)
         ASSERT(drive == 0 || drive == 2);
 
     // If image attached - detach one first
-    if (m_drivedata[drive].fpFile != NULL)
+    if (m_drivedata[drive].fpFile != nullptr)
     {
         DetachImage(drive);
         if (floppyType == FLOPPY_TYPE_MX)
@@ -104,12 +103,12 @@ bool CFloppyController::AttachImage(int drive, LPCTSTR sFileName, uint8_t floppy
     m_drivedata[drive].floppytype = floppyType;
     m_drivedata[drive].okReadOnly = false;
     m_drivedata[drive].fpFile = ::_tfopen(sFileName, _T("r+b"));
-    if (m_drivedata[drive].fpFile == NULL)
+    if (m_drivedata[drive].fpFile == nullptr)
     {
         m_drivedata[drive].okReadOnly = true;
         m_drivedata[drive].fpFile = ::_tfopen(sFileName, _T("rb"));
     }
-    if (m_drivedata[drive].fpFile == NULL)
+    if (m_drivedata[drive].fpFile == nullptr)
         return false;
 
     // For MX drive, soft-attach the other side
@@ -141,31 +140,31 @@ void CFloppyController::DetachImage(int drive)
     if (m_drivedata[drive].floppytype == FLOPPY_TYPE_MX && (drive & 1) == 0)
     {
         m_drivedata[drive + 1].floppytype = FLOPPY_TYPE_NONE;
-        m_drivedata[drive + 1].fpFile = NULL;
+        m_drivedata[drive + 1].fpFile = nullptr;
     }
 
     m_drivedata[drive].floppytype = FLOPPY_TYPE_NONE;
 
-    if (m_drivedata[drive].fpFile == NULL) return;
+    if (m_drivedata[drive].fpFile == nullptr) return;
 
     FlushChanges();
 
     ::fclose(m_drivedata[drive].fpFile);
-    m_drivedata[drive].fpFile = NULL;
+    m_drivedata[drive].fpFile = nullptr;
     m_drivedata[drive].okReadOnly = false;
     m_drivedata[drive].Reset();
 }
 
 //////////////////////////////////////////////////////////////////////
 
-static uint16_t Flopy_LastStatus = 0177777;  //DEBUG
+//static uint16_t Floppy_LastStatus = 0177777;  //DEBUG
 uint16_t CFloppyController::GetState(void)
 {
     m_motorcount = 0;
 
-    if (m_pDrive == NULL)
+    if (m_pDrive == nullptr)
         return FLOPPY_STATUS_RELOAD;  // Нет сигнала READY
-    if (m_pDrive->fpFile == NULL)
+    if (m_pDrive->fpFile == nullptr)
         return FLOPPY_STATUS_RELOAD;  // Нет сигнала READY
 
     if (m_pDrive->dataptr >= FLOPPY_RAWTRACKSIZE - FLOPPY_INDEXLENGTH)
@@ -175,10 +174,10 @@ uint16_t CFloppyController::GetState(void)
 
     uint16_t res = m_status;
 
-//    if (m_okTrace && Flopy_LastStatus != m_status)
+//    if (m_okTrace && Floppy_LastStatus != m_status)
 //    {
 //        DebugLogFormat(_T("Floppy GET STATE %06o\r\n"), res);
-//        Flopy_LastStatus = m_status;
+//        Floppy_LastStatus = m_status;
 //    }
 
     return res;
@@ -189,7 +188,7 @@ void CFloppyController::SetTimer(uint16_t word)
     m_timer = ((word & 1) != 0);
     m_timer = true;  m_timercount = 1;
     // Сигнал RELOAD сбрасывается при записи в регистр таймера, если к тому времени восстановился сигнал READY
-    if (m_pDrive != NULL && m_pDrive->fpFile != NULL)
+    if (m_pDrive != nullptr && m_pDrive->fpFile != nullptr)
         m_status &= ~FLOPPY_STATUS_RELOAD;
 }
 uint16_t CFloppyController::GetTimer()
@@ -234,7 +233,7 @@ void CFloppyController::SetCommand(uint16_t cmd)
         m_status &= ~FLOPPY_STATUS_TR;
 
         // Если операция ЗАПИСЬ, то бит TR00/WRPRT содержит признак защиты от записи
-        if (m_pDrive != NULL && m_pDrive->okReadOnly)
+        if (m_pDrive != nullptr && m_pDrive->okReadOnly)
             m_status &= ~FLOPPY_STATUS_TR00_WRPRT;  // Защита от записи -- WRPRT = 0
         else
             m_status |= FLOPPY_STATUS_TR00_WRPRT;
@@ -285,13 +284,13 @@ void CFloppyController::SetState(uint16_t data)
     }
 }
 
-uint16_t CFloppyController::GetData(void)
+uint16_t CFloppyController::GetData()
 {
     m_motorcount = 0;
 
     m_writeflag = m_shiftflag = false;
 
-    if (m_pDrive == NULL || m_pDrive->fpFile == NULL)
+    if (m_pDrive == nullptr || m_pDrive->fpFile == nullptr)
         return 0;
 
     uint16_t offset = m_pDrive->dataptr;
@@ -380,12 +379,12 @@ void CFloppyController::Periodic()
             m_drivedata[drive].dataptr = 0;
     }
 
-//    if (m_okTrace && m_pDrive != NULL && m_pDrive->dataptr == 0)
+//    if (m_okTrace && m_pDrive != nullptr && m_pDrive->dataptr == 0)
 //        DebugLogFormat(_T("Floppy Index\n"));
 
     // Далее обрабатываем операции на текущем драйве
-    if (m_pDrive == NULL) return;
-    if (m_pDrive->fpFile == NULL) return;
+    if (m_pDrive == nullptr) return;
+    if (m_pDrive->fpFile == nullptr) return;
 
     if (m_opercount == 0) return;  // Нет текущей операции
     if (m_opercount == -1) return;  // Операция задана, но пока не запущена
@@ -444,7 +443,7 @@ void CFloppyController::Periodic()
         {
             if (m_opercount == -4)
             {
-                m_pDrive->data[m_pDrive->dataptr] = (uint8_t)m_shiftreg;
+                m_pDrive->data[m_pDrive->dataptr] = static_cast<uint8_t>(m_shiftreg);
                 m_trackchanged = true;
                 m_shiftreg = m_writereg;  m_shiftflag = m_writeflag;  m_writeflag = false;
             }
@@ -458,8 +457,8 @@ void CFloppyController::PrepareTrack()
 {
     FlushChanges();
 
-    if (m_pDrive == NULL) return;
-    if (m_pDrive->fpFile == NULL) return;
+    if (m_pDrive == nullptr) return;
+    if (m_pDrive->fpFile == nullptr) return;
 
     if (m_okTrace) DebugLogFormat(_T("Floppy%d PREPARE TRACK %d\r\n"), m_drive, m_track);
 
@@ -482,7 +481,7 @@ void CFloppyController::PrepareTrack()
             foffset = (m_track * 23 - 1) * 128;
             sectors = 23;
         }
-        if (m_pDrive->fpFile != NULL)
+        if (m_pDrive->fpFile != nullptr)
         {
             ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
             count = ::fread(data, 1, sectors * 128, m_pDrive->fpFile);
@@ -525,7 +524,7 @@ void CFloppyController::PrepareTrack()
 void CFloppyController::FlushChanges()
 {
     if (m_drive == -1) return;
-    if (m_pDrive->fpFile == NULL) return;
+    if (m_pDrive->fpFile == nullptr) return;
     if (!m_trackchanged) return;
 
     if (m_okTrace) DebugLogFormat(_T("Floppy%d FLUSH\r\n"), m_drive);  //DEBUG
@@ -607,7 +606,7 @@ void CFloppyController::FlushChanges()
 
 uint16_t CalculateChecksum(const uint8_t* buffer, int length)
 {
-    ASSERT(buffer != NULL);
+    ASSERT(buffer != nullptr);
     ASSERT(length > 0);
     uint16_t sum = 0;
     while (length > 0)
@@ -635,12 +634,12 @@ static void EncodeTrackData(const uint8_t* pSrc, uint8_t* data, uint16_t track, 
     // Track header, 10 bytes
     uint8_t* checksumStart = data + ptr;
     data[ptr++] = 0363;  // Marker
-    data[ptr++] = (uint8_t)track;  // Track number
+    data[ptr++] = static_cast<uint8_t>(track);  // Track number
     data[ptr++] = 23;    // Sectors on the track
     data[ptr++] = 0;     // Byte used for XOR reading
     uint16_t firstSector = track * 23;
-    data[ptr++] = (uint8_t)(firstSector & 0xff);
-    data[ptr++] = (uint8_t)((firstSector & 0xff00) >> 8);
+    data[ptr++] = static_cast<uint8_t>(firstSector & 0xff);
+    data[ptr++] = static_cast<uint8_t>((firstSector & 0xff00) >> 8);
     data[ptr++] = 0xff;  // Byte used for XOR reading
     data[ptr++] = 0xff;  // Byte used for XOR reading
     uint16_t checksum = CalculateChecksum(checksumStart, 8);
@@ -728,7 +727,7 @@ static void EncodeTrackDataMX(const uint8_t* pSrc, uint8_t* data, uint16_t track
 
     data[ptr++] = 0363;
     data[ptr++] = 0;
-    data[ptr++] = (uint8_t)track;
+    data[ptr++] = static_cast<uint8_t>(track);
 
     for (int sect = 0; sect < 11; sect++)
     {
@@ -740,7 +739,7 @@ static void EncodeTrackDataMX(const uint8_t* pSrc, uint8_t* data, uint16_t track
             uint8_t hivalue = pSrc[(sect * 256) + count * 2 + 1];
             data[ptr++] = hivalue;
             data[ptr++] = lovalue;
-            checksum += ((uint16_t)lovalue) | (((uint16_t)hivalue) << 8);
+            checksum += static_cast<uint16_t>(lovalue) | (static_cast<uint16_t>(hivalue) << 8);
         }
         data[ptr++] = HIBYTE(checksum);
         data[ptr++] = LOBYTE(checksum);
@@ -750,7 +749,7 @@ static void EncodeTrackDataMX(const uint8_t* pSrc, uint8_t* data, uint16_t track
     data[ptr++] = 0x54;
     data[ptr++] = 0x01;
     data[ptr++] = 0x00;
-    data[ptr++] = (uint8_t)(track * 2);
+    data[ptr++] = static_cast<uint8_t>(track * 2);
 
     // Fill to the end of the track
     while (ptr < FLOPPY_RAWTRACKSIZE) data[ptr++] = 0xff;

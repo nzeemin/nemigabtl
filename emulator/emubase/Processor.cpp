@@ -91,8 +91,10 @@ void CProcessor::Init()
     RegisterMethodRef( 0000200, 0000207, &CProcessor::ExecuteRTS );  // RTS / RETURN
     // RESERVED:       0000210, 0000227
     // SPL             0000230, 0000237
-    RegisterMethodRef( 0000240, 0000257, &CProcessor::ExecuteCCC );
-    RegisterMethodRef( 0000260, 0000277, &CProcessor::ExecuteSCC );
+    RegisterMethodRef( 0000240, 0000240, &CProcessor::ExecuteNOP );
+    RegisterMethodRef( 0000241, 0000257, &CProcessor::ExecuteCCC );
+    RegisterMethodRef( 0000260, 0000260, &CProcessor::ExecuteNOP );
+    RegisterMethodRef( 0000261, 0000277, &CProcessor::ExecuteSCC );
     RegisterMethodRef( 0000300, 0000377, &CProcessor::ExecuteSWAB );
     RegisterMethodRef( 0000400, 0000777, &CProcessor::ExecuteBR );
     RegisterMethodRef( 0001000, 0001377, &CProcessor::ExecuteBNE );
@@ -222,6 +224,7 @@ void CProcessor::Start()
     SetPSW(ps);
     m_internalTick = 1000000;  // Количество тактов на включение процессора (значение с потолка)
 }
+
 void CProcessor::Stop()
 {
     m_okStopped = true;
@@ -275,6 +278,7 @@ void CProcessor::Execute()
             uint16_t intrVector = 0;
             //bool currMode = m_haltmode;  // Current processor mode: true = HALT mode, false = USER mode
             bool intrMode = false;  // true = HALT mode interrupt, false = USER mode interrupt
+
             if (m_HALTrq)  // HALT command
             {
                 intrVector = 0002;  intrMode = true;
@@ -373,19 +377,19 @@ void CProcessor::Execute()
                         DebugLogFormat(_T("CPU HALT interrupt vector=%06o PC=%06o PSW=%06o 170006=%06o %C\r\n"), intrVector, GetPC(), GetPSW(), port170006, keybyte >= 32 && keybyte < 128 ? (char)keybyte : ' ');
                     }
                 }
-                //if (m_pBoard->GetTrace() & TRACE_CPUINT)
-                //{
-                //    if (intrVector == 0160002)  // HALT
-                //    {
-                //        uint16_t port170006 = m_pBoard->GetPortView(0170006);
-                //        uint8_t keybyte = (uint8_t)(port170006 & 255);
-                //        DebugLogFormat(_T("CPU HALT interrupt vector=%06o PC=%06o PSW=%06o 170006=%06o %C\r\n"), intrVector, GetPC(), GetPSW(), port170006, keybyte >= 32 && keybyte < 128 ? (char)keybyte : ' ');
-                //    }
-                //    else
-                //    {
-                //        DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
-                //    }
-                //}
+                if (m_pBoard->GetTrace() & TRACE_CPUINT)
+                {
+                    if (intrVector == 0160002)  // HALT
+                    {
+                        uint16_t port170006 = m_pBoard->GetPortView(0170006);
+                        uint8_t keybyte = (uint8_t)(port170006 & 255);
+                        DebugLogFormat(_T("CPU HALT interrupt vector=%06o PC=%06o PSW=%06o 170006=%06o %C\r\n"), intrVector, GetPC(), GetPSW(), port170006, keybyte >= 32 && keybyte < 128 ? (char)keybyte : ' ');
+                    }
+                    else
+                    {
+                        DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
+                    }
+                }
 #endif
             }
             else  // USER mode interrupt
@@ -402,11 +406,11 @@ void CProcessor::Execute()
                 SetPC(GetWord(intrVector));
                 m_psw = GetWord(intrVector + 2) & 0377;
 
-//                if (m_pBoard->GetTrace() & TRACE_CPUINT)
-//                {
-//                    if (intrVector != 000020 && intrVector != 000030 && intrVector != 000034)  // skip IOT/EMT/TRAP
-//                        DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
-//                }
+                if (m_pBoard->GetTrace() & TRACE_CPUINT)
+                {
+                    if (intrVector != 000020 && intrVector != 000030 && intrVector != 000034)  // skip IOT/EMT/TRAP
+                        DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
+                }
             }
         }  // end while
     }
