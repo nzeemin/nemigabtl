@@ -39,6 +39,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
 BOOL DebugView_DrawWatchpoints(HDC hdc, const CProcessor* pProc, int x, int y);
 void DebugView_DrawPorts(HDC hdc, const CMotherboard* pBoard, int x, int y);
 BOOL DebugView_DrawBreakpoints(HDC hdc, int x, int y);
+void DebugView_DrawMemoryMap(HDC hdc, int x, int y);
 void DebugView_UpdateWindowText();
 
 
@@ -271,7 +272,10 @@ void DebugView_DoDraw(HDC hdc)
     if (!okWatches)
         DebugView_DrawPorts(hdc, g_pBoard, 30 + 56 * cxChar, 2 + 0 * cyLine);
 
-    DebugView_DrawBreakpoints(hdc, 30 + 85 * cxChar, 2 + 0 * cyLine);
+    BOOL okBreakpoints = DebugView_DrawBreakpoints(hdc, 30 + 85 * cxChar, 2 + 0 * cyLine);
+
+    int xMemoryMap = 30 + (85 + (okBreakpoints ? 10 : 0)) * cxChar;
+    DebugView_DrawMemoryMap(hdc, xMemoryMap, 0 * cyLine);
 
     SetTextColor(hdc, colorOld);
     SetBkColor(hdc, colorBkOld);
@@ -442,7 +446,7 @@ BOOL DebugView_DrawWatchpoints(HDC hdc, const CProcessor* pProc, int x, int y)
     COLORREF colorText = Settings_GetColor(ColorDebugText);
     COLORREF colorChanged = Settings_GetColor(ColorDebugValueChanged);
 
-    TextOut(hdc, x, y, _T("Watches:"), 8);
+    TextOut(hdc, x, y, _T("Watches"), 7);
     y += cyLine;
     while (*pws != 0177777)
     {
@@ -547,7 +551,7 @@ BOOL DebugView_DrawBreakpoints(HDC hdc, int x, int y)
 
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
 
-    TextOut(hdc, x, y, _T("Breakpts:"), 9);
+    TextOut(hdc, x, y, _T("Breakpts"), 8);
     y += cyLine;
     while (*pbps != 0177777)
     {
@@ -556,6 +560,48 @@ BOOL DebugView_DrawBreakpoints(HDC hdc, int x, int y)
         pbps++;
     }
     return TRUE;
+}
+
+void DebugView_DrawMemoryMap(HDC hdc, int x, int y)
+{
+    int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
+
+    int x1 = x + cxChar * 7;
+    int y1 = y + cxChar / 2;
+    int x2 = x1 + cxChar * 14;
+    int y2 = y1 + cyLine * 16;
+    int xtype = x1 + cxChar * 3;
+
+    HGDIOBJ hOldBrush = ::SelectObject(hdc, ::GetSysColorBrush(COLOR_BTNSHADOW));
+    PatBlt(hdc, x1, y1, 1, y2 - y1, PATCOPY);
+    PatBlt(hdc, x2, y1, 1, y2 - y1 + 1, PATCOPY);
+    PatBlt(hdc, x1, y1, x2 - x1, 1, PATCOPY);
+    PatBlt(hdc, x1, y2, x2 - x1, 1, PATCOPY);
+    PatBlt(hdc, x1, y1 + cyLine * 1, x2 - x1, 1, PATCOPY);
+    PatBlt(hdc, x1, y1 + cyLine * 2, x2 - x1, 1, PATCOPY);
+
+    TextOut(hdc, x, y2 - cyLine * 2 / 3, _T("000000"), 6);
+    TextOut(hdc, x, y1 + cyLine * 8 - cyLine / 2, _T("100000"), 6);
+    TextOut(hdc, x, y1 + cyLine * 2 / 3, _T("170000"), 6);
+    TextOut(hdc, x, y1 + cyLine * 5 / 3, _T("160000"), 6);
+
+    TextOut(hdc, xtype, y1 + cyLine + 2, _T("ROM"), 3);
+    TextOut(hdc, xtype + cxChar * 5, y1 + 2, _T("IO"), 2);
+
+    // ROM 4.0x expect that screen projected to memory, controlled by port 177574 bit 0
+    uint16_t port177574 = g_pBoard->GetPortView(0177574);
+    if ((port177574 & 1) == 0)
+    {
+        TextOut(hdc, xtype, y1 + cyLine * 8, _T("RAM"), 3);
+    }
+    else
+    {
+        PatBlt(hdc, x1, y1 + cyLine * 8, x2 - x1, 1, PATCOPY);
+        TextOut(hdc, xtype, y1 + cyLine * 12 - cxChar / 2, _T("VRAM"), 4);
+        TextOut(hdc, xtype, y1 + cyLine * 4 + cxChar / 2, _T("RAM"), 3);
+    }
+
+    ::SelectObject(hdc, hOldBrush);
 }
 
 
