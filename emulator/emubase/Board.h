@@ -22,8 +22,9 @@ class CProcessor;
 
 
 // TranslateAddress result code
-#define ADDRTYPE_RAM     0  // RAM
-#define ADDRTYPE_HIRAM   1  // RAM
+#define ADDRTYPE_NONE    0
+#define ADDRTYPE_RAM     1  // Low RAM
+#define ADDRTYPE_HIRAM   2  // High RAM
 #define ADDRTYPE_ROM     8  // ROM
 #define ADDRTYPE_IO     16  // I/O port
 #define ADDRTYPE_TERM   64  // Terminal ports

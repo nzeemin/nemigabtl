@@ -145,8 +145,8 @@ bool Emulator_Init()
     g_pBoard = new CMotherboard();
 
     // Allocate memory for old RAM values
-    g_pEmulatorRam = static_cast<uint8_t*>(::calloc(65536, 1));
-    g_pEmulatorChangedRam = static_cast<uint8_t*>(::calloc(65536, 1));
+    g_pEmulatorRam = static_cast<uint8_t*>(::calloc(128 * 1024, 1));
+    g_pEmulatorChangedRam = static_cast<uint8_t*>(::calloc(128 * 1024, 1));
 
     g_pBoard->Reset();
 
@@ -675,11 +675,19 @@ void Emulator_OnUpdate()
     }
 }
 
-// Get RAM change flag
+// Get RAM change flag for RAM word
 //   addrtype - address mode - see ADDRTYPE_XXX constants
-uint16_t Emulator_GetChangeRamStatus(uint16_t address)
+uint16_t Emulator_GetChangeRamStatus(int addrtype, uint16_t address)
 {
-    return *((uint16_t*)(g_pEmulatorChangedRam + address));
+    switch (addrtype)
+    {
+    case ADDRTYPE_RAM:
+        return *((uint16_t*)(g_pEmulatorChangedRam + address));
+    case ADDRTYPE_HIRAM:
+        return *((uint16_t*)(g_pEmulatorChangedRam + 65536 + address));
+    default:
+        return 0;
+    }
 }
 
 void Emulator_GetScreenSize(int scrmode, int* pwid, int* phei)

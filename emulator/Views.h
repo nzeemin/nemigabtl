@@ -98,10 +98,19 @@ void DisasmView_LoadUnloadSubtitles();
 
 extern HWND g_hwndMemory;  // Memory view window handler
 
+enum MemoryViewMode
+{
+    MEMMODE_CPU   = 0,  // Memory how CPU see it
+    MEMMODE_RAMLO = 1,  // RAM low part
+    MEMMODE_RAMHI = 2,  // RAM high part
+    MEMMODE_LAST  = 2,  // Last mode number
+};
+
 void MemoryView_RegisterClass();
 void MemoryView_Create(HWND hwndParent, int x, int y, int width, int height);
 LRESULT CALLBACK MemoryViewWndProc(HWND, UINT, WPARAM, LPARAM);
 LRESULT CALLBACK MemoryViewViewerWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+void MemoryView_SetViewMode(MemoryViewMode);
 void MemoryView_SwitchWordByte();
 void MemoryView_SelectAddress();
 

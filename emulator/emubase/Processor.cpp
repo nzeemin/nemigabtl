@@ -377,7 +377,7 @@ void CProcessor::Execute()
                         DebugLogFormat(_T("CPU HALT interrupt vector=%06o PC=%06o PSW=%06o 170006=%06o %C\r\n"), intrVector, GetPC(), GetPSW(), port170006, keybyte >= 32 && keybyte < 128 ? (char)keybyte : ' ');
                     }
                 }
-                if (m_pBoard->GetTrace() & TRACE_CPUINT)
+                //if (m_pBoard->GetTrace() & TRACE_CPUINT)
                 {
                     if (intrVector == 0160002)  // HALT
                     {
@@ -406,7 +406,7 @@ void CProcessor::Execute()
                 SetPC(GetWord(intrVector));
                 m_psw = GetWord(intrVector + 2) & 0377;
 
-                if (m_pBoard->GetTrace() & TRACE_CPUINT)
+                //if (m_pBoard->GetTrace() & TRACE_CPUINT)
                 {
                     if (intrVector != 000020 && intrVector != 000030 && intrVector != 000034)  // skip IOT/EMT/TRAP
                         DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
@@ -525,6 +525,9 @@ void CProcessor::ExecuteRTI()  // RTI - Return from Interrupt
     uint16_t new_psw = GetWord(GetSP());  // Pop PSW --- saving HALT
     SetSP( GetSP() + 2 );
     SetPSW(new_psw & 0377);
+
+    if (GetPC() < 0160000)
+        m_haltmode = false;
 
     m_internalTick = TIMING_RTI;
 }

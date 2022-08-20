@@ -18,7 +18,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include "ToolWindow.h"
 #include "Dialogs.h"
 #include "Emulator.h"
-#include "emubase\Emubase.h"
+#include "emubase/Emubase.h"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -33,16 +33,7 @@ int m_cxChar = 0;
 int m_cyLineMemory = 0;  // Line height in pixels
 int m_nPageSize = 100;  // Page size in lines
 
-//enum MemoryViewMode {
-//    MEMMODE_RAM0 = 0,  // RAM plane 0
-//    MEMMODE_RAM1 = 1,  // RAM plane 1
-//    MEMMODE_RAM2 = 2,  // RAM plane 2
-//    MEMMODE_ROM  = 3,  // ROM
-//    MEMMODE_CPU  = 4,  // CPU memory
-//    MEMMODE_LAST = 5,  // Last mode number
-//};
-
-//int     m_Mode = MEMMODE_ROM;  // See MemoryViewMode enum
+int     m_Mode = MEMMODE_CPU;  // See MemoryViewMode enum
 WORD    m_wBaseAddress = 0xFFFF;
 WORD    m_wCurrentAddress = 0xFFFF;
 BOOL    m_okMemoryByteMode = FALSE;
@@ -57,9 +48,11 @@ void MemoryView_CopyValueToClipboard(WPARAM command);
 void MemoryView_GotoAddress(WORD wAddress);
 void MemoryView_ScrollTo(WORD wBaseAddress);
 void MemoryView_UpdateWindowText();
-//LPCTSTR MemoryView_GetMemoryModeName();
+LPCTSTR MemoryView_GetMemoryModeName();
 void MemoryView_UpdateScrollPos();
+void MemoryView_UpdateToolbar();
 void MemoryView_GetCurrentValueRect(LPRECT pRect, int cxChar, int cyLine);
+WORD MemoryView_GetWordFromMemory(WORD address, bool& okValid, int& addrtype, WORD& wChanged);
 void MemoryView_OnDraw(HDC hdc);
 
 
@@ -90,6 +83,8 @@ void MemoryView_Create(HWND hwndParent, int x, int y, int width, int height)
 {
     ASSERT(hwndParent != NULL);
 
+    m_Mode = Settings_GetDebugMemoryMode();
+    if (m_Mode > MEMMODE_LAST) m_Mode = MEMMODE_LAST;
     m_okMemoryByteMode = Settings_GetDebugMemoryByte();
 
     g_hwndMemory = CreateWindow(
@@ -126,7 +121,7 @@ void MemoryView_Create(HWND hwndParent, int x, int y, int width, int height)
     SendMessage(m_hwndMemoryToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
     SendMessage(m_hwndMemoryToolbar, TB_SETBUTTONSIZE, 0, (LPARAM) MAKELONG (26, 26));
 
-    TBBUTTON buttons[2];
+    TBBUTTON buttons[7];
     ZeroMemory(buttons, sizeof(buttons));
     for (int i = 0; i < sizeof(buttons) / sizeof(TBBUTTON); i++)
     {
@@ -136,13 +131,23 @@ void MemoryView_Create(HWND hwndParent, int x, int y, int width, int height)
     }
     buttons[0].idCommand = ID_DEBUG_MEMORY_GOTO;
     buttons[0].iBitmap = ToolbarImageGotoAddress;
-    buttons[1].idCommand = ID_DEBUG_MEMORY_WORDBYTE;
-    buttons[1].iBitmap = ToolbarImageWordByte;
+    buttons[1].fsStyle = BTNS_SEP;
+    buttons[2].idCommand = ID_DEBUG_MEMORY_CPU;
+    buttons[2].iBitmap = ToolbarImageMemoryCpu;
+    buttons[3].idCommand = ID_DEBUG_MEMORY_RAMLO;
+    buttons[3].iBitmap = ToolbarImageMemoryRamLo;
+    buttons[4].idCommand = ID_DEBUG_MEMORY_RAMHI;
+    buttons[4].iBitmap = ToolbarImageMemoryRamHi;
+    buttons[5].fsStyle = BTNS_SEP;
+    buttons[6].idCommand = ID_DEBUG_MEMORY_WORDBYTE;
+    buttons[6].iBitmap = ToolbarImageWordByte;
 
     SendMessage(m_hwndMemoryToolbar, TB_ADDBUTTONS, (WPARAM) sizeof(buttons) / sizeof(TBBUTTON), (LPARAM) &buttons);
 
     MemoryView_ScrollTo(Settings_GetDebugMemoryBase());
     MemoryView_GotoAddress(Settings_GetDebugMemoryAddress());
+
+    MemoryView_UpdateToolbar();
 }
 
 // Adjust position of client windows
@@ -241,6 +246,9 @@ BOOL MemoryView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
     case VK_HOME:
         MemoryView_GotoAddress(0);
         break;
+    case VK_END:
+        MemoryView_GotoAddress(0177777);
+        break;
     case VK_LEFT:
         MemoryView_GotoAddress((WORD)(m_wCurrentAddress - 2));
         break;
@@ -252,6 +260,9 @@ BOOL MemoryView_OnKeyDown(WPARAM vkey, LPARAM /*lParam*/)
         break;
     case VK_DOWN:
         MemoryView_GotoAddress((WORD)(m_wCurrentAddress + 16));
+        break;
+    case VK_SPACE:
+        MemoryView_SetViewMode((MemoryViewMode)((m_Mode == MEMMODE_LAST) ? 0 : m_Mode + 1));
         break;
     case VK_PRIOR:
         MemoryView_GotoAddress((WORD)(m_wCurrentAddress - m_nPageSize * 16));
@@ -296,7 +307,7 @@ void MemoryView_OnRButtonDown(int mousex, int mousey)
     ::AppendMenu(hMenu, 0, ID_DEBUG_COPY_VALUE, _T("Copy Value"));
     ::AppendMenu(hMenu, 0, ID_DEBUG_COPY_ADDRESS, _T("Copy Address"));
     ::AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-    ::AppendMenu(hMenu, 0, ID_DEBUG_GOTO_ADDRESS, _T("Go to Address..."));
+    ::AppendMenu(hMenu, 0, ID_DEBUG_GOTO_ADDRESS, _T("Go to Address...\tG"));
 
     POINT pt = { rcValue.left, rcValue.bottom };
     ::ClientToScreen(m_hwndMemoryViewer, &pt);
@@ -345,78 +356,52 @@ BOOL MemoryView_OnVScroll(WORD scrollcmd, WORD scrollpos)
 void MemoryView_UpdateWindowText()
 {
     TCHAR buffer[64];
-    _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("Memory - %06o"), m_wCurrentAddress);
+    _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("Memory - %s - %06o"), MemoryView_GetMemoryModeName(), m_wCurrentAddress);
     ::SetWindowText(g_hwndMemory, buffer);
 }
 
-void MemoryView_CopyValueToClipboard(WPARAM command)
+void MemoryView_UpdateToolbar()
 {
-    WORD address = m_wCurrentAddress;
-    WORD value;
-
-    if (command == ID_DEBUG_COPY_ADDRESS)
+    int command;
+    switch (m_Mode)
     {
-        value = address;
+    default:
+    case MEMMODE_CPU:
+        command = ID_DEBUG_MEMORY_CPU;
+        break;
+    case MEMMODE_RAMLO:
+        command = ID_DEBUG_MEMORY_RAMLO;
+        break;
+    case MEMMODE_RAMHI:
+        command = ID_DEBUG_MEMORY_RAMHI;
+        break;
     }
-    else
-    {
-        // Get word from memory
-        int addrtype;
-        bool okHalt = g_pBoard->GetCPU()->IsHaltMode();
-        value = g_pBoard->GetWordView(address, okHalt, FALSE, &addrtype);
-        bool okValid = (addrtype != ADDRTYPE_IO) && (addrtype != ADDRTYPE_TERM) && (addrtype != ADDRTYPE_DENY);
+    SendMessage(m_hwndMemoryToolbar, TB_CHECKBUTTON, command, TRUE);
+}
 
-        if (!okValid)
-        {
-            AlertWarning(_T("Failed to get value: invalid memory type."));
-            return;
-        }
-    }
+void MemoryView_SetViewMode(MemoryViewMode mode)
+{
+    if (mode < 0) mode = MEMMODE_CPU;
+    if (mode > MEMMODE_LAST) mode = MEMMODE_LAST;
+    m_Mode = mode;
+    Settings_SetDebugMemoryMode((WORD)m_Mode);
 
-    TCHAR buffer[7];
-    PrintOctalValue(buffer, value);
+    InvalidateRect(m_hwndMemoryViewer, NULL, TRUE);
+    MemoryView_UpdateWindowText();
 
-    // Prepare global memory object for the text
-    HGLOBAL hglbCopy = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(buffer));
-    LPTSTR lptstrCopy = (LPTSTR) ::GlobalLock(hglbCopy);
-    memcpy(lptstrCopy, buffer, sizeof(buffer));
-    ::GlobalUnlock(hglbCopy);
-
-    // Send the text to the Clipboard
-    ::OpenClipboard(g_hwnd);
-    ::EmptyClipboard();
-    ::SetClipboardData(CF_UNICODETEXT, hglbCopy);
-    ::CloseClipboard();
+    MemoryView_UpdateToolbar();
 }
 
 LPCTSTR MemoryView_GetMemoryModeName()
 {
-    //  switch (m_Mode) {
-    //      case MEMMODE_RAM0:  return _T("RAM0");
-    //      case MEMMODE_RAM1:  return _T("RAM1");
-    //      case MEMMODE_RAM2:  return _T("RAM2");
-    //      case MEMMODE_ROM:   return _T("ROM");
-    //      case MEMMODE_CPU:   return _T("CPU");
-    //default:
-    //    return _T("UKWN");  // Unknown mode
-    //  }
-    return _T("");  //STUB
-}
-
-void MemoryView_SwitchWordByte()
-{
-    m_okMemoryByteMode = !m_okMemoryByteMode;
-    Settings_SetDebugMemoryByte(m_okMemoryByteMode);
-
-    InvalidateRect(m_hwndMemoryViewer, NULL, TRUE);
-}
-
-void MemoryView_SelectAddress()
-{
-    WORD value = m_wCurrentAddress;
-    if (InputBoxOctal(m_hwndMemoryViewer, _T("Go To Address"), &value))
-        MemoryView_GotoAddress(value);
-    ::SetFocus(m_hwndMemoryViewer);
+    switch (m_Mode)
+    {
+    case MEMMODE_CPU:   return _T("CPU");
+    case MEMMODE_RAMLO: return _T("RAMLO");
+    case MEMMODE_RAMHI: return _T("RAMHI");
+    default:
+        return _T("UKWN");  // Unknown mode
+    }
 }
 
 void MemoryView_GotoAddress(WORD wAddress)
@@ -453,6 +438,63 @@ void MemoryView_ScrollTo(WORD wBaseAddress)
     MemoryView_UpdateScrollPos();
 }
 
+void MemoryView_CopyValueToClipboard(WPARAM command)
+{
+    WORD address = m_wCurrentAddress;
+    WORD value;
+
+    if (command == ID_DEBUG_COPY_ADDRESS)
+    {
+        value = address;
+    }
+    else
+    {
+        // Get word from memory
+        int addrtype;
+        bool okValid;
+        WORD wChanged;
+        bool okHalt = g_pBoard->GetCPU()->IsHaltMode();
+        value = MemoryView_GetWordFromMemory(address, okValid, addrtype, wChanged);
+
+        if (!okValid)
+        {
+            AlertWarning(_T("Failed to get value: invalid memory type."));
+            return;
+        }
+    }
+
+    TCHAR buffer[7];
+    PrintOctalValue(buffer, value);
+
+    // Prepare global memory object for the text
+    HGLOBAL hglbCopy = ::GlobalAlloc(GMEM_MOVEABLE, sizeof(buffer));
+    LPTSTR lptstrCopy = (LPTSTR) ::GlobalLock(hglbCopy);
+    memcpy(lptstrCopy, buffer, sizeof(buffer));
+    ::GlobalUnlock(hglbCopy);
+
+    // Send the text to the Clipboard
+    ::OpenClipboard(g_hwnd);
+    ::EmptyClipboard();
+    ::SetClipboardData(CF_UNICODETEXT, hglbCopy);
+    ::CloseClipboard();
+}
+
+void MemoryView_SwitchWordByte()
+{
+    m_okMemoryByteMode = !m_okMemoryByteMode;
+    Settings_SetDebugMemoryByte(m_okMemoryByteMode);
+
+    InvalidateRect(m_hwndMemoryViewer, NULL, TRUE);
+}
+
+void MemoryView_SelectAddress()
+{
+    WORD value = m_wCurrentAddress;
+    if (InputBoxOctal(m_hwndMemoryViewer, _T("Go To Address"), &value))
+        MemoryView_GotoAddress(value);
+    ::SetFocus(m_hwndMemoryViewer);
+}
+
 void MemoryView_UpdateScrollPos()
 {
     SCROLLINFO si;
@@ -478,6 +520,36 @@ void MemoryView_GetCurrentValueRect(LPRECT pRect, int cxChar, int cyLine)
     pRect->right = pRect->left + cxChar * 7;
     pRect->top = (line + 1) * cyLine - 1;
     pRect->bottom = pRect->top + cyLine + 1;
+}
+
+WORD MemoryView_GetWordFromMemory(WORD address, bool& okValid, int& addrtype, WORD& wChanged)
+{
+    WORD word = 0;
+    okValid = TRUE;
+    addrtype = ADDRTYPE_NONE;
+    wChanged = 0;
+    bool okHalt = false;
+
+    switch (m_Mode)
+    {
+    default:
+    case MEMMODE_CPU:
+        okHalt = g_pBoard->GetCPU()->IsHaltMode();
+        word = g_pBoard->GetWordView(address, okHalt, FALSE, &addrtype);
+        okValid = (addrtype != ADDRTYPE_IO) && (addrtype != ADDRTYPE_DENY);
+        wChanged = Emulator_GetChangeRamStatus(addrtype, address);
+        break;
+    case MEMMODE_RAMLO:
+        word = g_pBoard->GetRAMWord(address);
+        wChanged = Emulator_GetChangeRamStatus(m_Mode, address);
+        break;
+    case MEMMODE_RAMHI:
+        word = g_pBoard->GetHIRAMWord(address);
+        wChanged = Emulator_GetChangeRamStatus(m_Mode, address);
+        break;
+    }
+
+    return word;
 }
 
 void MemoryView_OnDraw(HDC hdc)
@@ -520,10 +592,10 @@ void MemoryView_OnDraw(HDC hdc)
         {
             // Get word from memory
             int addrtype;
+            bool okValid;
+            WORD wChanged;
             bool okHalt = g_pBoard->GetCPU()->IsHaltMode();
-            WORD word = g_pBoard->GetWordView(address, okHalt, FALSE, &addrtype);
-            bool okValid = (addrtype != ADDRTYPE_IO) && (addrtype != ADDRTYPE_TERM) && (addrtype != ADDRTYPE_DENY);
-            WORD wChanged = Emulator_GetChangeRamStatus(address);
+            WORD word = MemoryView_GetWordFromMemory(address, okValid, addrtype, wChanged);
 
             if (okValid)
             {

@@ -182,7 +182,7 @@ BEGIN
     LTEXT           "NEMIGA BTL version 1.0",IDC_VERSION,10,10,139,8,SS_NOPREFIX
     LTEXT           "Build date: ????",IDC_BUILDDATE,10,20,139,8
     LTEXT           "Source code: https://github.com/nzeemin/nemigabtl",IDC_STATIC,10,32,193,10
-    LTEXT           "Copyright (C) 2012-2021",IDC_STATIC,10,44,139,10
+    LTEXT           "Copyright (C) 2012-2022",IDC_STATIC,10,44,139,10
     LTEXT           "Author:\r\nNikita Zimin (nzeemin@gmail.com)",IDC_STATIC,10,56,174,36
 END
 

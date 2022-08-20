@@ -926,6 +926,15 @@ bool MainWindow_DoCommand(int commandId)
     case ID_DEBUG_SUBTITLES:
         DisasmView_LoadUnloadSubtitles();
         break;
+    case ID_DEBUG_MEMORY_CPU:
+        MemoryView_SetViewMode(MEMMODE_CPU);
+        break;
+    case ID_DEBUG_MEMORY_RAMLO:
+        MemoryView_SetViewMode(MEMMODE_RAMLO);
+        break;
+    case ID_DEBUG_MEMORY_RAMHI:
+        MemoryView_SetViewMode(MEMMODE_RAMHI);
+        break;
     case ID_DEBUG_MEMORY_WORDBYTE:
         MemoryView_SwitchWordByte();
         break;

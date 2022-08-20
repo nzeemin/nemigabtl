@@ -453,7 +453,7 @@ BOOL DebugView_DrawWatchpoints(HDC hdc, const CProcessor* pProc, int x, int y)
         DrawOctalValue(hdc, x, y, address);
         int addrtype;
         uint16_t value = g_pBoard->GetWordView(address, okHaltMode, false, &addrtype);
-        uint16_t wChanged = Emulator_GetChangeRamStatus(address);
+        uint16_t wChanged = Emulator_GetChangeRamStatus(addrtype, address);
         SetTextColor(hdc, (wChanged != 0) ? colorChanged : colorText);
         DrawOctalValue(hdc, x + 8 * cxChar, y, value);
 
