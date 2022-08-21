@@ -86,7 +86,7 @@ void DebugView_Create(HWND hwndParent, int x, int y, int width, int height)
     DebugView_UpdateWindowText();
 
     // ToolWindow subclassing
-    m_wndprocDebugToolWindow = (WNDPROC) LongToPtr( SetWindowLongPtr(
+    m_wndprocDebugToolWindow = (WNDPROC)LongToPtr( SetWindowLongPtr(
             g_hwndDebug, GWLP_WNDPROC, PtrToLong(DebugViewWndProc)) );
 
     RECT rcClient;  GetClientRect(g_hwndDebug, &rcClient);
@@ -101,13 +101,13 @@ void DebugView_Create(HWND hwndParent, int x, int y, int width, int height)
     m_hwndDebugToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL,
             WS_CHILD | WS_VISIBLE | TBSTYLE_FLAT | TBSTYLE_TRANSPARENT | TBSTYLE_TOOLTIPS | CCS_NOPARENTALIGN | CCS_NODIVIDER | CCS_VERT,
             4, 4, 32, rcClient.bottom, m_hwndDebugViewer,
-            (HMENU) 102,
+            (HMENU)102,
             g_hInst, NULL);
 
     TBADDBITMAP addbitmap;
     addbitmap.hInst = g_hInst;
     addbitmap.nID = IDB_TOOLBAR;
-    SendMessage(m_hwndDebugToolbar, TB_ADDBITMAP, 2, (LPARAM) &addbitmap);
+    SendMessage(m_hwndDebugToolbar, TB_ADDBITMAP, 2, (LPARAM)&addbitmap);
 
     SendMessage(m_hwndDebugToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM) sizeof(TBBUTTON), 0);
     SendMessage(m_hwndDebugToolbar, TB_SETBUTTONSIZE, 0, (LPARAM) MAKELONG (26, 26));
@@ -128,7 +128,7 @@ void DebugView_Create(HWND hwndParent, int x, int y, int width, int height)
     buttons[2].idCommand = ID_DEBUG_STEPOVER;
     buttons[2].iBitmap = ToolbarImageStepOver;
 
-    SendMessage(m_hwndDebugToolbar, TB_ADDBUTTONS, (WPARAM) sizeof(buttons) / sizeof(TBBUTTON), (LPARAM) &buttons);
+    SendMessage(m_hwndDebugToolbar, TB_ADDBUTTONS, (WPARAM) sizeof(buttons) / sizeof(TBBUTTON), (LPARAM)&buttons);
 }
 
 void DebugView_Redraw()
@@ -141,7 +141,7 @@ void DebugView_AdjustWindowLayout()
 {
     RECT rc;  GetClientRect(g_hwndDebug, &rc);
 
-    if (m_hwndDebugViewer != (HWND) INVALID_HANDLE_VALUE)
+    if (m_hwndDebugViewer != (HWND)INVALID_HANDLE_VALUE)
         SetWindowPos(m_hwndDebugViewer, NULL, 0, 0, rc.right, rc.bottom, SWP_NOZORDER);
 }
 
@@ -152,7 +152,7 @@ LRESULT CALLBACK DebugViewWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM
     switch (message)
     {
     case WM_DESTROY:
-        g_hwndDebug = (HWND) INVALID_HANDLE_VALUE;  // We are closed! Bye-bye!..
+        g_hwndDebug = (HWND)INVALID_HANDLE_VALUE;  // We are closed! Bye-bye!..
         return CallWindowProc(m_wndprocDebugToolWindow, hWnd, message, wParam, lParam);
     case WM_SIZE:
         lResult = CallWindowProc(m_wndprocDebugToolWindow, hWnd, message, wParam, lParam);
@@ -359,13 +359,15 @@ void DebugView_DrawAddressAndValue(HDC hdc, const CProcessor* pProc, CMotherboar
 {
     COLORREF colorText = Settings_GetColor(ColorDebugText);
     SetTextColor(hdc, colorText);
-    DrawOctalValue(hdc, x + 0 * cxChar, y, address);
+    DrawOctalValue(hdc, x, y, address);
     x += 7 * cxChar;
 
     int addrtype = ADDRTYPE_DENY;
     uint16_t value = pBoard->GetWordView(address, pProc->IsHaltMode(), FALSE, &addrtype);
     if (addrtype == ADDRTYPE_RAM || addrtype == ADDRTYPE_HIRAM)
     {
+        uint16_t wChanged = Emulator_GetChangeRamStatus(addrtype, address);
+        if (wChanged != 0) SetTextColor(hdc, Settings_GetColor(ColorDebugValueChanged));
         DrawOctalValue(hdc, x, y, value);
     }
     else if (addrtype == ADDRTYPE_ROM)
