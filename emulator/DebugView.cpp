@@ -272,9 +272,9 @@ void DebugView_DoDraw(HDC hdc)
     if (!okWatches)
         DebugView_DrawPorts(hdc, g_pBoard, 30 + 56 * cxChar, 2 + 0 * cyLine);
 
-    BOOL okBreakpoints = DebugView_DrawBreakpoints(hdc, 30 + 85 * cxChar, 2 + 0 * cyLine);
+    BOOL okBreakpoints = DebugView_DrawBreakpoints(hdc, 30 + 83 * cxChar, 2 + 0 * cyLine);
 
-    int xMemoryMap = 30 + (85 + (okBreakpoints ? 10 : 0)) * cxChar;
+    int xMemoryMap = 30 + (83 + (okBreakpoints ? 10 : 0)) * cxChar;
     DebugView_DrawMemoryMap(hdc, xMemoryMap, 0 * cyLine);
 
     SetTextColor(hdc, colorOld);
@@ -355,15 +355,17 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
         TextOut(hdc, x + 6 * cxChar, y + 11 * cyLine, _T("STOP"), 4);
 }
 
-void DebugView_DrawAddressAndValue(HDC hdc, const CProcessor* pProc, CMotherboard* pBoard, uint16_t address, int x, int y, int cxChar)
+void DebugView_DrawAddressAndValue(HDC hdc, const CProcessor* pProc, uint16_t address, int x, int y, int cxChar)
 {
+    ASSERT(g_pBoard != nullptr);
+
     COLORREF colorText = Settings_GetColor(ColorDebugText);
     SetTextColor(hdc, colorText);
     DrawOctalValue(hdc, x, y, address);
     x += 7 * cxChar;
 
     int addrtype = ADDRTYPE_DENY;
-    uint16_t value = pBoard->GetWordView(address, pProc->IsHaltMode(), FALSE, &addrtype);
+    uint16_t value = g_pBoard->GetWordView(address, pProc->IsHaltMode(), FALSE, &addrtype);
     if (addrtype == ADDRTYPE_RAM || addrtype == ADDRTYPE_HIRAM)
     {
         uint16_t wChanged = Emulator_GetChangeRamStatus(addrtype, address);
@@ -377,7 +379,7 @@ void DebugView_DrawAddressAndValue(HDC hdc, const CProcessor* pProc, CMotherboar
     }
     else if (addrtype == ADDRTYPE_IO || addrtype == ADDRTYPE_TERM)
     {
-        value = pBoard->GetPortView(address);
+        value = g_pBoard->GetPortView(address);
         SetTextColor(hdc, Settings_GetColor(ColorDebugMemoryIO));
         DrawOctalValue(hdc, x, y, value);
     }
@@ -414,7 +416,7 @@ void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, 
     WORD address = current - 16;
     for (int index = 0; index < 16; index++)
     {
-        DebugView_DrawAddressAndValue(hdc, pProc, g_pBoard, address, x + 3 * cxChar, y, cxChar);
+        DebugView_DrawAddressAndValue(hdc, pProc, address, x + 3 * cxChar, y, cxChar);
 
         if (address == current)  // Current position
         {
@@ -442,27 +444,14 @@ BOOL DebugView_DrawWatchpoints(HDC hdc, const CProcessor* pProc, int x, int y)
     if (*pws == 0177777)
         return FALSE;
 
-    bool okHaltMode = pProc->IsHaltMode();
-
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
-    COLORREF colorText = Settings_GetColor(ColorDebugText);
-    COLORREF colorChanged = Settings_GetColor(ColorDebugValueChanged);
 
     TextOut(hdc, x, y, _T("Watches"), 7);
     y += cyLine;
     while (*pws != 0177777)
     {
         uint16_t address = *pws;
-
-        //TODO: Replace it with call to DebugView_DrawAddressAndValue()
-        SetTextColor(hdc, colorText);
-        DrawOctalValue(hdc, x, y, address);
-        int addrtype;
-        uint16_t value = g_pBoard->GetWordView(address, okHaltMode, false, &addrtype);
-        uint16_t wChanged = Emulator_GetChangeRamStatus(addrtype, address);
-        SetTextColor(hdc, (wChanged != 0) ? colorChanged : colorText);
-        DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-
+        DebugView_DrawAddressAndValue(hdc, pProc, address, x, y, cxChar);
         y += cyLine;
         pws++;
     }
@@ -476,73 +465,41 @@ void DebugView_DrawPorts(HDC hdc, const CMotherboard* /*pBoard*/, int x, int y)
 
     TextOut(hdc, x, y, _T("Port"), 6);
 
-    WORD value;
+    CProcessor* pProc = g_pBoard->GetCPU();
+
     y += cyLine;
-    value = g_pBoard->GetPortView(0170006);
-    DrawOctalValue(hdc, x + 0 * cxChar, y, 0170006);
-    DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    //DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    TextOut(hdc, x + 16 * cxChar, y, _T("System"), 6);
+    DebugView_DrawAddressAndValue(hdc, pProc, 0170006, x, y, cxChar);
+    TextOut(hdc, x + 14 * cxChar, y, _T("System"), 6);
     y += cyLine;
-    value = g_pBoard->GetPortView(0177660);
-    DrawOctalValue(hdc, x + 0 * cxChar, y, 0177572);
-    DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    //DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    TextOut(hdc, x + 16 * cxChar, y, _T("VADDR"), 5);
+    DebugView_DrawAddressAndValue(hdc, pProc, 0177572, x, y, cxChar);
+    TextOut(hdc, x + 14 * cxChar, y, _T("VADDR"), 5);
     y += cyLine;
-    value = g_pBoard->GetPortView(0177570);
-    DrawOctalValue(hdc, x + 0 * cxChar, y, 0177570);
-    DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    //DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    TextOut(hdc, x + 16 * cxChar, y, _T("VDATA"), 5);
+    DebugView_DrawAddressAndValue(hdc, pProc, 0177570, x, y, cxChar);
+    TextOut(hdc, x + 14 * cxChar, y, _T("VDATA"), 5);
     y += cyLine;
-    value = g_pBoard->GetPortView(0177100);
-    DrawOctalValue(hdc, x + 0 * cxChar, y, 0177100);
-    DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    //DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    TextOut(hdc, x + 16 * cxChar, y, _T("FDD state"), 9);
+    DebugView_DrawAddressAndValue(hdc, pProc, 0177100, x, y, cxChar);
+    TextOut(hdc, x + 14 * cxChar, y, _T("FDD state"), 9);
     y += cyLine;
-    value = g_pBoard->GetPortView(0177102);
-    DrawOctalValue(hdc, x + 0 * cxChar, y, 0177102);
-    DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    //DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    TextOut(hdc, x + 16 * cxChar, y, _T("FDD data"), 8);
+    DebugView_DrawAddressAndValue(hdc, pProc, 0177102, x, y, cxChar);
+    TextOut(hdc, x + 14 * cxChar, y, _T("FDD data"), 8);
     y += cyLine;
-    value = g_pBoard->GetPortView(0177106);
-    DrawOctalValue(hdc, x + 0 * cxChar, y, 0177106);
-    DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    //DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    TextOut(hdc, x + 16 * cxChar, y, _T("FDD timer"), 9);
+    DebugView_DrawAddressAndValue(hdc, pProc, 0177106, x, y, cxChar);
+    TextOut(hdc, x + 14 * cxChar, y, _T("FDD timer"), 9);
     //y += cyLine;
-    //value = g_pBoard->GetPortView(0177712);
-    //DrawOctalValue(hdc, x + 0 * cxChar, y, 0177712);
-    //DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    ////DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    //TextOut(hdc, x + 16 * cxChar, y, _T("timer manage"), 12);
+    //DebugView_DrawAddressAndValue(hdc, pProc, 0177712, x, y, cxChar);
+    //TextOut(hdc, x + 14 * cxChar, y, _T("timer manage"), 12);
     y += cyLine;
-    value = g_pBoard->GetPortView(0177514);
-    DrawOctalValue(hdc, x + 0 * cxChar, y, 0177514);
-    DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    //DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    TextOut(hdc, x + 16 * cxChar, y, _T("parallel"), 8);
+    DebugView_DrawAddressAndValue(hdc, pProc, 0177514, x, y, cxChar);
+    TextOut(hdc, x + 14 * cxChar, y, _T("parallel"), 8);
     //y += cyLine;
-    //value = g_pBoard->GetPortView(0177716);
-    //DrawOctalValue(hdc, x + 0 * cxChar, y, 0177716);
-    //DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    ////DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    //TextOut(hdc, x + 16 * cxChar, y, _T("system"), 6);
+    //DebugView_DrawAddressAndValue(hdc, pProc, 0177716, x, y, cxChar);
+    //TextOut(hdc, x + 14 * cxChar, y, _T("system"), 6);
     //y += cyLine;
-    //value = g_pBoard->GetPortView(0177130);
-    //DrawOctalValue(hdc, x + 0 * cxChar, y, 0177130);
-    //DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    ////DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    //TextOut(hdc, x + 16 * cxChar, y, _T("floppy state"), 12);
+    //DebugView_DrawAddressAndValue(hdc, pProc, 0177130, x, y, cxChar);
+    //TextOut(hdc, x + 14 * cxChar, y, _T("floppy state"), 12);
     //y += cyLine;
-    //value = g_pBoard->GetPortView(0177132);
-    //DrawOctalValue(hdc, x + 0 * cxChar, y, 0177132);
-    //DrawOctalValue(hdc, x + 8 * cxChar, y, value);
-    ////DrawBinaryValue(hdc, x + 15 * cxChar, y, value);
-    //TextOut(hdc, x + 16 * cxChar, y, _T("floppy data"), 11);
+    //DebugView_DrawAddressAndValue(hdc, pProc, 0177132, x, y, cxChar);
+    //TextOut(hdc, x + 14 * cxChar, y, _T("floppy data"), 11);
 }
 
 BOOL DebugView_DrawBreakpoints(HDC hdc, int x, int y)
