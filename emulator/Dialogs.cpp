@@ -12,11 +12,9 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 #include "stdafx.h"
 #include <commdlg.h>
-#include <commctrl.h>
+#include <CommCtrl.h>
 #include "Dialogs.h"
-#include "Emulator.h"
 #include "Main.h"
-#include "emubase\Emubase.h"
 
 //////////////////////////////////////////////////////////////////////
 

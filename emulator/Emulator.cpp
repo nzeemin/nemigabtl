@@ -11,12 +11,12 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 // Emulator.cpp
 
 #include "stdafx.h"
-#include <stdio.h>
-#include <Share.h>
+#include <cstdio>
+#include <share.h>
 #include "Main.h"
 #include "Emulator.h"
 #include "Views.h"
-#include "emubase\Emubase.h"
+#include "emubase/Emubase.h"
 #include "SoundGen.h"
 
 //////////////////////////////////////////////////////////////////////
@@ -191,6 +191,7 @@ bool Emulator_InitConfiguration(uint16_t configuration)
     uint16_t nRomResourceId;
     switch (configuration)
     {
+    default:
     case EMU_CONF_NEMIGA303:
         szRomFileName = FILENAME_ROM_303;
         nRomResourceId = IDR_NEMIGA_ROM_303;
@@ -202,10 +203,6 @@ bool Emulator_InitConfiguration(uint16_t configuration)
     case EMU_CONF_NEMIGA406:
         szRomFileName = FILENAME_ROM_406;
         nRomResourceId = IDR_NEMIGA_ROM_406;
-        break;
-    default:
-        szRomFileName = FILENAME_ROM_303;
-        nRomResourceId = IDR_NEMIGA_ROM_303;
         break;
     }
 
@@ -239,6 +236,19 @@ bool Emulator_InitConfiguration(uint16_t configuration)
     m_dwEmulatorUptime = 0;
 
     return true;
+}
+
+LPCTSTR Emulator_GetConfigurationName()
+{
+    uint16_t configuration = g_pBoard->GetConfiguration();
+
+    switch (configuration)
+    {
+    default:
+    case EMU_CONF_NEMIGA303:  return _T("NEMIGA 3.03");
+    case EMU_CONF_NEMIGA405:  return _T("NEMIGA 4.05");
+    case EMU_CONF_NEMIGA406:  return _T("NEMIGA 4.06");
+    }
 }
 
 void Emulator_Start()

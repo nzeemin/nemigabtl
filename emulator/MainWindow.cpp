@@ -14,11 +14,11 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 #include <commdlg.h>
 #include <crtdbg.h>
 #include <mmintrin.h>
-#include <vfw.h>
-#include <commctrl.h>
+#include <Vfw.h>
+#include <CommCtrl.h>
 
 #include "Main.h"
-#include "emubase\Emubase.h"
+#include "emubase/Emubase.h"
 #include "Emulator.h"
 #include "Dialogs.h"
 #include "Views.h"
@@ -146,6 +146,7 @@ BOOL CreateMainWindow()
     UpdateWindow(g_hwnd);
     MainWindow_UpdateAllViews();
     MainWindow_UpdateMenu();
+    MainWindow_UpdateWindowTitle();
 
     // Autostart
     if (Settings_GetAutostart() || Option_AutoBoot)
@@ -324,9 +325,10 @@ void MainWindow_RestorePositionAndShow()
 
 void MainWindow_UpdateWindowTitle()
 {
+    LPCTSTR confName = Emulator_GetConfigurationName();
     LPCTSTR emustate = g_okEmulatorRunning ? _T("run") : _T("stop");
-    TCHAR buffer[100];
-    _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%s [%s]"), g_szTitle, emustate);
+    TCHAR buffer[120];
+    _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("%s - %s - [%s]"), g_szTitle, confName, emustate);
     SetWindowText(g_hwnd, buffer);
 }
 
@@ -1169,6 +1171,7 @@ void MainWindow_DoEmulatorConf(WORD configuration)
     Settings_SetConfiguration(configuration);
 
     MainWindow_UpdateMenu();
+    MainWindow_UpdateWindowTitle();
     MainWindow_UpdateAllViews();
 }
 

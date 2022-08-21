@@ -11,7 +11,7 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 // MemoryView.cpp
 
 #include "stdafx.h"
-#include <commctrl.h>
+#include <CommCtrl.h>
 #include <windowsx.h>
 #include "Main.h"
 #include "Views.h"
