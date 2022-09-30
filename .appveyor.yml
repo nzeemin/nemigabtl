@@ -9,9 +9,6 @@ shallow_clone: true
 matrix:
   fast_finish: false
 
-platform:
-  - Win32
-
 configuration:
   - Debug
   - Release
