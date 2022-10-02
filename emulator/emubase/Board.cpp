@@ -926,7 +926,6 @@ uint16_t CMotherboard::GetPortView(uint16_t address) const
     case 0177576:
         return 0;  //STUB
 
-
     default:
         return 0;
     }
