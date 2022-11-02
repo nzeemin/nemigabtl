@@ -230,8 +230,8 @@ bool PngFile_WriteImageData4(FILE * fpFile, uint32_t framenum, const uint32_t* p
 
     uint8_t * pDataStart = pData + ((framenum <= 1) ? 8 : 12);
     const uint8_t cmf = 8;
-    pDataStart[0] = cmf;                           // CM = 8, CMINFO = 0
-    pDataStart[1] = (31 - ((cmf << 8) % 31)) % 31; // FCHECK (FDICT/FLEVEL=0)
+    pDataStart[0] = cmf;                    // CM = 8, CMINFO = 0
+    pDataStart[1] = 31 - ((cmf << 8) % 31); // FCHECK (FDICT/FLEVEL=0)
 
     uint8_t * pdst = pDataStart + 2;
     uint32_t adler = 1L;

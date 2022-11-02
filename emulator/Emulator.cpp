@@ -264,9 +264,7 @@ void Emulator_Start()
 
     // For proper breakpoint processing
     if (m_wEmulatorCPUBpsCount != 0)
-    {
         g_pBoard->GetCPU()->ClearInternalTick();
-    }
 }
 void Emulator_Stop()
 {
@@ -439,7 +437,7 @@ void Emulator_RemoveAllWatchpoints()
 
 void Emulator_SetSpeed(uint16_t realspeed)
 {
-    uint16_t speedpercent = 100;
+    uint16_t speedpercent;
     switch (realspeed)
     {
     case 0: speedpercent = 200; break;

@@ -202,9 +202,9 @@ void CFloppyController::SetCommand(uint16_t cmd)
 
     m_motorcount = 0;
 
-    bool okPrepareTrack = false;  // Нужно ли считывать дорожку в буфер
+    bool okPrepareTrack = false;  // Is it needed to load the track into the buffer
 
-    // Проверить, не сменился ли текущий привод
+    // Check if the current drive was changed or not
     int newdrive = ((cmd & 03) << 1) | ((cmd & 04) >> 2);
     if (m_drive != newdrive)
     {
@@ -217,11 +217,11 @@ void CFloppyController::SetCommand(uint16_t cmd)
 
         if (m_okTrace) DebugLogFormat(_T("Floppy CURRENT DRIVE %d\r\n"), newdrive);
     }
-    cmd &= ~7;  // Убираем из команды информацию о текущем приводе
+    cmd &= ~7;  // Remove the info about the current drive
 
     // Copy new flags to m_flags
     m_motoron = ((cmd & 8) != 0);
-    cmd &= 060;  // Оставляем только код операции
+    cmd &= 060;  // Keep the operation code only
 
     if (okPrepareTrack)
         PrepareTrack();
@@ -335,9 +335,8 @@ void CFloppyController::WriteData(uint16_t data)
         else if (m_writeflag && !m_shiftflag)  // Shift register is empty
         {
             m_shiftreg = m_writereg;
-            m_shiftflag = m_writeflag;
+            m_shiftflag = true;
             m_writereg = data & 0xff;
-            m_writeflag = true;
             //m_status &= ~FLOPPY_STATUS_MOREDATA;
         }
         else  // Both registers are not empty
@@ -371,7 +370,7 @@ void CFloppyController::Periodic()
         return;
     }
 
-    // Вращаем дискеты во всех драйвах сразу
+    // Rotating all the disks at once
     for (int drive = 0; drive < 8; drive++)
     {
         m_drivedata[drive].dataptr += 1;
@@ -485,7 +484,7 @@ void CFloppyController::PrepareTrack()
         {
             ::fseek(m_pDrive->fpFile, foffset, SEEK_SET);
             count = ::fread(data, 1, sectors * 128, m_pDrive->fpFile);
-            //TODO: Контроль ошибок чтения
+            //TODO: Check for reading error
         }
 
         // Fill m_data array with data
@@ -765,8 +764,8 @@ static bool DecodeTrackDataMX(const uint8_t* pRaw, uint8_t* pDest, uint16_t /*tr
     uint16_t destptr = 0;  // Offset in data array
 
     if (pRaw[dataptr++] != 0363) return false;  // Marker not found
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Track Number hi
-    if (dataptr < FLOPPY_RAWTRACKSIZE) dataptr++;  // Skip Track Number lo
+    dataptr++;  // Skip Track Number hi
+    dataptr++;  // Skip Track Number lo
 
     for (int sect = 0; sect < 11; sect++)  // Copy sectors
     {

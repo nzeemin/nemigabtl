@@ -294,7 +294,7 @@ void DisasmView_OnRButtonDown(int mousex, int mousey)
     DisasmLineItem* pLineItem = nullptr;
     if (lineindex >= 0 && lineindex < MAX_DISASMLINECOUNT)
         pLineItem = m_pDisasmLineItems + lineindex;
-    if (pLineItem->type == LINETYPE_NONE)
+    if (pLineItem != nullptr && pLineItem->type == LINETYPE_NONE)
         pLineItem = nullptr;
 
     m_nDisasmSelectedLineIndex = (pLineItem == nullptr) ? m_nDisasmCurrentLineIndex : lineindex;

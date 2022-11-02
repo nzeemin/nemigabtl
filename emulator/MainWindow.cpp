@@ -507,7 +507,7 @@ void MainWindow_AdjustWindowLayout()
     }
     if (Settings_GetDebug())  // Debug views shown -- keyboard/tape snapped to top
     {
-        cxScreen = 596;
+        cxScreen = 620;
         cyScreen = NEMIGA_SCREEN_HEIGHT + 8;
 
         int yKeyboard = yScreen + cyScreen + (Settings_GetKeyboard() ? 0 : 4);
@@ -517,7 +517,7 @@ void MainWindow_AdjustWindowLayout()
         if (Settings_GetKeyboard())
         {
             int cxKeyboard = cxScreen;
-            int cyKeyboard = 162;
+            int cyKeyboard = 172;
             int xKeyboard = (cxScreen - cxKeyboard) / 2;
             SetWindowPos(g_hwndKeyboard, NULL, xKeyboard, yKeyboard, cxKeyboard, cyKeyboard, SWP_NOZORDER);
             yTape += cyKeyboard + 4;
