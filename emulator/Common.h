@@ -81,7 +81,9 @@ BOOL ParseOctalValue(LPCTSTR text, WORD* pValue);
 void DrawOctalValue(HDC hdc, int x, int y, WORD value);
 void DrawHexValue(HDC hdc, int x, int y, WORD value);
 void DrawBinaryValue(HDC hdc, int x, int y, WORD value);
-BOOL ParseOctalValue(LPCTSTR text, WORD* pValue);
+
+void CopyTextToClipboard(LPCTSTR text);
+
 TCHAR Translate_BK_Unicode(BYTE ch);
 TCHAR Translate_KOI7R_Unicode(BYTE ch);
 
