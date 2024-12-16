@@ -137,6 +137,8 @@ void Settings_SetDebug(BOOL flag);
 BOOL Settings_GetDebug();
 void Settings_GetDebugFontName(LPTSTR buffer);
 void Settings_SetDebugFontName(LPCTSTR sFontName);
+WORD Settings_GetDebugBreakpoint(int bpno);
+void Settings_SetDebugBreakpoint(int bpno, WORD address);
 void Settings_SetDebugMemoryMode(WORD mode);
 WORD Settings_GetDebugMemoryMode();
 void Settings_SetDebugMemoryAddress(WORD address);
