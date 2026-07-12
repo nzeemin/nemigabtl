@@ -363,8 +363,8 @@ void ScreenView_ScanKeyboard()
             if (okCtrl && key >= 'A' && key <= 'X')
                 key -= 0x40;
 
-            if (newstate & 128)
-                DebugPrintFormat(_T("Screen key: 0x%0x %d 0x%0x\r\n"), scan, okCtrl, (int)key);
+            if ((newstate & 128) && key > 4)
+                DebugPrintFormat(_T("Screen key: 0x%02x %d 0x%02x\r\n"), scan, okCtrl, (int)key);
 
             if (key == 0)
                 continue;

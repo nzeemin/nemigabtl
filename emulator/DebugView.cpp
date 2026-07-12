@@ -39,9 +39,10 @@ BOOL DebugView_OnKeyDown(WPARAM vkey, LPARAM lParam);
 void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WORD* arrR, BOOL* arrRChanged, WORD oldPsw);
 void DebugView_DrawMemoryForRegister(HDC hdc, int reg, const CProcessor* pProc, int x, int y, WORD oldValue);
 int DebugView_DrawWatchpoints(HDC hdc, const CProcessor* pProc, int x, int y);
+void DebugView_DrawPortView(HDC hdc, uint16_t address, uint16_t portview, int x, int y, int cxChar);
 void DebugView_DrawPorts(HDC hdc, int x, int y);
 void DebugView_DrawBreakpoints(HDC hdc, int x, int y);
-void DebugView_DrawMemoryMap(HDC hdc, int x, int y);
+void DebugView_DrawMemoryMap(HDC hdc, int x, int y, const CProcessor* pProc);
 void DebugView_UpdateWindowText();
 
 
@@ -314,7 +315,7 @@ void DebugView_DoDraw(HDC hdc)
     DebugView_DrawBreakpoints(hdc, xBreaks + cxChar / 2, cyLine / 2);
 
     int xMemoryMap = xMemmap + cxChar;
-    DebugView_DrawMemoryMap(hdc, xMemoryMap, 0 * cyLine);
+    DebugView_DrawMemoryMap(hdc, xMemoryMap, 0 * cyLine, pDebugPU);
 
     SetTextColor(hdc, colorOld);
     SetBkColor(hdc, colorBkOld);
@@ -370,6 +371,17 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
         TextOut(hdc, x + cxChar * (15 + 15 - i), y + 10 * cyLine, buffera, 1);
     }
 
+    // PSW TNZVC flags as letters: letter if bit set, '-' otherwise
+    ::SetTextColor(hdc, colorText);
+    static const TCHAR* flagchars = _T("TNZVC");
+    for (int i = 0; i < 5; i++)
+    {
+        int bit = 4 - i;  // T=4, N=3, Z=2, V=1, C=0
+        WORD bitpos = 1 << bit;
+        buffera[0] = (psw & bitpos) ? flagchars[i] : '-';
+        TextOut(hdc, x + cxChar * (15 + 15 - bit), y + 12 * cyLine, buffera, 1);
+    }
+
     ::SetTextColor(hdc, colorText);
 
     // Processor mode - HALT or USER
@@ -380,6 +392,15 @@ void DebugView_DrawProcessor(HDC hdc, const CProcessor* pProc, int x, int y, WOR
     BOOL okStopped = pProc->IsStopped();
     if (okStopped)
         TextOut(hdc, x + 6 * cxChar, y + 12 * cyLine, _T("STOP"), 4);
+}
+
+void DebugView_DrawPortView(HDC hdc, uint16_t address, uint16_t portview, int x, int y, int cxChar)
+{
+    ASSERT(g_pBoard != nullptr);
+    DrawOctalValue(hdc, x, y, address);
+    x += 7 * cxChar;
+    uint16_t value = g_pBoard->GetPortView(portview);
+    DrawOctalValue(hdc, x, y, value);
 }
 
 void DebugView_DrawAddressAndValue(HDC hdc, const CProcessor* pProc, uint16_t address, int x, int y, int cxChar)
@@ -499,6 +520,9 @@ void DebugView_DrawPorts(HDC hdc, int x, int y)
     DebugView_DrawAddressAndValue(hdc, pProc, 0170006, x, y, cxChar);
     TextOut(hdc, x + 14 * cxChar, y, _T("System"), 6);
     y += cyLine;
+    DebugView_DrawPortView(hdc, 0170006, 0170007, x, y, cxChar);
+    TextOut(hdc, x + 14 * cxChar, y, _T("MODE"), 4);
+    y += cyLine;
     DebugView_DrawAddressAndValue(hdc, pProc, 0177572, x, y, cxChar);
     TextOut(hdc, x + 14 * cxChar, y, _T("VADDR"), 5);
     y += cyLine;
@@ -550,7 +574,7 @@ void DebugView_DrawBreakpoints(HDC hdc, int x, int y)
     }
 }
 
-void DebugView_DrawMemoryMap(HDC hdc, int x, int y)
+void DebugView_DrawMemoryMap(HDC hdc, int x, int y, const CProcessor* pProc)
 {
     int cxChar, cyLine;  GetFontWidthAndHeight(hdc, &cxChar, &cyLine);
 
@@ -588,6 +612,16 @@ void DebugView_DrawMemoryMap(HDC hdc, int x, int y)
         TextOut(hdc, xtype, y1 + cyLine * 12 - cxChar / 2, _T("VRAM"), 4);
         TextOut(hdc, xtype, y1 + cyLine * 4 + cxChar / 2, _T("RAM"), 3);
     }
+
+    uint16_t sp = pProc->GetSP();
+    int ysp = y2 - ((y2 - y1) * sp / 65536);
+    PatBlt(hdc, x2, ysp, cxChar, 1, PATCOPY);
+    TextOut(hdc, x2 + cxChar, ysp - cyLine / 2, _T("SP"), 2);
+
+    uint16_t pc = pProc->GetPC();
+    int ypc = y2 - ((y2 - y1) * pc / 65536);
+    PatBlt(hdc, x2, ypc, cxChar, 1, PATCOPY);
+    TextOut(hdc, x2 + cxChar, ypc - cyLine / 2, _T("PC"), 2);
 
     ::SelectObject(hdc, hOldBrush);
 }

@@ -175,6 +175,8 @@ public:  // Saving/loading emulator status
     void        LoadFromImage(const uint8_t* pImage);
 private:  // Ports: implementation
     void        RegisterHaltRq(uint8_t flags);
+    uint8_t     m_keyscan;          // Скан-код с клавиатуры, ожидающий что его заберут
+    bool        m_keypending;       // Флаг того что в m_keyscan ожидает скан-код
     uint8_t     m_Port170006;       // Регистр данных клавиатуры (байт 170006)
     uint8_t     m_Port170007acc;    // Регистр приема HALT-запросов
     uint8_t     m_Port170007;       // Регистр фиксации HALT-запросов (байт 170007)

@@ -86,7 +86,7 @@ static ScreenModeReference[] =
 
 const uint32_t ScreenView_Palette[4] =
 {
-    0x000000, 0xB0B0B0, 0x404040, 0xFFFFFF
+    0x000000, 0xB0B0B0, 0x555555, 0xFFFFFF
 };
 
 

@@ -16,20 +16,20 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 
 
 // Timings ///////////////////////////////////////////////////////////
-// Таблицы таймингов основаны на статье Ю. А. Зальцмана, журнал "Персональный компьютер БК" №1 1995.
+// Таблицы таймингов
 
-const int TIMING_BRANCH =   16;  // 5.4 us - BR, BEQ etc.
+const int TIMING_BRANCH =   26;  // measured on real hardware (BEQ/BMI/BNE/BLO/BPL avg) ~3.14 us @ 8 MHz = 25.1 ticks
 const int TIMING_ILLEGAL = 144;
 const int TIMING_WAIT   = 1140;  // 380 us - WAIT and RESET
 const int TIMING_EMT    =   68;  // 22.8 us - IOT, BPT, EMT, TRAP - 42+5t
-const int TIMING_RTI    =   40;  // 13.4 us - RTI and RTT - 24+2t
+const int TIMING_RTI    =   67;
 const int TIMING_RTS    =   32;  // 10.8 us
 const int TIMING_NOP    =   12;  // 4 us - NOP and all commands without operands and with register operands
-const int TIMING_SOB    =   20;  // 6.8 us
-const int TIMING_BR     =   16;  // 5.4 us
+const int TIMING_SOB    =   38;  // measured on real hardware (14,788 samples) ~4.77 us @ 8 MHz = 38.1 ticks - matches original value
+const int TIMING_BR     =   30;
 const int TIMING_MARK   =   36;
 
-const int TIMING_REGREG =   11;  // Base timing
+const int TIMING_REGREG =   16;  // was 22; measured on real hardware (ADD/ASL/ROL/TST Rn, register-only) ~1.67 us @ 8 MHz = 13.4 ticks
 const int TIMING_A[8]   = { 0, 12, 12, 20, 12, 20, 20, 28 };  // Source
 const int TIMING_B[8]   = { 0, 20, 20, 32, 20, 32, 32, 40 };  // Destination
 const int TIMING_AB[8]  = { 0, 16, 16, 24, 16, 24, 24, 32 };  // Source and destination are the same
@@ -190,11 +190,11 @@ CProcessor::CProcessor(CMotherboard* pBoard)
     m_pBoard = pBoard;
     ::memset(m_R, 0, sizeof(m_R));
     m_psw = 0340;
-    m_okStopped = true;  m_haltmode = false;
+    m_okStopped = true;
     m_internalTick = 0;
     m_waitmode = false;
     m_stepmode = false;
-    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_EVNTrq = false;
+    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_HALTCMDrq = m_RPL2rq = m_EVNTrq = false;
     m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = false;
 
     m_instruction = m_instructionpc = 0;
@@ -209,19 +209,20 @@ CProcessor::CProcessor(CMotherboard* pBoard)
 
 void CProcessor::Start()
 {
-    m_okStopped = false;  m_haltmode = true;
+    m_okStopped = false;
 
     m_stepmode = false;
     m_waitmode = false;
-    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_EVNTrq = false;
+    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_HALTCMDrq = m_RPL2rq = m_EVNTrq = false;
     m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = false;
     m_virqrq = 0;  memset(m_virq, 0, sizeof(m_virq));
 
-    // "Turn On" interrupt processing
-    uint16_t pc = GetWord(0160006);
-    SetPC(pc);
-    uint16_t ps = GetWord(0160010);
-    SetPSW(ps);
+    // Simulate 588ВГ1 INIT microcode:
+    // Vector fetch at 000024/000026 returns 000000 (588ВА1 disconnected)
+    // -> PC=0, PSW=0 -> executes HALT at address 0 -> HALT interrupt fires
+    SetPC(0);
+    SetPSW(0);
+    m_HALTCMDrq = true;  // simulate HALT instruction at address 0
     m_internalTick = 1000000;  // Количество тактов на включение процессора (значение с потолка)
 }
 
@@ -233,7 +234,7 @@ void CProcessor::Stop()
     m_waitmode = false;
     m_psw = 0340;
     m_internalTick = 0;
-    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_RPL2rq = m_EVNTrq = false;
+    m_RPLYrq = m_RSVDrq = m_TBITrq = m_HALTrq = m_HALTCMDrq = m_RPL2rq = m_EVNTrq = false;
     m_BPT_rq = m_IOT_rq = m_EMT_rq = m_TRAPrq = false;
     m_virqrq = 0;  memset(m_virq, 0, sizeof(m_virq));
 }
@@ -276,14 +277,19 @@ void CProcessor::Execute()
 
             // Calculate interrupt vector and mode according to priority
             uint16_t intrVector = 0;
-            //bool currMode = m_haltmode;  // Current processor mode: true = HALT mode, false = USER mode
             bool intrMode = false;  // true = HALT mode interrupt, false = USER mode interrupt
 
-            if (m_HALTrq)  // HALT command
+            if (m_HALTrq)  // HALT signal
             {
                 intrVector = 0002;  intrMode = true;
                 m_HALTrq = false;
                 m_pBoard->PreProcessHALT();
+            }
+            else if (m_HALTCMDrq)  // HALT command
+            {
+                intrVector = 0002;  intrMode = true;
+                m_HALTCMDrq = false;
+                m_pBoard->PreProcessHALT();  // snapshot and clear accumulator
             }
             else if (m_BPT_rq)  // BPT command
             {
@@ -357,7 +363,6 @@ void CProcessor::Execute()
                 intrVector |= selVector;
 
                 uint16_t oldpsw = m_psw;
-                m_haltmode = true;
 
                 // Save PC/PSW to stack
                 SetSP(GetSP() - 2);
@@ -368,16 +373,7 @@ void CProcessor::Execute()
                 SetPC(GetWord(intrVector));
                 m_psw = GetWord(intrVector + 2) & 0377;
 #if !defined(PRODUCT)
-                if (intrVector == 0160002)  // HALT
-                {
-                    uint16_t port170006 = m_pBoard->GetPortView(0170006);
-                    if (port170006 & 002000)  // keyboard
-                    {
-                        uint8_t keybyte = static_cast<uint8_t>(port170006 & 255);
-                        DebugLogFormat(_T("CPU HALT interrupt vector=%06o PC=%06o PSW=%06o 170006=%06o %C\r\n"), intrVector, GetPC(), GetPSW(), port170006, keybyte >= 32 && keybyte < 128 ? (char)keybyte : ' ');
-                    }
-                }
-                //if (m_pBoard->GetTrace() & TRACE_CPUINT)
+                if (m_pBoard->GetTrace() & TRACE_CPUINT)
                 {
                     if (intrVector == 0160002)  // HALT
                     {
@@ -395,7 +391,6 @@ void CProcessor::Execute()
             else  // USER mode interrupt
             {
                 uint16_t oldpsw = m_psw;
-                m_haltmode = false;
 
                 // Save PC/PSW to stack
                 SetSP(GetSP() - 2);
@@ -406,7 +401,7 @@ void CProcessor::Execute()
                 SetPC(GetWord(intrVector));
                 m_psw = GetWord(intrVector + 2) & 0377;
 
-                //if (m_pBoard->GetTrace() & TRACE_CPUINT)
+                if (m_pBoard->GetTrace() & TRACE_CPUINT)
                 {
                     if (intrVector != 000020 && intrVector != 000030 && intrVector != 000034)  // skip IOT/EMT/TRAP
                         DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
@@ -512,7 +507,7 @@ void CProcessor::ExecuteWAIT()  // WAIT - Wait for an interrupt
 
 void CProcessor::ExecuteHALT()  // HALT - Останов
 {
-    m_HALTrq = true;
+    m_HALTCMDrq = true;
 }
 
 void CProcessor::ExecuteRTI()  // RTI - Return from Interrupt
@@ -525,9 +520,6 @@ void CProcessor::ExecuteRTI()  // RTI - Return from Interrupt
     uint16_t new_psw = GetWord(GetSP());  // Pop PSW --- saving HALT
     SetSP( GetSP() + 2 );
     SetPSW(new_psw & 0377);
-
-    if (GetPC() < 0160000)
-        m_haltmode = false;
 
     m_internalTick = TIMING_RTI;
 }
@@ -2261,7 +2253,7 @@ void CProcessor::SaveToImage(uint8_t* pImage)
     uint8_t* pbImage = reinterpret_cast<uint8_t*>(pwImage);
     uint8_t flags0 = 0;
     flags0 |= (m_stepmode ? 1 : 0);
-    flags0 |= (m_haltmode ? 4 : 0);
+    //flags0 |= (m_haltmode ? 4 : 0);
     flags0 |= (m_waitmode ? 32 : 0);
     *pbImage++ = flags0;                            //   22     1   Flags
     uint8_t flags1 = 0;
@@ -2295,7 +2287,7 @@ void CProcessor::LoadFromImage(const uint8_t* pImage)
     const uint8_t* pbImage = reinterpret_cast<const uint8_t*>(pwImage);
     uint8_t flags0 = *pbImage++;                    //   22     1   Flags
     m_stepmode  = ((flags0 &   1) != 0);
-    m_haltmode  = ((flags0 &   4) != 0);
+    //m_haltmode  = ((flags0 &   4) != 0);
     m_waitmode  = ((flags0 &  32) != 0);
     uint8_t flags1 = *pbImage++;                    //   23     1   Flags
     m_RPLYrq    = ((flags1 &   2) != 0);

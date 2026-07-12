@@ -24,8 +24,7 @@ class CProcessor  // KM1801VM1 processor
 {
 public:  // Constructor / initialization
     CProcessor(CMotherboard* pBoard);
-    void        FireHALT() { m_HALTrq = true; }  // Fire HALT interrupt request, same as HALT command
-    void        SetHaltMode(bool halt) { m_haltmode = halt; }
+    void        FireHALT() { m_HALTrq = true; }  // Fire HALT interrupt request
     void        MemoryError();
     int         GetInternalTick() const { return m_internalTick; }
     void        ClearInternalTick() { m_internalTick = 0; }
@@ -43,7 +42,6 @@ protected:  // Processor state
     uint16_t    m_psw;              // Processor Status Word (PSW)
     uint16_t    m_R[8];             // Registers (R0..R5, R6=SP, R7=PC)
     bool        m_okStopped;        // "Processor stopped" flag
-    bool        m_haltmode;         // true = HALT mode, false = USER mode
     bool        m_stepmode;         // Read true if it's step mode
     bool        m_waitmode;         // WAIT
     uint16_t    m_eisregs[3];       // EIS chip registers
@@ -62,7 +60,8 @@ protected:  // Interrupt processing
     bool        m_RPLYrq;           // Hangup interrupt pending
     bool        m_RSVDrq;           // Reserved instruction interrupt pending
     bool        m_TBITrq;           // T-bit interrupt pending
-    bool        m_HALTrq;           // HALT command or HALT signal
+    bool        m_HALTrq;           // HALT signal
+    bool        m_HALTCMDrq;        // HALT command
     bool        m_RPL2rq;           // Double hangup interrupt pending
     bool        m_EVNTrq;           // Timer event interrupt pending
     bool        m_BPT_rq;           // BPT command interrupt pending
@@ -107,7 +106,7 @@ public:  // Processor state
     // "Processor stopped" flag
     bool        IsStopped() const { return m_okStopped; }
     // HALT flag (true - HALT mode, false - USER mode)
-    bool        IsHaltMode() const { return m_haltmode; }
+    bool        IsHaltMode() const { return (m_psw & PSW_P) != 0; }
 public:  // Processor control
     void        Start();     // Start processor
     void        Stop();      // Stop processor

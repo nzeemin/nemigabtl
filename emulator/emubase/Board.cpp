@@ -37,6 +37,7 @@ CMotherboard::CMotherboard() :
     m_pROM = static_cast<uint8_t*>(::calloc(4 * 1024, 1));
 
     m_Configuration = 0;
+    m_keypending = false;
     m_Port170007acc = m_Port170007 = m_Port170006 = 0;
     m_Port170006wr = 0;
     m_Port177572 = 0;
@@ -107,6 +108,7 @@ void CMotherboard::Reset()
 
     // Reset ports
     DebugLog(_T("Reset\r\n"));
+    m_keypending = false;
     m_Port170007acc = m_Port170007 = m_Port170006 = 0;
     m_Port170006wr = 0;
     m_Port177572 = 0;
@@ -247,8 +249,9 @@ void CMotherboard::ResetDevices()
         m_pFloppyCtl->Reset();
 
     //m_Port170006 = 0;
-    m_Port170007acc |= 0x80;
+    m_Port170007acc = 0;
     m_Port170007 = 0;
+    m_Port170006 = 0;
     m_Port170006wr = 0;
     m_Port177574 = 0;
     //m_pCPU->FireHALT();
@@ -268,15 +271,19 @@ void CMotherboard::ResetHALT()
 void CMotherboard::RegisterHaltRq(uint8_t flags)
 {
     m_Port170007acc |= flags;
-    if ((m_Port170006wr & 3) == 0 && !m_pCPU->IsHaltMode())
-    {
+    if ((m_Port170006wr & 3) == 0)
         m_pCPU->FireHALT();
-        //if (m_Port170007 != 0x10)
-        //    DebugLogFormat(_T("RegisterHaltRq 0x%02x\r\n"), (int)m_Port170007);
-    }
+    //    DebugLogFormat(_T("RegisterHaltRq 0x%02x\r\n"), (int)m_Port170007);
 }
 void CMotherboard::PreProcessHALT()
 {
+    if (m_keypending)
+    {
+        m_Port170006 = m_keyscan;
+        m_keypending = false;
+        m_Port170007acc |= 0x04;  // ensure kbd_ready appears in the snapshot
+    }
+
     m_Port170007 = m_Port170007acc;
     m_Port170007acc = 0;
 }
@@ -290,7 +297,7 @@ void CMotherboard::Tick50()  // 50 Hz timer
     }
 
     //NOTE: Прерывание HALT с кодом Н3 должно генерироваться каждые 1/50 секунды
-    RegisterHaltRq(0x10);  // Сигнал Н3
+    RegisterHaltRq(0x10);  // Сигнал Н3 - таймер
 
     if (m_Timer2 == 0)
     {
@@ -326,6 +333,7 @@ void CMotherboard::TimerTick() // Timer Tick, 8 MHz
         {
             uint16_t octave = m_Port170030 & 7;  // Октава 1..7
             m_Timer1div = (1 << octave);
+            m_Timer1 = m_Port170022;
         }
         return;
     }
@@ -361,7 +369,7 @@ void CMotherboard::ExecuteCPU()
 Каждый фрейм равен 1/25 секунды = 40 мс
 Фрейм делим на 20000 тиков, 1 тик = 2 мкс
 В каждый фрейм происходит:
-* 320000 тиков таймер 1 -- 16 раз за тик -- 8 МГц
+* 320000 тиков таймер 1 -- 16 раз за тик -- 8 МГц;  1 CPU tick = 125 ns
 * 320000 тиков ЦП       -- 16 раз за тик
 *      2 тика IRQ2 и таймер 2 -- 50 Гц, в 0-й и 10000-й тик фрейма
 *    625 тиков FDD -- каждый 32-й тик (300 RPM = 5 оборотов в секунду)
@@ -391,6 +399,10 @@ bool CMotherboard::SystemFrame()
 
             // Timer 1 ticks
             TimerTick();
+
+            // Update interrupts
+            if (m_Port170007acc != 0 && (m_Port170006wr & 3) == 0)
+                m_pCPU->FireHALT();
         }
 
         if (frameticks == 0 || frameticks == 10000)
@@ -468,8 +480,17 @@ void CMotherboard::KeyboardEvent(uint8_t scancode, bool okPressed)
 {
     if (okPressed)
     {
-        m_Port170006 = scancode;
-        RegisterHaltRq(0x04);
+        if (m_keypending)
+            return;  // Ничего не делаем, предыдущая клавиша не обработана
+
+        if ((m_Port170006wr & 3) == 0)  // Прерывания разрешены
+            m_Port170006 = scancode;
+        else
+        {
+            m_keyscan = scancode;
+            m_keypending = true;
+        }
+        RegisterHaltRq(0x04);  // Прерывание от клавиатуры
 
         //if (m_dwTrace & TRACE_KEYBOARD)
         {
@@ -478,8 +499,6 @@ void CMotherboard::KeyboardEvent(uint8_t scancode, bool okPressed)
             else
                 DebugLogFormat(_T("Keyboard 0x%02x\r\n"), scancode);
         }
-
-        return;
     }
 }
 
@@ -523,7 +542,8 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
     switch (addrtype & ADDRTYPE_MASK)
     {
     case ADDRTYPE_RAM:
-//        if (address == 0177562)
+        if (address == 0177562)          // H2 fires on ANY access to KBD data,
+            RegisterHaltRq(0x20);        //   regardless of HALT/USER mode
 //            DebugLogFormat(_T("GetWord %06o %03o\r\n"), address, GetRAMWord(offset & 0177776));
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_HIRAM:
@@ -534,14 +554,14 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
         //TODO: What to do if okExec == true ?
         return GetPortWord(address);
     case ADDRTYPE_TERM:
-        if (address == 0177560)
-            return GetRAMWord(address);
-        else if (address == 0177562)
-            RegisterHaltRq(0x20);
-        else if (address == 0177564)
-            return 0200; //GetRAMWord(offset & 0177776);
-        else if (address == 0177566)
-            RegisterHaltRq(0x40);
+        //if (address == 0177560)  // KBS
+        //    return GetRAMWord(address & 0177776);
+        if (address == 0177562)  // KBD
+            RegisterHaltRq(0x20);  // SH2 - по чтению из KBD
+        //else if (address == 0177564)  // TTS
+        //    return GetRAMWord(offset & 0177776);
+        //else if (address == 0177566)  // TTD
+        //    RegisterHaltRq(0x40);
         DebugLogFormat(_T("GetWord %06o\r\n"), address);
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_DENY:
@@ -561,7 +581,8 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
     switch (addrtype & ADDRTYPE_MASK)
     {
     case ADDRTYPE_RAM:
-//        if (address == 0177562)
+        if (address == 0177562)          // H2 fires on ANY access to KBD data,
+            RegisterHaltRq(0x20);        //   regardless of HALT/USER mode
 //            DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, (uint16_t)GetRAMByte(offset));
         return GetRAMByte(offset);
     case ADDRTYPE_HIRAM:
@@ -572,14 +593,14 @@ uint8_t CMotherboard::GetByte(uint16_t address, bool okHaltMode)
         //TODO: What to do if okExec == true ?
         return GetPortByte(address);
     case ADDRTYPE_TERM:
-        if (address == 0177560 || address == 0177561)
-            return GetRAMByte(address);
-        else if (address == 0177562)
-            RegisterHaltRq(0x20);
-        else if (address == 0177564)
-            return 0200; //GetRAMByte(offset);
-        else if (address == 0177566)
-            RegisterHaltRq(0x40);
+        //if (address == 0177560 || address == 0177561)
+        //    return GetRAMByte(address);
+        if (address == 0177562)  // KBD
+            RegisterHaltRq(0x20);  // SH2 - по чтению из KBD
+        //else if (address == 0177564)
+        //    return 0200; //GetRAMByte(offset);
+        //else if (address == 0177566)
+        //    RegisterHaltRq(0x40);
         DebugLogFormat(_T("GetByte %06o %03o\r\n"), address, static_cast<uint16_t>(GetRAMByte(offset)));
         return GetRAMByte(offset);
     case ADDRTYPE_DENY:
@@ -612,28 +633,28 @@ void CMotherboard::SetWord(uint16_t address, bool okHaltMode, uint16_t word)
         SetPortWord(address, word);
         return;
     case ADDRTYPE_TERM:
-        if (address == 0177560)
-        {
-            SetRAMWord(address, word);
-            return;
-        }
-        if (address == 0177562)
-        {
+        //if (address == 0177560)
+        //{
+        //    SetRAMWord(address, word);
+        //    return;
+        //}
+        //if (address == 0177562)
+        //{
 //            DebugLogFormat(_T("SetWord 177562 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-            RegisterHaltRq(0x20);
-        }
-        else if (address == 0177564)
-        {
+        //RegisterHaltRq(0x20);
+        //}
+        //if (address == 0177564)
+        //{
 //            DebugLogFormat(_T("WRITE 177564 value %06o, PC=%06o\r\n"), word, m_pCPU->GetInstructionPC());
-            SetRAMWord(offset & 0177776, word);
-            return;
-        }
-        else if (address == 0177566)
+        //SetRAMWord(offset & 0177776, word);
+        //return;
+        //}
+        if (address == 0177566)  // TTD
         {
 //            DebugLogFormat(_T("177566 TERMOUT %04x\r\n"), word);
-            RegisterHaltRq(0x40);
+            RegisterHaltRq(0x40);  // SH1 - по записи в TTD
         }
-//        DebugLogFormat(_T("SetWord 06o\r\n"), address);
+//        DebugLogFormat(_T("SetWord %06o\r\n"), address);
         SetRAMWord(offset & 0177776, word);
         return;
     case ADDRTYPE_DENY:
@@ -664,21 +685,21 @@ void CMotherboard::SetByte(uint16_t address, bool okHaltMode, uint8_t byte)
         SetPortByte(address, byte);
         return;
     case ADDRTYPE_TERM:
-        if (address == 0177562)
-        {
+        //if (address == 0177562)
+        //{
 //            DebugLogFormat(_T("SetByte 177562 value %03o, PC=%06o\r\n"), (uint16_t)byte, m_pCPU->GetInstructionPC());
-            RegisterHaltRq(0x20);
-        }
-        else if (address == 0177564)
-        {
+        //    RegisterHaltRq(0x20);
+        //}
+        //else if (address == 0177564)
+        //{
 //            DebugLogFormat(_T("WRITE 177564 value %03o, PC=%06o\r\n"), byte, m_pCPU->GetInstructionPC());
-            SetRAMByte(offset, byte);
-            return;
-        }
-        else if (address == 0177566)
+        //    SetRAMByte(offset, byte);
+        //    return;
+        //}
+        if (address == 0177566)  // TTD
         {
 //            DebugLogFormat(_T("177566 TERMOUT %02x\r\n"), byte);
-            RegisterHaltRq(0x40);
+            RegisterHaltRq(0x40);  // SH1 - по записи в TTD
         }
         SetRAMByte(offset, byte);
 //        DebugLogFormat(_T("SetByte 06o\r\n"), address);
@@ -875,6 +896,9 @@ uint16_t CMotherboard::GetPortView(uint16_t address) const
 
     case 0170006:
         return ((m_Port170007 | 0x03) << 8) | m_Port170006;
+    case 0170007:  //HACK to get MODE register
+        return m_Port170006wr;
+
     case 0170010:  // Network
     case 0170012:
         return 0;  //STUB
@@ -960,23 +984,30 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
 
     case 0170006:
         {
+            //DebugLogFormat(_T("Reg 170006 W %06ho\r\n"), word & 0xFF);
             bool oldmode = (m_Port170006wr & 3) != 0;
             bool newmode = (word & 3) != 0;
-            m_Port170006wr = word;
-            m_pCPU->SetHaltMode(newmode);
-            if (!oldmode && newmode)  // switched from USER mode to HALT
+            m_Port170006wr = word & 0xFF;
+            if (!oldmode && newmode)  // прерывания отключены (MODE3)
             {
                 //if (m_Port170007 != 0)
                 //    DebugLogFormat(_T("USER->HALT 0x%02x key=0x%02x\r\n"), (int)m_Port170007, (int)m_Port170006);
             }
-            else if (oldmode && !newmode)  // switched from HALT mode to USER
+            else if (oldmode && !newmode)  // прерывания включены
             {
-                if (m_Port170007acc != 0)
+                if (m_keypending)
                 {
-                    m_pCPU->FireHALT();
-                    //if (m_Port170007 != 0x10)
-                    //DebugLogFormat(_T("HALT->USER 0x%02x 0x%02x\r\n"), (int)m_Port170007acc, (int)m_Port170007);
+                    m_Port170006 = m_keyscan;
+                    m_keypending = false;
+                    //m_Port170007acc |= 0x04;  // keyboard interrupt
+                    RegisterHaltRq(0x04);
                 }
+
+                //if (m_Port170007acc != 0)
+                //{
+                //    m_pCPU->FireHALT();
+                //    //    //DebugLogFormat(_T("HALT->USER 0x%02x 0x%02x\r\n"), (int)m_Port170007acc, (int)m_Port170007);
+                //}
             }
         }
         break;  //STUB
@@ -1178,10 +1209,16 @@ void CMotherboard::LoadFromImage(const uint8_t* pImage)
 
 //////////////////////////////////////////////////////////////////////
 
-void CMotherboard::DoSound(void)
+void CMotherboard::DoSound()
 {
     if (m_SoundGenCallback == nullptr)
         return;
+
+    if (m_Timer2 == 0)  // duration expired = silence
+    {
+        (*m_SoundGenCallback)(0, 0);
+        return;
+    }
 
     uint16_t volume = (m_Port170030 >> 3) & 3;  // Громкость 0..3
     uint16_t octave = m_Port170030 & 7;  // Октава 1..7
