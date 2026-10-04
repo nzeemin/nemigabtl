@@ -391,7 +391,7 @@ bool CProcessor::InterruptProcessing()
                 SetWord(GetSP(), GetPC());
 
                 SetPC(GetWord(intrVector));
-                m_psw = GetWord(intrVector + 2) & 0377;
+                m_psw = (GetWord(intrVector + 2) & 0377) | PSW_HALT;
 #if !defined(PRODUCT)
                 if (m_pBoard->GetTrace() & TRACE_CPUINT)
                 {
@@ -541,7 +541,7 @@ void CProcessor::ExecuteRTI()  // RTI - Return from Interrupt
 
     uint16_t new_psw = GetWord(GetSP());  // Pop PSW --- saving HALT
     SetSP( GetSP() + 2 );
-    SetPSW(new_psw & 0377);
+    SetPSW(new_psw & 0777);  // HALT bit is restored from the stack too
 
     m_internalTick = TIMING_RTI;
 }
@@ -556,7 +556,7 @@ void CProcessor::ExecuteRTT()  // RTT - Return from Trace Trap
     uint16_t new_psw = GetWord(GetSP());  // Pop PSW --- saving HALT
     SetSP( GetSP() + 2 );
     if (m_RPLYrq) return;
-    SetPSW(new_psw & 0377);
+    SetPSW(new_psw & 0777);  // HALT bit is restored from the stack too
 
     //m_psw |= PSW_T; // set the trap flag ???
 

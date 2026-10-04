@@ -106,7 +106,7 @@ public:  // Processor state
     // "Processor stopped" flag
     bool        IsStopped() const { return m_okStopped; }
     // HALT flag (true - HALT mode, false - USER mode)
-    bool        IsHaltMode() const { return (m_psw & PSW_P) != 0; }
+    bool        IsHaltMode() const { return (m_psw & PSW_HALT) != 0; }
 public:  // Processor control
     void        Start();     // Start processor
     void        Stop();      // Stop processor
