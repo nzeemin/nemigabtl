@@ -29,7 +29,8 @@ const int TIMING_SOB    =   38;
 const int TIMING_BR     =   30;
 const int TIMING_MARK   =   36;
 
-const int TIMING_REGREG =   14;  // Base timing; measured on real hardware: register-only ADD/MOV/BIC/BIS/ASL/ASR/TST Rn = 13-14 ticks @ 8 MHz
+const int TIMING_REGREG =   12;  // Base timing
+// Measured on real hardware: register-only ADD/MOV/BIC/BIS/ASL/ASR/TST Rn = 13-14 ticks @ 8 MHz
 // Extra time for reading the console registers 177560-177567: peripheral wait states.
 // Measured on real hardware: TSTB @#177560 ~7.17 us = 57 ticks @ 8 MHz, i.e. 21 ticks above the plain RAM variant
 const int TIMING_CONSOLE =  23;  // REGREG 14 + A1[3] 20 + 23 = 57
