@@ -40,6 +40,8 @@ CMotherboard::CMotherboard() :
     m_keypending = false;
     m_Port170007acc = m_Port170007 = m_Port170006 = 0;
     m_Port170006wr = 0;
+    m_okHaltHeld = false;
+    m_okHaltReleasePending = false;
     m_Port177572 = 0;
     m_Port177574 = 0;
     m_Port177514 = 0377;
@@ -111,6 +113,8 @@ void CMotherboard::Reset()
     m_keypending = false;
     m_Port170007acc = m_Port170007 = m_Port170006 = 0;
     m_Port170006wr = 0;
+    m_okHaltHeld = false;
+    m_okHaltReleasePending = false;
     m_Port177572 = 0;
     m_Port177574 = 0;
     m_Port177514 = 0377;
@@ -122,8 +126,8 @@ void CMotherboard::Reset()
     ResetDevices();
 
     m_pCPU->Start();
-    if (m_Configuration >= 400)
-        m_pCPU->FireHALT();
+    //if (m_Configuration >= 400)
+    //    m_pCPU->FireHALT();
 }
 
 // Load 4 KB ROM image from the buffer
@@ -253,6 +257,8 @@ void CMotherboard::ResetDevices()
     m_Port170007 = 0;
     m_Port170006 = 0;
     m_Port170006wr = 0;
+    m_okHaltHeld = false;
+    m_okHaltReleasePending = false;
     m_Port177574 = 0;
     //m_pCPU->FireHALT();
 
@@ -266,12 +272,14 @@ void CMotherboard::ResetHALT()
     m_Port170007 = 0;
     m_Port170007acc = 0;
     m_Port170006wr = 0;
+    m_okHaltHeld = false;
+    m_okHaltReleasePending = false;
 }
 
 void CMotherboard::RegisterHaltRq(uint8_t flags)
 {
     m_Port170007acc |= flags;
-    if ((m_Port170006wr & 3) == 0)
+    if ((m_Port170006wr & 3) == 0 && !m_okHaltHeld)
         m_pCPU->FireHALT();
     //    DebugLogFormat(_T("RegisterHaltRq 0x%02x\r\n"), (int)m_Port170007);
 }
@@ -286,6 +294,7 @@ void CMotherboard::PreProcessHALT()
 
     m_Port170007 = m_Port170007acc;
     m_Port170007acc = 0;
+    m_okHaltHeld = true;  // D33.2: ОСТ принят, новый HALT не входит, пока в 170006 не запишут D0=0
 }
 
 
@@ -386,11 +395,25 @@ bool CMotherboard::SystemFrame()
     {
         for (int procticks = 0; procticks < frameProcTicks; procticks++)  // CPU ticks
         {
+            // КВЗ - выборка очередной команды: D33.2 сбрасывается на ней (для HOUT1 это RTI), а накопленные
+            // запросы входят уже после этой команды, в восстановленном контексте. Поэтому запоминаем КВЗ
+            // до Execute(), а сбрасываем D33.2 и взводим HALT после него.
+            const bool okHaltRelease = m_okHaltReleasePending && m_pCPU->GetInternalTick() == 0;
+
 #if !defined(PRODUCT)
             if ((m_dwTrace & TRACE_CPU) && m_pCPU->GetInternalTick() == 0)
                 TraceInstruction(m_pCPU, this, m_pCPU->GetPC(), m_dwTrace);
 #endif
             m_pCPU->Execute();
+
+            if (okHaltRelease)
+            {
+                m_okHaltReleasePending = false;
+                m_okHaltHeld = false;
+                m_Port170007 = 0;  // D28 очищается по окончании обработки; код клавиши (D27) остаётся
+                if (m_Port170007acc != 0 && (m_Port170006wr & 3) == 0)
+                    m_pCPU->FireHALT();
+            }
             if (m_CPUbps != nullptr)  // Check for breakpoints
             {
                 const uint16_t* pbps = m_CPUbps;
@@ -401,7 +424,7 @@ bool CMotherboard::SystemFrame()
             TimerTick();
 
             // Update interrupts
-            if (m_Port170007acc != 0 && (m_Port170006wr & 3) == 0)
+            if (m_Port170007acc != 0 && (m_Port170006wr & 3) == 0 && !m_okHaltHeld)
                 m_pCPU->FireHALT();
         }
 
@@ -562,7 +585,7 @@ uint16_t CMotherboard::GetWord(uint16_t address, bool okHaltMode, bool okExec)
         //    return GetRAMWord(offset & 0177776);
         //else if (address == 0177566)  // TTD
         //    RegisterHaltRq(0x40);
-        DebugLogFormat(_T("GetWord %06o\r\n"), address);
+        DebugLogFormat(_T("GetWord %06o %06o\r\n"), address, GetRAMWord(offset & 0177776));
         return GetRAMWord(offset & 0177776);
     case ADDRTYPE_DENY:
         m_pCPU->MemoryError();
@@ -1009,6 +1032,11 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
                 //    //    //DebugLogFormat(_T("HALT->USER 0x%02x 0x%02x\r\n"), (int)m_Port170007acc, (int)m_Port170007);
                 //}
             }
+
+            // D-вход D33.2 = D0 записанного байта (РЕЖИМ). Запись с D0=0 отпускает ОСТ, но сам D33.2
+            // сбрасывается только на ближайшей выборке команды (КВЗ, для HOUT1 это RTI) - см. SystemFrame
+            if (m_okHaltHeld && (word & 1) == 0)
+                m_okHaltReleasePending = true;
         }
         break;  //STUB
 

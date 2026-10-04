@@ -121,6 +121,7 @@ public:  // Saving/loading emulator status (pImage addresses up to 32 bytes)
 protected:  // Implementation
     void        FetchInstruction();      // Read next instruction
     void        TranslateInstruction();  // Execute the instruction
+    bool        InterruptProcessing();   // Take one pending interrupt/trap; returns true if taken
 protected:  // Implementation - memory access
     uint16_t    GetWordExec(uint16_t address) { return m_pBoard->GetWordExec(address, IsHaltMode()); }
     uint16_t    GetWord(uint16_t address) { return m_pBoard->GetWord(address, IsHaltMode()); }

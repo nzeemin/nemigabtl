@@ -18,25 +18,34 @@ NEMIGABTL. If not, see <http://www.gnu.org/licenses/>. */
 // Timings ///////////////////////////////////////////////////////////
 // Таблицы таймингов
 
-const int TIMING_BRANCH =   26;  // measured on real hardware (BEQ/BMI/BNE/BLO/BPL avg) ~3.14 us @ 8 MHz = 25.1 ticks
+const int TIMING_BRANCH =   32;  // measured on real hardware: BPL in the console polling loop ~4.03 us = 32 ticks @ 8 MHz
 const int TIMING_ILLEGAL = 144;
 const int TIMING_WAIT   = 1140;  // 380 us - WAIT and RESET
 const int TIMING_EMT    =   68;  // 22.8 us - IOT, BPT, EMT, TRAP - 42+5t
 const int TIMING_RTI    =   67;
-const int TIMING_RTS    =   32;  // 10.8 us
+const int TIMING_RTS    =   45;  // was 32; measured on real hardware: RETURN (RTS PC) = 45 ticks @ 8 MHz
 const int TIMING_NOP    =   12;  // 4 us - NOP and all commands without operands and with register operands
-const int TIMING_SOB    =   38;  // measured on real hardware (14,788 samples) ~4.77 us @ 8 MHz = 38.1 ticks - matches original value
+const int TIMING_SOB    =   38;
 const int TIMING_BR     =   30;
 const int TIMING_MARK   =   36;
 
-const int TIMING_REGREG =   16;  // was 22; measured on real hardware (ADD/ASL/ROL/TST Rn, register-only) ~1.67 us @ 8 MHz = 13.4 ticks
-const int TIMING_A[8]   = { 0, 12, 12, 20, 12, 20, 20, 28 };  // Source
-const int TIMING_B[8]   = { 0, 20, 20, 32, 20, 32, 32, 40 };  // Destination
-const int TIMING_AB[8]  = { 0, 16, 16, 24, 16, 24, 24, 32 };  // Source and destination are the same
+const int TIMING_REGREG =   14;  // Base timing; measured on real hardware: register-only ADD/MOV/BIC/BIS/ASL/ASR/TST Rn = 13-14 ticks @ 8 MHz
+// Extra time for reading the console registers 177560-177567: peripheral wait states.
+// Measured on real hardware: TSTB @#177560 ~7.17 us = 57 ticks @ 8 MHz, i.e. 21 ticks above the plain RAM variant
+const int TIMING_CONSOLE =  23;  // REGREG 14 + A1[3] 20 + 23 = 57
+// Mode 2, (Rn)+, is fitted to real hardware (8 MHz ticks): POP Rn = 38 (REGREG + A[2]),
+// MOV (Rn)+,(Rn)+ copy loop = 58 (REGREG + A[2] + AB[2]); CLR (Rn)+ comes out 34 against measured 43
+// Mode 3, @#N, as source: MOV @#N,Rn = 51 on real hardware (REGREG + A[3]), BIC @#N,Rn = 54
+const int TIMING_A[8]   = { 0, 12, 24, 37, 12, 20, 20, 28 };  // Source
+// Mode 4, -(Rn), as destination with a register source: PUSH Rn = 45 on real hardware (REGREG + B[4])
+const int TIMING_B[8]   = { 0, 20, 20, 32, 31, 32, 32, 40 };  // Destination
+const int TIMING_AB[8]  = { 0, 16, 20, 24, 16, 24, 24, 32 };  // Source and destination are the same
 const int TIMING_A2[8]  = { 0, 20, 20, 28, 20, 28, 28, 36 };
 const int TIMING_DS[8]  = { 0, 32, 32, 40, 32, 40, 40, 48 };
 
-#define TIMING_A1 TIMING_A
+// Source timing of the read-only operand (TST/TSTB, CMP/BIT). Kept apart from TIMING_A: the console polling loop
+// TSTB @#177560 is fitted to hardware with these values (see TIMING_CONSOLE) and must not move with TIMING_A
+const int TIMING_A1[8]  = { 0, 12, 12, 20, 12, 20, 20, 28 };
 #define TIMING_DJ TIMING_A2
 
 #define TIMING_DST (m_methsrc ? TIMING_AB : TIMING_B)
@@ -248,6 +257,12 @@ void CProcessor::Execute()
         m_internalTick--;
         return;
     }
+
+    // Asynchronous interrupts (HALT signal, EVNT, VIRQ, T-bit) are taken at the instruction boundary,
+    // before the next instruction is fetched - one interrupt per boundary, like in ukncbtl
+    if (InterruptProcessing())
+        return;
+
     m_internalTick = TIMING_ILLEGAL;  // ANYTHING UNKNOWN
 
     m_RPLYrq = false;
@@ -263,15 +278,23 @@ void CProcessor::Execute()
         }
     }
 
+    // Traps made by the instruction itself enter at once, in the same step, so a pending
+    // asynchronous interrupt (HALT) sees the trap handler address as the return address
+    if (m_BPT_rq || m_IOT_rq || m_EMT_rq || m_TRAPrq || m_HALTCMDrq || m_RPLYrq || m_RSVDrq)
+        InterruptProcessing();
+}
+
+bool CProcessor::InterruptProcessing()
+{
     if (m_stepmode)
+    {
         m_stepmode = false;
-    else if (m_instruction == PI_RTT && (GetPSW() & PSW_T))
-    {
-        // Skip interrupt processing for RTT with T bit set
+        return false;
     }
-    else  // Processing interrupts
+    if (m_instruction == PI_RTT && (GetPSW() & PSW_T))
+        return false;  // Skip interrupt processing for RTT with T bit set
+
     {
-        for (;;)
         {
             m_TBITrq = (m_psw & 020) != 0;  // T-bit
 
@@ -279,19 +302,8 @@ void CProcessor::Execute()
             uint16_t intrVector = 0;
             bool intrMode = false;  // true = HALT mode interrupt, false = USER mode interrupt
 
-            if (m_HALTrq)  // HALT signal
-            {
-                intrVector = 0002;  intrMode = true;
-                m_HALTrq = false;
-                m_pBoard->PreProcessHALT();
-            }
-            else if (m_HALTCMDrq)  // HALT command
-            {
-                intrVector = 0002;  intrMode = true;
-                m_HALTCMDrq = false;
-                m_pBoard->PreProcessHALT();  // snapshot and clear accumulator
-            }
-            else if (m_BPT_rq)  // BPT command
+            // Traps made by the instruction come first, then HALT, then the rest
+            if (m_BPT_rq)  // BPT command
             {
                 intrVector = 0000014;  intrMode = false;
                 m_BPT_rq = false;
@@ -310,6 +322,13 @@ void CProcessor::Execute()
             {
                 intrVector = 0000034;  intrMode = false;
                 m_TRAPrq = false;
+            }
+            else if (m_HALTrq || m_HALTCMDrq)  // HALT signal or HALT command - same vector, one entry
+            {
+                intrVector = 0002;  intrMode = true;
+                m_HALTrq = false;
+                m_HALTCMDrq = false;
+                m_pBoard->PreProcessHALT();  // snapshot and clear accumulator
             }
             else if (m_RPLYrq)  // Зависание
             {
@@ -353,9 +372,10 @@ void CProcessor::Execute()
             }
 
             if (intrVector == 0)
-                break;  // No more unmasked interrupts
+                return false;  // No unmasked interrupts
 
             m_waitmode = false;
+            if (m_internalTick == 0) m_internalTick = TIMING_EMT;  // interrupt entry takes time too
 
             if (intrMode)  // HALT mode interrupt
             {
@@ -407,7 +427,9 @@ void CProcessor::Execute()
                         DebugLogFormat(_T("CPU interrupt vector=%06o PC=%06o PSW=%06o\r\n"), intrVector, GetPC(), GetPSW());
                 }
             }
-        }  // end while
+
+            return true;
+        }
     }
 }
 
@@ -1050,6 +1072,7 @@ void CProcessor::ExecuteSBCB()
 void CProcessor::ExecuteTST()
 {
     uint16_t dst;
+    int extra = 0;
 
     if (m_methdest)
     {
@@ -1057,6 +1080,7 @@ void CProcessor::ExecuteTST()
         if (m_RPLYrq) return;
         dst = GetWord(ea);
         if (m_RPLYrq) return;
+        if (ea >= 0177560 && ea <= 0177567) extra = TIMING_CONSOLE;
     }
     else
         dst = GetReg(m_regdest);
@@ -1066,12 +1090,13 @@ void CProcessor::ExecuteTST()
     SetV(false);
     SetC(false);
 
-    m_internalTick = TIMING_REGREG + TIMING_A1[m_methdest];
+    m_internalTick = TIMING_REGREG + TIMING_A1[m_methdest] + extra;
 }
 
 void CProcessor::ExecuteTSTB()
 {
     uint8_t dst;
+    int extra = 0;
 
     if (m_methdest)
     {
@@ -1079,6 +1104,7 @@ void CProcessor::ExecuteTSTB()
         if (m_RPLYrq) return;
         dst = GetByte(ea);
         if (m_RPLYrq) return;
+        if (ea >= 0177560 && ea <= 0177567) extra = TIMING_CONSOLE;
     }
     else
         dst = GetLReg(m_regdest);
@@ -1088,7 +1114,7 @@ void CProcessor::ExecuteTSTB()
     SetV(false);
     SetC(false);
 
-    m_internalTick = TIMING_REGREG + TIMING_A1[m_methdest];
+    m_internalTick = TIMING_REGREG + TIMING_A1[m_methdest] + extra;
 }
 
 void CProcessor::ExecuteROR()
