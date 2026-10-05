@@ -978,8 +978,41 @@ uint16_t CMotherboard::GetPortView(uint16_t address) const
     }
 }
 
+// Запись в младший байт 170006 (РЕЖИМ); регистр клавиатуры D27 здесь не трогается
+void CMotherboard::WritePort170006Mode(uint8_t mode)
+{
+    bool oldmode = (m_Port170006wr & 3) != 0;
+    bool newmode = (mode & 3) != 0;
+    m_Port170006wr = mode;
+    if (oldmode && !newmode)  // прерывания включены
+    {
+        if (m_keypending)
+        {
+            m_Port170006 = m_keyscan;
+            m_keypending = false;
+            RegisterHaltRq(0x04);
+        }
+    }
+
+    // D-вход D33.2 = D0 записанного байта (РЕЖИМ). Запись с D0=0 отпускает ОСТ, но сам D33.2
+    // сбрасывается только на ближайшей выборке команды (КВЗ, для HOUT1 это RTI) - см. SystemFrame
+    if (m_okHaltHeld && (mode & 1) == 0)
+        m_okHaltReleasePending = true;
+}
+
 void CMotherboard::SetPortByte(uint16_t address, uint8_t byte)
 {
+    if (address == 0170006)  // Байт в РЕЖИМ: D27 не сбрасывается
+    {
+        WritePort170006Mode(byte);
+        return;
+    }
+    if (address == 0170007)  // Байт в старший байт 170006: сбрасывает D27
+    {
+        m_Port170006 = 0;
+        return;
+    }
+
     uint16_t word;
     if (address & 1)
     {
@@ -1006,39 +1039,9 @@ void CMotherboard::SetPortWord(uint16_t address, uint16_t word)
         break;  //STUB
 
     case 0170006:
-        {
-            //DebugLogFormat(_T("Reg 170006 W %06ho\r\n"), word & 0xFF);
-            bool oldmode = (m_Port170006wr & 3) != 0;
-            bool newmode = (word & 3) != 0;
-            m_Port170006wr = word & 0xFF;
-            if (!oldmode && newmode)  // прерывания отключены (MODE3)
-            {
-                //if (m_Port170007 != 0)
-                //    DebugLogFormat(_T("USER->HALT 0x%02x key=0x%02x\r\n"), (int)m_Port170007, (int)m_Port170006);
-            }
-            else if (oldmode && !newmode)  // прерывания включены
-            {
-                if (m_keypending)
-                {
-                    m_Port170006 = m_keyscan;
-                    m_keypending = false;
-                    //m_Port170007acc |= 0x04;  // keyboard interrupt
-                    RegisterHaltRq(0x04);
-                }
-
-                //if (m_Port170007acc != 0)
-                //{
-                //    m_pCPU->FireHALT();
-                //    //    //DebugLogFormat(_T("HALT->USER 0x%02x 0x%02x\r\n"), (int)m_Port170007acc, (int)m_Port170007);
-                //}
-            }
-
-            // D-вход D33.2 = D0 записанного байта (РЕЖИМ). Запись с D0=0 отпускает ОСТ, но сам D33.2
-            // сбрасывается только на ближайшей выборке команды (КВЗ, для HOUT1 это RTI) - см. SystemFrame
-            if (m_okHaltHeld && (word & 1) == 0)
-                m_okHaltReleasePending = true;
-        }
-        break;  //STUB
+        m_Port170006 = 0;  // D27 сбрасывается по записи слова в 170006 (и байта в 170007)
+        WritePort170006Mode(static_cast<uint8_t>(word));
+        break;
 
     case 0170010:  // Network
     case 0170012:
