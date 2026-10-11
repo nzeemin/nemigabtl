@@ -118,6 +118,7 @@ public:  // System control
     void        LoadRAM(int startbank, const uint8_t* pBuffer, int length);  // Load data into the RAM
     void        SetTimer50OnOff(bool okOnOff) { m_okTimer50OnOff = okOnOff; }
     bool        IsTimer50OnOff() const { return m_okTimer50OnOff; }
+    int         GetSoundChanges() const { return m_SoundChanges; }  // Sound signal 0 to non-0 changes since the beginning of the frame
     void        Tick50();           // Tick 50 Hz - goes to CPU EVNT line
     void        TimerTick();        // Timer Tick, 31250 Hz, 32uS -- dividers are within timer routine
     void        ResetDevices();     // INIT signal
@@ -203,6 +204,8 @@ private:
     uint16_t    m_Timer1;           // Timer 1 counter, initial value copied from m_Port170022
     uint16_t    m_Timer2;           // Timer 2 counter
     bool        m_okSoundOnOff;
+    int         m_SoundPrevValue;   // Previous value of the sound signal
+    int         m_SoundChanges;     // Sound signal 0 to non-0 changes since the beginning of the frame
 private:
     SOUNDGENCALLBACK m_SoundGenCallback;
     SERIALINCALLBACK    m_SerialInCallback;

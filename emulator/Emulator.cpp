@@ -46,6 +46,7 @@ long m_nFrameCount = 0;
 uint32_t m_dwTickCount = 0;
 uint32_t m_dwEmulatorUptime = 0;  // Machine uptime, seconds, from turn on or reset, increments every 25 frames
 long m_nUptimeFrameCount = 0;
+int m_nEmulatorSoundChanges = 0;
 
 uint8_t* g_pEmulatorRam = nullptr;  // RAM values - for change tracking
 uint8_t* g_pEmulatorChangedRam = nullptr;  // RAM change flags
@@ -650,6 +651,15 @@ bool Emulator_SystemFrame()
         TCHAR buffer[20];
         _sntprintf(buffer, sizeof(buffer) / sizeof(TCHAR) - 1, _T("Uptime: %02d:%02d:%02d"), hours, minutes, seconds);
         MainWindow_SetStatusbarText(StatusbarPartUptime, buffer);
+    }
+
+    // Update "Sound" indicator every 5 frames
+    m_nEmulatorSoundChanges += g_pBoard->GetSoundChanges();
+    if (m_nUptimeFrameCount % 5 == 0)
+    {
+        bool soundOn = m_nEmulatorSoundChanges > 0;
+        MainWindow_SetStatusbarText(StatusbarPartSound, soundOn ? _T("Sound") : nullptr);
+        m_nEmulatorSoundChanges = 0;
     }
 
     // Auto-boot option processing: select "boot from disk" and press Enter

@@ -347,7 +347,7 @@ void ScreenView_ScanKeyboard()
         BYTE keys[256];
         VERIFY(::GetKeyboardState(keys));
 
-        //BOOL okShift = ((keys[VK_SHIFT] & 128) != 0);
+        BOOL okShift = ((keys[VK_SHIFT] & 128) != 0);
         BOOL okCtrl = ((keys[VK_CONTROL] & 128) != 0);
 
         // Check every key for state change
@@ -362,6 +362,10 @@ void ScreenView_ScanKeyboard()
             BYTE key = arrPcScan2NemigaChar[scan];
             if (okCtrl && key >= 'A' && key <= 'X')
                 key -= 0x40;
+            else if (okShift && key >= 0x40 && key <= 0x5f)  // Letters: Shift gives lower case
+                key += 0x20;
+            else if (okShift && key >= 0x31 && key <= 0x3f)  // Digits and punctuation: 1 -> !, 2 -> " etc.; Shift+0 stays 0
+                key -= 0x10;
 
             if ((newstate & 128) && key > 4)
                 DebugPrintFormat(_T("Screen key: 0x%02x %d 0x%02x\r\n"), scan, okCtrl, (int)key);

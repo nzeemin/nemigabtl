@@ -29,6 +29,8 @@ CMotherboard::CMotherboard() :
     m_ParallelOutCallback = nullptr;
     m_okTimer50OnOff = false;
     m_okSoundOnOff = false;
+    m_SoundPrevValue = 0;
+    m_SoundChanges = 0;
     m_Timer1 = m_Timer1div = m_Timer2 = 0;
     m_CPUbps = nullptr;
 
@@ -390,6 +392,7 @@ bool CMotherboard::SystemFrame()
     const int floppyTicks = 32;
     //const int serialOutTicks = 20000 / (9600 / 25);
     int serialTxCount = 0;
+    m_SoundChanges = 0;
 
     for (int frameticks = 0; frameticks < 20000; frameticks++)
     {
@@ -822,8 +825,9 @@ uint16_t CMotherboard::GetPortWord(uint16_t address)
         return ((m_Port170007 | 0x03) << 8) | m_Port170006;
 
     case 0170010:  // RgSt -- Network
-    case 0170012:  // RgL -- Network
         return 0xffff;  //STUB
+    case 0170012:  // RgL -- Network
+        return 0;  //STUB
 
     case 0170014:
         return 0;  //STUB
@@ -923,6 +927,7 @@ uint16_t CMotherboard::GetPortView(uint16_t address) const
         return m_Port170006wr;
 
     case 0170010:  // Network
+        return 0xffff;  //STUB
     case 0170012:
         return 0;  //STUB
 
@@ -1242,29 +1247,20 @@ void CMotherboard::LoadFromImage(const uint8_t* pImage)
 
 void CMotherboard::DoSound()
 {
+    uint16_t sound = 0;  // silence
+    uint16_t volume = (m_Port170030 >> 3) & 3;  // Громкость 0..3
+    uint16_t octave = m_Port170030 & 7;  // Октава 1..7
+    if (m_Timer2 != 0 && m_okSoundOnOff && volume != 0 && octave != 0 && m_Timer1 <= m_Port170022 / 2)
+        sound = 0x1fff >> (3 - volume);
+
+    // Count the signal changes for the "Sound" indicator, regardless of the sound output
+    if (m_SoundPrevValue == 0 && sound != 0)
+        m_SoundChanges++;
+    m_SoundPrevValue = sound;
+
     if (m_SoundGenCallback == nullptr)
         return;
 
-    if (m_Timer2 == 0)  // duration expired = silence
-    {
-        (*m_SoundGenCallback)(0, 0);
-        return;
-    }
-
-    uint16_t volume = (m_Port170030 >> 3) & 3;  // Громкость 0..3
-    uint16_t octave = m_Port170030 & 7;  // Октава 1..7
-    if (!m_okSoundOnOff || volume == 0 || octave == 0)
-    {
-        (*m_SoundGenCallback)(0, 0);
-        return;
-    }
-    if (m_Timer1 > m_Port170022 / 2)
-    {
-        (*m_SoundGenCallback)(0, 0);
-        return;
-    }
-
-    uint16_t sound = 0x1fff >> (3 - volume);
     (*m_SoundGenCallback)(sound, sound);
 }
 
