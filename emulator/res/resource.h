@@ -25,6 +25,7 @@
 #define IDR_NEMIGA_ROM_303              149
 #define IDR_NEMIGA_ROM_405              150
 #define IDR_NEMIGA_ROM_406              151
+#define IDD_COMMANDLINEHELP             152
 #define IDC_EDIT1                       1000
 #define IDC_BUILDDATE                   1001
 #define IDC_EDITADDR                    1001
@@ -114,6 +115,7 @@
 #define ID_DEBUG_COPY_ADDRESS           32899
 #define ID_DEBUG_COPY_VALUE             32900
 #define ID_DEBUG_GOTO_ADDRESS           32901
+#define ID_HELP_COMMAND_LINE_HELP       32999
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -121,8 +123,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        152
-#define _APS_NEXT_COMMAND_VALUE         32999
+#define _APS_NEXT_RESOURCE_VALUE        153
+#define _APS_NEXT_COMMAND_VALUE         33000
 #define _APS_NEXT_CONTROL_VALUE         1034
 #define _APS_NEXT_SYMED_VALUE           110
 #endif

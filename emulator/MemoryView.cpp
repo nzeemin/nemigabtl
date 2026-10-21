@@ -468,7 +468,7 @@ void MemoryView_CopyValueToClipboard(WPARAM command)
         int addrtype;
         bool okValid;
         WORD wChanged;
-        value =MemoryView_GetWordFromMemory(address, okValid, addrtype, wChanged);
+        value = MemoryView_GetWordFromMemory(address, okValid, addrtype, wChanged);
 
         if (!okValid)
         {
@@ -608,7 +608,7 @@ void MemoryView_OnDraw(HDC hdc)
             int addrtype;
             bool okValid;
             WORD wChanged;
-            WORD word =MemoryView_GetWordFromMemory(address, okValid, addrtype, wChanged);
+            WORD word = MemoryView_GetWordFromMemory(address, okValid, addrtype, wChanged);
 
             if (address == m_wCurrentAddress)
                 ::PatBlt(hdc, x - cxChar / 2, y, cxChar * 7, cyLine, PATCOPY);
