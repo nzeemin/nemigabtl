@@ -51,7 +51,9 @@ LPCTSTR g_CommandLineHelp =
     _T("/debug /debugon /debugger\r\n\tSwitch to debug mode\r\n")
     _T("/nodebug /debugoff\r\n\tSwitch off the debug mode\r\n")
     _T("/sound /soundon\r\n\tTurn sound on\r\n")
-    _T("/nosound /soundoff\r\n\tTurn sound off\r\n");
+    _T("/nosound /soundoff\r\n\tTurn sound off\r\n")
+    _T("/diskmdN:filePath /diskN:filePath\r\n\tAttach MD disk image, N=0..3\r\n")
+    _T("/diskmxN:filePath\r\n\tAttach MX disk image, N=0..1\r\n");
 
 
 //////////////////////////////////////////////////////////////////////
@@ -267,6 +269,21 @@ void ParseCommandLine()
         else if (_tcscmp(arg, _T("/soundoff")) == 0 || _tcscmp(arg, _T("/nosound")) == 0)
         {
             Settings_SetSound(FALSE);
+        }
+        else if (_tcslen(arg) > 9 && _tcsncmp(arg, _T("/diskmd"), 7) == 0)  // "/diskmdN:filePath", N=0..3
+        {
+            if (arg[7] >= _T('0') && arg[7] <= _T('3') && arg[8] == _T(':'))
+                Settings_SetFloppyFilePath(arg[7] - _T('0'), arg + 9);
+        }
+        else if (_tcslen(arg) > 7 && _tcsncmp(arg, _T("/disk"), 5) == 0)  // "/diskN:filePath", N=0..3, alias for /diskmdN
+        {
+            if (arg[5] >= _T('0') && arg[5] <= _T('3') && arg[6] == _T(':'))
+                Settings_SetFloppyFilePath(arg[5] - _T('0'), arg + 7);
+        }
+        else if (_tcslen(arg) > 9 && _tcsncmp(arg, _T("/diskmx"), 7) == 0)  // "/diskmxN:filePath", N=0..1
+        {
+            if (arg[7] >= _T('0') && arg[7] <= _T('1') && arg[8] == _T(':'))
+                Settings_SetFloppyMXFilePath(arg[7] - _T('0'), arg + 9);
         }
     }
 

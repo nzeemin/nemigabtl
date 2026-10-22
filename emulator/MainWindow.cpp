@@ -275,7 +275,7 @@ void MainWindow_RestoreSettings()
         if (buf[0] != _T('\0'))
         {
             if (!g_pBoard->AttachFloppyMXImage(slot * 2, buf))
-                Settings_SetFloppyFilePath(slot, NULL);
+                Settings_SetFloppyMXFilePath(slot, NULL);
         }
     }
 
